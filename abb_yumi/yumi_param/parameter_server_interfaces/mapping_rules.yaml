@@ -1,0 +1,33 @@
+# This file defines mappings between ROS 1 and ROS 2 interfaces.
+# It is used with the ros1_bridge to allow for communcation between ROS 1 and ROS 2.
+
+-
+  ros1_package_name: 'parameter_server_interfaces'
+  ros1_service_name: 'GetAllJoints'
+  ros2_package_name: 'parameter_server_interfaces'
+  ros2_service_name: 'GetAllJoints'
+-
+  ros1_package_name: 'parameter_server_interfaces'
+  ros1_service_name: 'GetControllerJoints'
+  ros2_package_name: 'parameter_server_interfaces'
+  ros2_service_name: 'GetControllerJoints'
+-
+  ros1_package_name: 'parameter_server_interfaces'
+  ros1_service_name: 'GetControllerPid'
+  ros2_package_name: 'parameter_server_interfaces'
+  ros2_service_name: 'GetControllerPid'
+-
+  ros1_package_name: 'parameter_server_interfaces'
+  ros1_service_name: 'GetControllers'
+  ros2_package_name: 'parameter_server_interfaces'
+  ros2_service_name: 'GetControllers'
+-
+  ros1_package_name: 'parameter_server_interfaces'
+  ros1_service_name: 'GetRobots'
+  ros2_package_name: 'parameter_server_interfaces'
+  ros2_service_name: 'GetRobots'
+-
+  ros1_package_name: 'parameter_server_interfaces'
+  ros1_service_name: 'GetAllPid'
+  ros2_package_name: 'parameter_server_interfaces'
+  ros2_service_name: 'GetAllPid'

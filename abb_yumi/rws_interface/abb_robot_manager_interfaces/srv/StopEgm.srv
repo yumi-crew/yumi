@@ -1,0 +1,3 @@
+bool to_stop
+---
+bool is_stopped
