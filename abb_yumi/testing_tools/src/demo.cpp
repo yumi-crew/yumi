@@ -264,7 +264,7 @@ int main(int argc, char * argv[])
     loop_rate.sleep();  
   }
   sent = false;
-  usleep(24*1000000);
+  usleep(4*1000000);
 
 
 
