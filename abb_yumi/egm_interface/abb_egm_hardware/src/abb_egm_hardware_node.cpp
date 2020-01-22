@@ -20,12 +20,6 @@
 
 
 
-
-//TODO: 
-//      * add gripper support
-//      * first read() should be a part of init()
-
-
 void spin(std::shared_ptr<rclcpp::executors::MultiThreadedExecutor> exe)
 {
   exe->spin();
