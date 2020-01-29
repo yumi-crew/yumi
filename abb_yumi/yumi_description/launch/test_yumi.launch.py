@@ -36,11 +36,18 @@ def generate_launch_description():
              arguments=['-d', rviz_config_dir],
              output='screen'
              ),
-
         Node(package='robot_state_publisher',
-             node_executable='robot_state_publisher',
-             node_name='robot_state_publisher',
-             output='screen',
-             arguments=[urdf]),
+            node_executable='robot_state_publisher',
+            node_name='robot_state_publisher',
+            output='screen',
+            arguments=[urdf]),
 
     ])
+
+    '''
+Node(package='yumi_sim',
+            node_executable='global_joint_state_node',
+            node_name='global_joint_state_node',
+            output='screen',
+            arguments=[]),
+    '''

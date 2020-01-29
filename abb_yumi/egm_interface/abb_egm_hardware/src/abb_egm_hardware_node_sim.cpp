@@ -44,8 +44,8 @@ int main(int argc, char* argv[])
   auto executor = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
   controller_manager::ControllerManager controller_manager(robot, executor, nodegroup_namespace + "/controller_manager"); 
 
-  controller_manager.load_controller("ros_controllers", "ros_controllers::JointPositionController",
-                                     "joint_position_controller");
+  controller_manager.load_controller("ros_controllers", "ros_controllers::JointStateController",
+                                     "joint_state_controller");
   
   // Pass namespace to controllers as well
   auto controllers = controller_manager.get_loaded_controller();
