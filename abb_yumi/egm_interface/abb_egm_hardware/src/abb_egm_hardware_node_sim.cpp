@@ -19,7 +19,6 @@
 #include <abb_egm_hardware/abb_egm_hardware_sim.hpp>
 
 
-
 void spin(std::shared_ptr<rclcpp::executors::MultiThreadedExecutor> exe)
 {
   exe->spin();
