@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>yumi_description</name>
+  <version>0.0.4</version>
+  <description>The yumi_description package</description>
+
+  <maintainer email="yoshua.nava@kth.se">Yoshua Nava</maintainer>
+  <maintainer email="lars.tingelstad@ntnu.no">Lars Tingelstad</maintainer>
+
+  <license>BSD</license>
+
+  <author email="yoshua.nava@kth.se">Yoshua Nava</author>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>urdf</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
