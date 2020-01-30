@@ -41,13 +41,9 @@ def generate_launch_description():
             node_name='robot_state_publisher',
             output='screen',
             arguments=[urdf]),
-
-    ])
-
-    '''
-Node(package='yumi_sim',
+        Node(package='yumi_sim',
             node_executable='global_joint_state_node',
             node_name='global_joint_state_node',
             output='screen',
-            arguments=[]),
-    '''
+            arguments=[])
+    ])

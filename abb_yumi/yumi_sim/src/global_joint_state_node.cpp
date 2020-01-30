@@ -1,4 +1,3 @@
-
 #include <chrono>
 #include <cmath>
 #include <iostream>
@@ -12,10 +11,10 @@
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <angles/angles.h>
 
-std::array<double, 7> recieved_joint_state_l;
-std::array<double, 7> recieved_joint_state_r;
+std::array<double, 8> recieved_joint_state_l{0, 0, 0, 0, 0, 0, 0, 0.02};
+std::array<double, 8> recieved_joint_state_r{0, 0, 0, 0, 0, 0, 0, 0.02};
 
-void signal_callback_handler(int signum ) 
+void signal_callback_handler(int signum)
 {
   std::cout << "Caught signal " << signum << std::endl;
   // Terminate ros node
@@ -26,17 +25,18 @@ void signal_callback_handler(int signum )
 
 sensor_msgs::msg::JointState combine_joint_states()
 {
-  std::cout << "HEI\n";
   sensor_msgs::msg::JointState combined;
   combined.name = {
       "yumi_joint_1_l", "yumi_joint_1_r", "yumi_joint_2_l", "yumi_joint_2_r",
       "yumi_joint_7_l", "yumi_joint_7_r", "yumi_joint_3_l", "yumi_joint_3_r",
       "yumi_joint_4_l", "yumi_joint_4_r", "yumi_joint_5_l", "yumi_joint_5_r",
-      "yumi_joint_6_l", "yumi_joint_6_r"};
-  for (int i = 0; i < 7; i+=1)
+      "yumi_joint_6_l", "yumi_joint_6_r", "gripper_l_joint", "gripper_r_joint",
+      };
+
+  for (int i = 0; i < 8; i++)
   {
-    combined.position[2*i] = recieved_joint_state_l[i];
-    combined.position[2*i+1] = recieved_joint_state_r[i];
+    combined.position.push_back(recieved_joint_state_l[i]);
+    combined.position.push_back(recieved_joint_state_r[i]);
   }
   return combined;
 }
@@ -68,14 +68,13 @@ int main(int argc, char *argv[])
 
   // Ctrl+C handler
   signal(SIGINT, signal_callback_handler);
-  
+
   rclcpp::init(argc, argv);
 
   // making node
   auto node_s_r = rclcpp::Node::make_shared("joint_state_right_s");
   auto node_s_l = rclcpp::Node::make_shared("joint_state_left_s");
   auto node_p = rclcpp::Node::make_shared("joint_state_p");
-
 
   // creating publisher for global namespaced joint_space
   auto joint_command_publisher = node_p->create_publisher<sensor_msgs::msg::JointState>("/joint_states", 10);
@@ -89,13 +88,14 @@ int main(int argc, char *argv[])
   executor_l->add_node(node_s_l);
   auto future_handle_r = std::async(std::launch::async, spin, executor_r);
   auto future_handle_l = std::async(std::launch::async, spin, executor_l);
+
   rclcpp::WallRate loop_rate(250);
-  while(rclcpp::ok())
+
+  while (rclcpp::ok())
   {
     auto msg = combine_joint_states();
     joint_command_publisher->publish(msg);
-
-    // Spin node to publish command 
+    // Spin node to publish command
     rclcpp::spin_some(node_p);
     loop_rate.sleep();
   }

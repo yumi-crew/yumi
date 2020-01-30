@@ -4,13 +4,20 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 
 
-def generate_launch_description():
+def generate_launch_description(viz: bool = False):
 
     pkgShareDir  = get_package_share_directory('yumi_launch')
 
     configDir_L    = os.path.join(pkgShareDir, 'config', 'yumi_params_L.yaml')
     configDir_R    = os.path.join(pkgShareDir, 'config', 'yumi_params_R.yaml')
     
+    urdf = os.path.join(get_package_share_directory(
+        'yumi_description'), 'urdf', 'yumi.urdf')
+    assert os.path.exists(urdf)
+
+    rviz_config_dir = os.path.join(get_package_share_directory(
+        'yumi_description'), 'config', 'yumi.rviz')
+    assert os.path.exists(rviz_config_dir)
 
     return LaunchDescription([
 
@@ -65,7 +72,21 @@ def generate_launch_description():
                               node_namespace='/r',   
                               output='screen'),
 
-      #######################################################                              
+      ################ Rviz launch ##################
+      Node(package='rviz2',
+                              node_executable='rviz2',
+                              node_name='rviz2',
+                              arguments=['-d', rviz_config_dir],
+                              output='screen'
+                              ),
+      Node(package='robot_state_publisher',
+                              node_executable='robot_state_publisher',
+                              node_name='robot_state_publisher',
+                              output='screen',
+                              arguments=[urdf]),
+      Node(package='yumi_sim',
+                              node_executable='global_joint_state_node',
+                              node_name='global_joint_state_node',
+                              output='screen',
+                              arguments=[])
     ])
-  
-        
