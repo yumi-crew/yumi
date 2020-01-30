@@ -16,7 +16,8 @@
 
 #include "controller_manager/controller_manager.hpp"
 
-#include <abb_egm_hardware/abb_egm_hardware_sim.hpp>
+#include "abb_egm_hardware/abb_egm_hardware.hpp"
+
 
 
 void spin(std::shared_ptr<rclcpp::executors::MultiThreadedExecutor> exe)
@@ -26,27 +27,42 @@ void spin(std::shared_ptr<rclcpp::executors::MultiThreadedExecutor> exe)
 
 int main(int argc, char* argv[])
 {
+  
   rclcpp::init(argc, argv);
+  auto robot = std::make_shared<abb_egm_hardware::AbbEgmHardware>("abb_egm_hardware");
+  hardware_interface::hardware_interface_ret_t ret;
 
-  auto robot = std::make_shared<abb_egm_hardware::AbbEgmHardwareSim>("abb_egm_hardware");
+  // To avoid a race condition, wait to ensure all parameter servers are ready.
+  rclcpp::sleep_for(std::chrono::milliseconds(2000));
 
-  // initialize the robot
+
+  // Initialize the robot
   if (robot->init() != hardware_interface::HW_RET_OK)
   {
     fprintf(stderr, "Failed to initialize hardware");
     return -1;
   }
 
+  // Reads to initialize the joint arrays
+  ret = robot->read();
+  if (ret != hardware_interface::HW_RET_OK)
+  {
+    fprintf(stderr, "read failed!\n");
+  }
 
-  // // Now load and initialize the controllers
+
+  // Now load and initialize the controllers
   // As there is no ROS2 equivalent to ROS1 nodegroups we will manually pass along namespace
   std::string nodegroup_namespace = argv[2];
   auto executor = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
-  controller_manager::ControllerManager controller_manager(robot, executor, nodegroup_namespace + "/controller_manager"); 
+  controller_manager::ControllerManager controller_manager(robot, executor, nodegroup_namespace+"/controller_manager"); 
 
+  controller_manager.load_controller("ros_controllers", "ros_controllers::JointPositionController",
+                                     "joint_position_controller");
   controller_manager.load_controller("ros_controllers", "ros_controllers::JointStateController",
                                      "joint_state_controller");
-  
+
+
   // Pass namespace to controllers as well
   auto controllers = controller_manager.get_loaded_controller();
   for(auto c : controllers)
@@ -55,49 +71,51 @@ int main(int argc, char* argv[])
     l_node->declare_parameter("namespace", nodegroup_namespace);
   }
 
-
   // there is no async spinner in ROS 2, so we have to put the spin() in its own thread
   auto future_handle = std::async(std::launch::async, spin, executor);
 
-  // we can either configure each controller individually through its services
-  // or we use the controller manager to configure every loaded controller
+  // Controller manager transitions the cotnrollers lifecycle node from Unconfigured to Inactive state
+  // by calling their respective on_configured() functions.
   if (controller_manager.configure() != controller_interface::CONTROLLER_INTERFACE_RET_SUCCESS)
   {
-    RCLCPP_ERROR(controller_manager.get_logger(), "at least one controller failed to configure");
+    RCLCPP_ERROR(controller_manager.get_logger(), "at least one controller failed to configure"); 
     return -1;
   }
-  // and activate all controller
+
+  // Controller manager transitions the controllers lifecycle nodes from Inactive to Active state.
+  // by running their respective on_activate() funcitons.
   if (controller_manager.activate() != controller_interface::CONTROLLER_INTERFACE_RET_SUCCESS)
   {
     RCLCPP_ERROR(controller_manager.get_logger(), "at least one controller failed to activate");
     return -1;
   }
-
-  rclcpp::Rate rate(250.0);
-
-  hardware_interface::hardware_interface_ret_t ret;
+  
+  RCLCPP_INFO(controller_manager.get_logger(),"Entering EGM control loop");
+  // Real-time control loop
+  rclcpp::WallRate loop_rate(250);
   while (rclcpp::ok())
   {
+    // Reads into joint_position_ and joint_velocity_
     ret = robot->read();
-
     if (ret != hardware_interface::HW_RET_OK)
     {
       fprintf(stderr, "read failed!\n");
     }
 
+    // (joint_position_controller): Updates joint_position_command_ 
     controller_manager.update();
 
+    // Writes the contents of joint_position_command_ to robot
     ret = robot->write();
     if (ret != hardware_interface::HW_RET_OK)
     {
       fprintf(stderr, "write failed!\n");
     }
-
-    rate.sleep();
+    loop_rate.sleep();
   }
 
+  // teardown
   executor->cancel();
-
   fprintf(stderr, "Cancelled");
 
   return 0;

@@ -40,6 +40,20 @@ target_compile_definitions( yumi_robot_manager PRIVATE
                            "ABB_ROBOT_MANAGER_BUILDING_DLL"
 )
 
+# yumi_robot_manager_sim
+add_library(yumi_robot_manager_sim SHARED src/yumi_robot_manager_sim.cpp)
+target_include_directories(yumi_robot_manager_sim PRIVATE include )
+ament_target_dependencies(yumi_robot_manager_sim
+                          rcutils
+                          rclcpp
+                          abb_robot_manager_interfaces
+)
+# Causes the visibility macros to use dllexport rather than dllimport, which is
+# appropriate when building the dll but not consuming it.
+target_compile_definitions( yumi_robot_manager_sim PRIVATE
+                           "ABB_ROBOT_MANAGER_BUILDING_DLL"
+)
+
 
 # yumi_robot_manager_node
 add_executable(yumi_robot_manager_node src/yumi_robot_manager_node.cpp)
@@ -53,18 +67,28 @@ ament_target_dependencies(yumi_robot_manager_node
                           poco
 ) 
 
+# yumi_robot_manager_sim_node
+add_executable(yumi_robot_manager_sim_node src/yumi_robot_manager_sim_node.cpp)
+target_include_directories(yumi_robot_manager_sim_node PRIVATE include )
+target_link_libraries(yumi_robot_manager_sim_node yumi_robot_manager_sim )
+ament_target_dependencies(yumi_robot_manager_sim_node
+                          rclcpp
+                          abb_robot_manager_interfaces
+                          rcutils
+) 
+
                           
 install(DIRECTORY include/ DESTINATION include)
 
 
-install(TARGETS yumi_robot_manager 
+install(TARGETS yumi_robot_manager yumi_robot_manager_sim
         ARCHIVE DESTINATION lib
         LIBRARY DESTINATION lib
         RUNTIME DESTINATION bin
 )
 
 install(TARGETS 
-        yumi_robot_manager_node 
+        yumi_robot_manager_node yumi_robot_manager_sim_node
         DESTINATION lib/${PROJECT_NAME}
 )
 

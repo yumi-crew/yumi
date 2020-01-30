@@ -38,7 +38,8 @@ ament_target_dependencies(abb_egm_hardware
 # appropriate when building the dll but not consuming it.
 target_compile_definitions(abb_egm_hardware PRIVATE
                            "ABB_EGM_HARDWARE_BUILDING_DLL")
-
+                           
+#abb_egm_hardware_sim
 add_library(abb_egm_hardware_sim SHARED src/abb_egm_hardware_sim.cpp)
 target_include_directories(abb_egm_hardware_sim PRIVATE include)
 ament_target_dependencies(abb_egm_hardware_sim
@@ -47,7 +48,8 @@ ament_target_dependencies(abb_egm_hardware_sim
                           abb_libegm
                           controller_manager
                           controller_interface
-                          hardware_interface)
+                          hardware_interface
+                          parameter_server_interfaces)
 
 # Causes the visibility macros to use dllexport rather than dllimport, which is
 # appropriate when building the dll but not consuming it.
@@ -63,10 +65,10 @@ ament_target_dependencies(abb_egm_hardware_node
                           abb_libegm
                           hardware_interface)
 
-add_executable(abb_egm_hardware_node_sim src/abb_egm_hardware_node_sim.cpp)
-target_include_directories(abb_egm_hardware_node_sim PRIVATE include)
-target_link_libraries(abb_egm_hardware_node_sim abb_egm_hardware_sim ${Boost_LIBRARIES})
-ament_target_dependencies(abb_egm_hardware_node_sim
+add_executable(abb_egm_hardware_sim_node src/abb_egm_hardware_sim_node.cpp)
+target_include_directories(abb_egm_hardware_sim_node PRIVATE include)
+target_link_libraries(abb_egm_hardware_sim_node abb_egm_hardware_sim ${Boost_LIBRARIES})
+ament_target_dependencies(abb_egm_hardware_sim_node
                           rclcpp
                           abb_libegm
                           hardware_interface)
@@ -79,7 +81,7 @@ install(TARGETS abb_egm_hardware abb_egm_hardware_sim
         RUNTIME DESTINATION bin)
 
 install(TARGETS abb_egm_hardware_node
-                abb_egm_hardware_node_sim
+                abb_egm_hardware_sim_node
                 DESTINATION
                 lib/${PROJECT_NAME})
 

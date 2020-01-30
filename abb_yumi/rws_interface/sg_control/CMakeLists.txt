@@ -44,6 +44,20 @@ ament_target_dependencies(sg_control
 target_compile_definitions( sg_control PRIVATE
                            "SG_CONTROL_BUILDING_DLL")
 
+add_library(sg_control_sim SHARED src/sg_control_sim.cpp)
+target_include_directories(sg_control_sim PRIVATE include)
+ament_target_dependencies(sg_control_sim
+                          rcutils
+                          rclcpp
+                          rclcpp_action
+                          rclcpp_components
+                          sg_control_interfaces
+)
+# Causes the visibility macros to use dllexport rather than dllimport, which is
+# appropriate when building the dll but not consuming it.
+target_compile_definitions( sg_control_sim PRIVATE
+                          "SG_CONTROL_BUILDING_DLL")
+
 # sg_control_node
 add_executable(sg_control_node src/sg_control_node.cpp)
 target_include_directories(sg_control_node PRIVATE include )
@@ -53,19 +67,28 @@ ament_target_dependencies(sg_control_node
                           rclcpp_action
                           sg_control_interfaces                        
 )
+# sg_control_sim_node
+add_executable(sg_control_sim_node src/sg_control_sim_node.cpp)
+target_include_directories(sg_control_sim_node PRIVATE include )
+target_link_libraries(sg_control_sim_node sg_control_sim )
+ament_target_dependencies(sg_control_sim_node
+                          rclcpp
+                          rclcpp_action
+                          sg_control_interfaces                        
+)
 
 
 install(DIRECTORY include/ DESTINATION include)
 
-install(TARGETS 
-          sg_control
-          ARCHIVE DESTINATION lib
-          LIBRARY DESTINATION lib
-          RUNTIME DESTINATION bin
+install(TARGETS sg_control sg_control_sim
+        ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin
 )
 
 install(TARGETS 
           sg_control_node
+          sg_control_sim_node
           DESTINATION lib/${PROJECT_NAME}
 )
 
