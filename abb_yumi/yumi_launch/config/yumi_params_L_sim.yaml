@@ -1,0 +1,27 @@
+yumi:
+  port: 6511
+  joints: 
+    - yumi_joint_1_l
+    - yumi_joint_2_l 
+    - yumi_joint_7_l
+    - yumi_joint_3_l
+    - yumi_joint_4_l
+    - yumi_joint_5_l
+    - yumi_joint_6_l
+  
+  joint_position_controller:
+    type:   "ros_controllers::JointPositionController"
+    joints: 
+    - yumi_joint_1_l
+    - yumi_joint_2_l
+    - yumi_joint_7_l
+    - yumi_joint_3_l
+    - yumi_joint_4_l
+    - yumi_joint_5_l
+    - yumi_joint_6_l
+    pid: {p: 0.1, i: 0, d: 0, i_min: -4, i_max: 4, antiwindup: True}
+  
+      
+	  
+  
+

@@ -19,5 +19,5 @@ yumi:
     - yumi_joint_4_r
     - yumi_joint_5_r
     - yumi_joint_6_r
-    pid: {p: 1.2, i: 0, d: 0 , i_min: -4, i_max: 4, antiwindup: True}
+    pid: {p: 0.1, i: 0, d: 0 , i_min: -4, i_max: 4, antiwindup: True}
     
