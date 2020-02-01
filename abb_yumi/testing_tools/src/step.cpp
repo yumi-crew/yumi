@@ -18,9 +18,9 @@
 
 #include <rws_clients/robot_manager_client.hpp>
 
-#include <abb_robot_manager_interfaces/srv/is_ready.hpp>
-#include <abb_robot_manager_interfaces/srv/stop_egm.hpp>
-#include <abb_robot_manager_interfaces/srv/start_egm.hpp>
+#include <yumi_robot_manager_interfaces/srv/is_ready.hpp>
+#include <yumi_robot_manager_interfaces/srv/stop_egm.hpp>
+#include <yumi_robot_manager_interfaces/srv/start_egm.hpp>
 
 
 

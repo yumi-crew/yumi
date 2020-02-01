@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 project(testing_tools)
 
-# Default to C++14
+
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -18,10 +18,9 @@ find_package(sensor_msgs REQUIRED)
 find_package(angles REQUIRED)
 
 find_package(rws_clients REQUIRED)
-
 find_package(ros2_control_interfaces REQUIRED)
 find_package(sg_control_interfaces REQUIRED)
-find_package(abb_robot_manager_interfaces REQUIRED)
+find_package(yumi_robot_manager_interfaces REQUIRED)
 
 
 # Sine wave 
@@ -33,7 +32,7 @@ ament_target_dependencies(sine_wave
                           angles                             
                           ros2_control_interfaces
                           sg_control_interfaces
-                          abb_robot_manager_interfaces
+                          yumi_robot_manager_interfaces
                           rws_clients  
 )
 
@@ -46,7 +45,7 @@ ament_target_dependencies(sine_wave_inf
                           angles                             
                           ros2_control_interfaces
                           sg_control_interfaces
-                          abb_robot_manager_interfaces
+                          yumi_robot_manager_interfaces
                           rws_clients   
 )
 
@@ -59,9 +58,10 @@ ament_target_dependencies(step
                           angles                             
                           ros2_control_interfaces
                           sg_control_interfaces
-                          abb_robot_manager_interfaces
+                          yumi_robot_manager_interfaces
                           rws_clients  
 )
+
 # Demo (both)                           
 add_executable(demo src/demo.cpp)
 target_include_directories(demo PRIVATE include)
@@ -71,9 +71,10 @@ ament_target_dependencies(demo
                           angles                             
                           ros2_control_interfaces 
                           sg_control_interfaces
-                          abb_robot_manager_interfaces
+                          yumi_robot_manager_interfaces
                           rws_clients 
 )
+
 # graph_bringup                            
 add_executable(graph_bringup src/graph_bringup.cpp)
 target_include_directories(graph_bringup PRIVATE include)
@@ -83,7 +84,7 @@ ament_target_dependencies(graph_bringup
                           angles                             
                           ros2_control_interfaces 
                           sg_control_interfaces
-                          abb_robot_manager_interfaces
+                          yumi_robot_manager_interfaces
                           rws_clients 
 )
 

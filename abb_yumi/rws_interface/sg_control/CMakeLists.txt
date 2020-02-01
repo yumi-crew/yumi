@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 project(sg_control)
 
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -35,7 +35,7 @@ ament_target_dependencies(sg_control
                           rclcpp
                           rclcpp_action
                           abb_librws
-                          poco 
+                          Poco 
                           rclcpp_components
                           sg_control_interfaces
 )
@@ -44,6 +44,7 @@ ament_target_dependencies(sg_control
 target_compile_definitions( sg_control PRIVATE
                            "SG_CONTROL_BUILDING_DLL")
 
+# sg_control_sim                          
 add_library(sg_control_sim SHARED src/sg_control_sim.cpp)
 target_include_directories(sg_control_sim PRIVATE include)
 ament_target_dependencies(sg_control_sim
@@ -58,7 +59,7 @@ ament_target_dependencies(sg_control_sim
 target_compile_definitions( sg_control_sim PRIVATE
                           "SG_CONTROL_BUILDING_DLL")
 
-# sg_control_node
+# sg_control_node (TO BE REMOVED BY LIFECYCLE)
 add_executable(sg_control_node src/sg_control_node.cpp)
 target_include_directories(sg_control_node PRIVATE include )
 target_link_libraries(sg_control_node sg_control ${Poco_LIBRARIES} )
@@ -67,7 +68,7 @@ ament_target_dependencies(sg_control_node
                           rclcpp_action
                           sg_control_interfaces                        
 )
-# sg_control_sim_node
+# sg_control_sim_node (TO BE REMOVED BY LIFECYCLE)
 add_executable(sg_control_sim_node src/sg_control_sim_node.cpp)
 target_include_directories(sg_control_sim_node PRIVATE include )
 target_link_libraries(sg_control_sim_node sg_control_sim )

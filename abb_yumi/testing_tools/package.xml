@@ -19,7 +19,7 @@
   <depend>rws_clients</depend>
   
   <depend>sg_control_interfaces</depend>
-  <depend>abb_robot_manager_interfaces</depend>
+  <depend>yumi_robot_manager_interfaces</depend>
   <depend>ros2_control_interfaces</depend>
   
   <export>

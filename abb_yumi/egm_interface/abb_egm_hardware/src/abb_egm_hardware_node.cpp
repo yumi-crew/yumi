@@ -53,13 +53,13 @@ int main(int argc, char* argv[])
 
   // Now load and initialize the controllers
   // As there is no ROS2 equivalent to ROS1 nodegroups we will manually pass along namespace
-  std::string nodegroup_namespace = argv[2];
+  std::string nodegroup_namespace = argv[1];
   auto executor = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
   controller_manager::ControllerManager controller_manager(robot, executor, nodegroup_namespace+"/controller_manager"); 
 
-  controller_manager.load_controller("ros_controllers", "ros_controllers::JointPositionController",
+  controller_manager.load_controller("controllers", "ros_controllers::JointPositionController",
                                      "joint_position_controller");
-  controller_manager.load_controller("ros_controllers", "ros_controllers::JointStateController",
+  controller_manager.load_controller("controllers", "ros_controllers::JointStateController",
                                      "joint_state_controller");
 
 

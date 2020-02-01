@@ -1,11 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 project(parameter_server)
 
-# Default to C99
-if(NOT CMAKE_C_STANDARD)
-  set(CMAKE_C_STANDARD 99)
-endif()
-
 # Default to C++17 (for filesystem implementation)
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
@@ -33,31 +28,35 @@ endif()
 add_library(ros2_control_parameter_server SHARED src/parameter_server.cpp)
 target_include_directories(ros2_control_parameter_server PUBLIC include)
 target_link_libraries(ros2_control_parameter_server yaml_parser)
-ament_target_dependencies(
-  ros2_control_parameter_server
-  rclcpp
-  parameter_server_interfaces
+ament_target_dependencies(ros2_control_parameter_server
+                          rclcpp
+                          parameter_server_interfaces
 )
 
-install(
-  TARGETS ros2_control_parameter_server yaml_parser
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
+# param_server_node
+add_executable(param_server_node src/param_server_node.cpp)
+target_link_libraries(param_server_node ros2_control_parameter_server)
+ament_target_dependencies(param_server_node 
+                          rclcpp                          
 )
 
-add_executable(param_server_exec src/param_server_exec.cpp)
-target_link_libraries(param_server_exec ros2_control_parameter_server)
-ament_target_dependencies(param_server_exec rclcpp controller_parameter_server)
-ament_export_include_directories(
-  include
+install(DIRECTORY include/ DESTINATION include)
+
+install(TARGETS ros2_control_parameter_server yaml_parser
+        ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin
 )
+
 install(TARGETS
-  param_server_exec
-  DESTINATION lib/${PROJECT_NAME})
+        param_server_node
+        DESTINATION lib/${PROJECT_NAME}
+)
 
-install(DIRECTORY include/
-DESTINATION include)
 
+
+
+ament_export_include_directories( include )
+ament_export_dependencies( parameter_server_interfaces )
 
 ament_package()

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 project(rws_clients)
 
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -15,11 +15,8 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rclcpp_action REQUIRED)
-
-find_package(abb_robot_manager_interfaces REQUIRED)
+find_package(yumi_robot_manager_interfaces REQUIRED)
 find_package(sg_control_interfaces REQUIRED)
-
-
 
 
 
@@ -29,23 +26,24 @@ target_include_directories(robot_manager_client PRIVATE include)
 ament_target_dependencies(robot_manager_client
                           rcutils
                           rclcpp
-                          abb_robot_manager_interfaces               
+                          yumi_robot_manager_interfaces               
 )
 # Causes the visibility macros to use dllexport rather than dllimport, which is
 # appropriate when building the dll but not consuming it.
 target_compile_definitions( robot_manager_client PRIVATE
                            "RWS_CLIENTS_BUILDING_DLL"
 )
-# robot_manager_client_node
+
+
+# robot_manager_client_node (TO BE REMOVED BY LIFECYCLE)
 add_executable(robot_manager_client_node src/robot_manager_client_node.cpp)
 target_include_directories(robot_manager_client_node PRIVATE include )
 target_link_libraries(robot_manager_client_node robot_manager_client)
 ament_target_dependencies(robot_manager_client_node
                           rcutils
                           rclcpp
-                          abb_robot_manager_interfaces                
+                          yumi_robot_manager_interfaces                
 ) 
-
 
 # grip_client
 add_library(grip_client SHARED src/grip_client.cpp)
@@ -61,7 +59,7 @@ ament_target_dependencies(grip_client
 target_compile_definitions( grip_client PRIVATE
                            "RWS_CLIENTS_BUILDING_DLL"
 )                
-# grip_client_node
+# grip_client_node (TO BE REMOVED BY LIFECYCLE)
 add_executable(grip_client_node src/grip_client_node.cpp)
 target_include_directories(grip_client_node PRIVATE include )
 target_link_libraries(grip_client_node grip_client)
@@ -91,7 +89,7 @@ install(TARGETS
 
 
 ament_export_include_directories(include)
-ament_export_dependencies(abb_robot_manager_interfaces sg_control_interfaces)
+ament_export_dependencies(yumi_robot_manager_interfaces sg_control_interfaces)
 ament_export_libraries(robot_manager_client grip_client)
 
 ament_package()                          

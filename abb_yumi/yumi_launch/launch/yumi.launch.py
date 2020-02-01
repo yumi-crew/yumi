@@ -23,9 +23,8 @@ def generate_launch_description(viz: bool = False):
 
       ################# Global node group ###################
       # Global RWS robot manager
-      Node(package= 'abb_robot_manager',
-                              node_executable='yumi_robot_manager_node',
-                              #arguments=['egm'],    # egm / rapid
+      Node(package= 'yumi_robot_manager',
+                              node_executable='yumi_robot_manager_node',                          
                               output='screen'),
       
 
@@ -34,12 +33,12 @@ def generate_launch_description(viz: bool = False):
       Node(package= 'abb_egm_hardware',
                               node_executable='abb_egm_hardware_node',
                               node_namespace='/l',
-                              arguments=[configDir_L, '/l'],
+                              arguments=['/l'],
                               output='screen'),
 
-      # Left arm paramter server
+      # Left arm parameter server
       Node(package='parameter_server', 
-                              node_executable='param_server_exec',
+                              node_executable='param_server_node',
                               node_namespace='/l', 
                               arguments=[configDir_L],     
                               output='screen'),
@@ -56,12 +55,12 @@ def generate_launch_description(viz: bool = False):
       Node(package= 'abb_egm_hardware',
                               node_executable='abb_egm_hardware_node',
                               node_namespace='/r',
-                              arguments=[configDir_R, '/r'],
+                              arguments=['/r'],
                               output='screen'),
 
       # Right arm parameter server
       Node(package='parameter_server', 
-                              node_executable='param_server_exec',
+                              node_executable='param_server_node',
                               node_namespace='/r', 
                               arguments=[configDir_R],     
                               output='screen'),

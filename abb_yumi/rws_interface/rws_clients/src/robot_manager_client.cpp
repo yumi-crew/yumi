@@ -49,7 +49,7 @@ RobotManagerClient::init()
 bool
 RobotManagerClient::robot_is_ready()
 {
-  using IsReady  = abb_robot_manager_interfaces::srv::IsReady;
+  using IsReady  = yumi_robot_manager_interfaces::srv::IsReady;
   using namespace std::chrono_literals;
 
   // temp node which will handle communication with the service server
@@ -72,7 +72,7 @@ RobotManagerClient::robot_is_ready()
       continue;
     }
 
-    auto req = std::make_shared<abb_robot_manager_interfaces::srv::IsReady::Request>();
+    auto req = std::make_shared<yumi_robot_manager_interfaces::srv::IsReady::Request>();
     auto resp = client->async_send_request(req);
     
     auto spin_status = rclcpp::spin_until_future_complete(temp_node->get_node_base_interface(), resp, 3s);
@@ -115,7 +115,7 @@ RobotManagerClient::robot_is_ready()
 bool
 RobotManagerClient::stop_egm()
 {
-  using StopEgm  = abb_robot_manager_interfaces::srv::StopEgm;
+  using StopEgm  = yumi_robot_manager_interfaces::srv::StopEgm;
   using namespace std::chrono_literals;
 
   // temp node which will handle communication with the service server
@@ -138,7 +138,7 @@ RobotManagerClient::stop_egm()
       continue;
     }
 
-    auto req = std::make_shared<abb_robot_manager_interfaces::srv::StopEgm::Request>();
+    auto req = std::make_shared<yumi_robot_manager_interfaces::srv::StopEgm::Request>();
     req->to_stop = true;
     auto resp = client->async_send_request(req);
     RCLCPP_INFO(node_->get_logger(), "Stopping EGM control");
@@ -183,7 +183,7 @@ RobotManagerClient::stop_egm()
 bool
 RobotManagerClient::start_egm()
 {
-  using StartEgm = abb_robot_manager_interfaces::srv::StartEgm;
+  using StartEgm = yumi_robot_manager_interfaces::srv::StartEgm;
   using namespace std::chrono_literals;
 
   // temp node which will handle communication with the service server
@@ -206,7 +206,7 @@ RobotManagerClient::start_egm()
       continue;
     }
 
-    auto req = std::make_shared<abb_robot_manager_interfaces::srv::StartEgm::Request>();
+    auto req = std::make_shared<yumi_robot_manager_interfaces::srv::StartEgm::Request>();
     req->to_start = true;
     auto resp = client->async_send_request(req);
     RCLCPP_INFO(node_->get_logger(), "Starting EGM control");

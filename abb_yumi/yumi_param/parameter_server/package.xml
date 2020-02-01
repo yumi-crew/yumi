@@ -2,15 +2,18 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>parameter_server</name>
-  <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="poh140996@hotmail.com">pohzhiee</maintainer>
-  <license>TODO: License declaration</license>
+  <version>1.0.0</version>
+  <description>Parameter server for a arm manipulator</description>
+  <maintainer email="mariunil@stud.ntnu.no">Marius Nilsen</maintainer>
+  <maintainer email="markubjo@stud.ntnu.no">Markus Bjonnes</maintainer>
+
+  <license>Apache License 2.0</license>
+  <author email="mariunil@stud.ntnu.no">Marius Nilsen</author>
+  <author email="markubjo@stud.ntnu.no">Markus Bjonnes</author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>rclcpp</depend>
-  <depend>controller_parameter_server</depend>
   <depend>parameter_server_interfaces</depend>
 
   <test_depend>ament_lint_auto</test_depend>
