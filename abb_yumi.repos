@@ -1,0 +1,13 @@
+repositories:
+  abb_libegm:
+    type: git
+    url: https://github.com/yumi-crew/abb_libegm
+    version: master
+  abb_librws:
+    type: git
+    url: https://github.com/yumi-crew/abb_librws
+    version: eloquent
+  ros2_control:
+    type: git
+    url: https://github.com/yumi-crew/abb_librws
+    version: master
