@@ -96,7 +96,7 @@ JointPositionController::update()
     auto curr_pos = state_handle->get_position();
 
 
-    // find_if and utilsied lambda function
+    // find_if and utilised lambda function
     auto fp = [&joint_name](const hardware_interface::JointCommandHandle *cmd_handle) -> bool 
     { 
       // return true if its the same joint.
@@ -108,7 +108,7 @@ JointPositionController::update()
 
 
     // if joint is to be controlled by this controller
-    if (joint_cmd_iter != registered_joint_cmd_handles_.cend())
+    if (joint_cmd_iter != registered_joint_cmd_handles_.cend()) 
     {
       auto cmd_handle = *joint_cmd_iter;
       auto desired_pos = desired_pos_map_[joint_name];  
@@ -118,12 +118,19 @@ JointPositionController::update()
         //--------------PID---------------------------------------------------------------------------------------------
         auto error = desired_pos - curr_pos;
         auto addition = pid_controllers_map_[joint_name]->compute_command(error, timeElapsed);
+        // TODO : Replace with proper NaN handling
         if(std::isnan(addition))
         {
           addition = 0.0;
         }
+        if(std::isnan(curr_pos))
+        {
+          curr_pos = 0.0;
+        }
         //--------------------------------------------------------------------------------------------------------------
+        //RCLCPP_INFO_STREAM(this->get_lifecycle_node()->get_logger(), "addition: " << addition);
         cmd_handle->set_cmd(curr_pos + addition);
+        //cmd_handle->set_cmd(1);
       }   
     }
   }

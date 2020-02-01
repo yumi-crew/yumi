@@ -9,5 +9,5 @@ repositories:
     version: eloquent
   ros2_control:
     type: git
-    url: https://github.com/yumi-crew/abb_librws
-    version: master
+    url: https://github.com/yumi-crew/ros2_control.git
+    version: dashing

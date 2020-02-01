@@ -43,13 +43,6 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  // Reads to initialize the joint arrays
-  ret = robot->read();
-  if (ret != hardware_interface::HW_RET_OK)
-  {
-    fprintf(stderr, "read failed!\n");
-  }
-
 
   // Now load and initialize the controllers
   // As there is no ROS2 equivalent to ROS1 nodegroups we will manually pass along namespace

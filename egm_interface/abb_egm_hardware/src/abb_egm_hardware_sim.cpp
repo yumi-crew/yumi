@@ -1,4 +1,4 @@
-// Copyright 2019 Norwegian University of Science and Technology.
+// Copyright 2020 Norwegian University of Science and Technology.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -131,10 +131,6 @@ AbbEgmHardware::init()
     configuration_.axes = abb::egm::RobotAxes::Six;
 
  
-
-  // then read in the states of the robot so the controllers can fetch it upon activation
-  //this->read();
-
 
   return hardware_interface::HW_RET_OK;
 }
