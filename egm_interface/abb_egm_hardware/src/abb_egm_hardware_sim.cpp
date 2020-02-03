@@ -157,11 +157,9 @@ hardware_interface::hardware_interface_ret_t
 AbbEgmHardware::write()
 { 
   usleep(1*100000); //0.1 seconds
-  std::cout << "ny runde" << std::endl;
 	for (size_t index = 0; index < n_joints_; ++index)
 	{
     joint_position_[index] = joint_position_command_[index];
-    std::cout << "joint_position_command_[index]: " << joint_position_command_[index] << std::endl;
 	}
 	return hardware_interface::HW_RET_OK;
 }

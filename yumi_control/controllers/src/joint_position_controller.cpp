@@ -119,14 +119,14 @@ JointPositionController::update()
         auto error = desired_pos - curr_pos;
         auto addition = pid_controllers_map_[joint_name]->compute_command(error, timeElapsed);
         // TODO : Replace with proper NaN handling
-        if(std::isnan(addition))
-        {
-          addition = 0.0;
-        }
-        if(std::isnan(curr_pos))
-        {
-          curr_pos = 0.0;
-        }
+        // if(std::isnan(addition))
+        // {
+        //   addition = 0.0;
+        // }
+        // if(std::isnan(curr_pos))
+        // {
+        //   curr_pos = 0.0;
+        // }
         //--------------------------------------------------------------------------------------------------------------
         //RCLCPP_INFO_STREAM(this->get_lifecycle_node()->get_logger(), "addition: " << addition);
         cmd_handle->set_cmd(curr_pos + addition);

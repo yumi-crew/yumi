@@ -66,7 +66,7 @@ double Pid::compute_command(double error, double error_dot, rclcpp::Duration dt)
   // Get the gain parameters from the realtime buffer
   Gains gains = *gains_buffer_;
 
-  double p_term, d_term, i_term;
+  double p_term{0.0}, d_term{0.0}, i_term{0.0};
   p_error_ = error; // this is error = target - state
   d_error_ = error_dot;
 
@@ -77,8 +77,11 @@ double Pid::compute_command(double error, double error_dot, rclcpp::Duration dt)
   p_term = gains.p_gain_ * p_error_;
 
   // Calculate the integral of the position error
-  i_error_ += dt.seconds() * p_error_;
-
+  if(gains.i_gain_ != 0)
+  {
+    i_error_ += dt.seconds() * p_error_;
+  }
+  
   if (gains.antiwindup_ && gains.i_gain_ != 0)
   {
     // Prevent i_error_ from climbing higher than permitted by i_max_/i_min_
@@ -87,11 +90,17 @@ double Pid::compute_command(double error, double error_dot, rclcpp::Duration dt)
   }
 
   // Calculate integral contribution to command
-  i_term = gains.i_gain_ * i_error_;
+  if(gains.i_gain_ != 0)
+  {
+    i_term = gains.i_gain_ * i_error_;
+  }
 
   // Calculate derivative contribution to command
-  d_term = gains.d_gain_ * d_error_;
-
+  if(gains.d_gain_ != 0)
+  {
+    d_term = gains.d_gain_ * d_error_;
+  }
+  
   // Compute the command
   cmd_ = p_term + i_term + d_term;
 
