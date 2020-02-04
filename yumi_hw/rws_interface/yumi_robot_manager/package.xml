@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>yumi_robot_manager</name>
+  <version>1.0.0</version>
+  <description>Contains interfaces for abb_robot_manager</description>
+  <maintainer email="mariunil@stud.ntnu.no">Marius Nilsen</maintainer>
+  <maintainer email="markubjo@stud.ntnu.no">Markus Bjonnes</maintainer>
+  
+  <license>Apache License 2.0</license>
+  <author email="mariunil@stud.ntnu.no">Marius Nilsen</author>
+  <author email="markubjo@stud.ntnu.no">Markus Bjonnes</author>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>rctuils</depend>
+  <depend>abb_librws</depend>
+  <depend>yumi_robot_manager_interfaces</depend>
+
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

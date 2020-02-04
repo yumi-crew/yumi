@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>abb_egm_hardware</name>
+  <version>1.0.0</version>
+  <description>ros2_control hardware interface for ABB robots with EGM</description>
+
+  <maintainer email="lars.tingelstad@ntnu.no">Lars Tingelstad</maintainer>
+
+  <license>Apache License 2.0</license>
+
+  <author email="lars.tingelstad@ntnu.no">Lars Tingelstad</author>
+
+  <url type="repository">https://github.com/tingelst/abb_libegm</url>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>boost</depend>
+  <depend>rcutils</depend>
+  <depend>angles</depend>
+  <depend>abb_libegm</depend>
+  <depend>hardware_interface</depend>
+  <depend>controller_manager</depend>
+  <depend>controller_interface</depend>
+  <depend>parameter_server_interfaces</depend>
+
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
