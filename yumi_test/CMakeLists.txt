@@ -12,15 +12,16 @@ endif()
 
 
 find_package(ament_cmake REQUIRED)
-
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(angles REQUIRED)
-
 find_package(rws_clients REQUIRED)
 find_package(ros2_control_interfaces REQUIRED)
 find_package(sg_control_interfaces REQUIRED)
 find_package(yumi_robot_manager_interfaces REQUIRED)
+find_package(kdl_test REQUIRED)
+find_package(urdf REQUIRED)
+find_package(orocos_kdl REQUIRED)
 
 
 # Sine wave 
@@ -35,7 +36,6 @@ ament_target_dependencies(sine_wave
                           yumi_robot_manager_interfaces
                           rws_clients  
 )
-
 # Sine wave inf 
 add_executable(sine_wave_inf src/sine_wave_inf.cpp)
 target_include_directories(sine_wave_inf PRIVATE include)
@@ -48,7 +48,6 @@ ament_target_dependencies(sine_wave_inf
                           yumi_robot_manager_interfaces
                           rws_clients   
 )
-
 # Step
 add_executable(step src/step.cpp)
 target_include_directories(step PRIVATE include)
@@ -61,8 +60,7 @@ ament_target_dependencies(step
                           yumi_robot_manager_interfaces
                           rws_clients  
 )
-
-# Demo (both)                           
+# Demo                           
 add_executable(demo src/demo.cpp)
 target_include_directories(demo PRIVATE include)
 ament_target_dependencies(demo 
@@ -74,7 +72,21 @@ ament_target_dependencies(demo
                           yumi_robot_manager_interfaces
                           rws_clients 
 )
-
+# demo_kdl_ik                         
+add_executable(demo_kdl_ik src/demo_kdl_ik.cpp)
+target_include_directories(demo_kdl_ik PRIVATE include)
+ament_target_dependencies(demo_kdl_ik 
+                          rclcpp                            
+                          sensor_msgs
+                          angles                             
+                          ros2_control_interfaces 
+                          sg_control_interfaces
+                          yumi_robot_manager_interfaces
+                          rws_clients
+                          kdl_test 
+                          urdf
+                          orocos_kdl
+)
 # graph_bringup                            
 add_executable(graph_bringup src/graph_bringup.cpp)
 target_include_directories(graph_bringup PRIVATE include)
@@ -96,6 +108,7 @@ install(TARGETS
   sine_wave_inf
   step
   demo
+  demo_kdl_ik
   graph_bringup
   DESTINATION lib/${PROJECT_NAME}
 )

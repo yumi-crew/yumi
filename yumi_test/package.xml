@@ -5,22 +5,21 @@
   <version>1.0.0</version>
   <description>Tools for testing purposes</description>
   <maintainer email="mariunil@stud.ntnu.no">Marius Nilsen</maintainer>
-
   <license>Apache License 2.0</license>
   <author email="mariunil@stud.ntnu.no">Marius Nilsen</author>
-
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>rclcpp</depend>
   <depend>angles</depend>
   <depend>sensor_msgs</depend>
-
   <depend>rws_clients</depend>
-  
   <depend>sg_control_interfaces</depend>
   <depend>yumi_robot_manager_interfaces</depend>
   <depend>ros2_control_interfaces</depend>
+  <depend>kdl_test</depend>
+  <depend>urdf</depend>
+  <depend>orocos_kdl</depend>
   
   <export>
     <build_type>ament_cmake</build_type>
