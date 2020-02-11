@@ -4,7 +4,6 @@
 namespace rws_clients
 {
 
-
 // namespaced helper functions..........................................................................................
 unsigned int random_char()
 {
@@ -35,7 +34,6 @@ RobotManagerClient::RobotManagerClient(std::string name)
 name_(name)
 {
 }
-
 
 
 bool
@@ -89,13 +87,11 @@ RobotManagerClient::robot_is_ready()
     {
       retryCount++;
       RCLCPP_ERROR(node_->get_logger(), 
-        "Client service request failed to execute. Retries left: %d", 
-        maxRetries - retryCount);
+        "Client service request failed to execute. Retries left: %d", maxRetries - retryCount);
       continue;
     }
-
    
-    if( resp.get()->is_ready )
+    if(resp.get()->is_ready)
     {
       return true;
     }
@@ -139,9 +135,7 @@ RobotManagerClient::stop_egm()
     }
 
     auto req = std::make_shared<yumi_robot_manager_interfaces::srv::StopEgm::Request>();
-    req->to_stop = true;
     auto resp = client->async_send_request(req);
-    RCLCPP_INFO(node_->get_logger(), "Stopping EGM control");
     
     auto spin_status = rclcpp::spin_until_future_complete(temp_node->get_node_base_interface(), resp, 3s);
     if (spin_status != rclcpp::executor::FutureReturnCode::SUCCESS)
@@ -165,10 +159,12 @@ RobotManagerClient::stop_egm()
    
     if( resp.get()->is_stopped )
     {
+      RCLCPP_INFO(node_->get_logger(), "EGM control is stopped");
       return true;
     }
     else
     {
+      RCLCPP_ERROR(node_->get_logger(), "Failed to stop EGM control");
       return false;
     }
     
@@ -207,9 +203,7 @@ RobotManagerClient::start_egm()
     }
 
     auto req = std::make_shared<yumi_robot_manager_interfaces::srv::StartEgm::Request>();
-    req->to_start = true;
     auto resp = client->async_send_request(req);
-    RCLCPP_INFO(node_->get_logger(), "Starting EGM control");
     
     auto spin_status = rclcpp::spin_until_future_complete(temp_node->get_node_base_interface(), resp, 3s);
     if (spin_status != rclcpp::executor::FutureReturnCode::SUCCESS)
@@ -231,22 +225,85 @@ RobotManagerClient::start_egm()
     }
 
    
-    if( resp.get()->is_started)
+    if(resp.get()->is_started)
     {
+      RCLCPP_INFO(node_->get_logger(), "EGM control is started");
       return true;
     }
     else
     {
+      RCLCPP_ERROR(node_->get_logger(), "Failed to start EGM control");
       return false;
     }
-    
   }
 
   RCLCPP_ERROR(node_->get_logger(), "Failed to communicate with service server");
   return false;
-
 }
 
 
+bool
+RobotManagerClient::stop_motors()
+{
+  using StopMotors = yumi_robot_manager_interfaces::srv::StopMotors;
+  using namespace std::chrono_literals;
+
+  // temp node which will handle communication with the service server
+  auto temp_node = std::make_unique<rclcpp::Node>("temp_"+generate_hex(8));
+  auto client = temp_node->create_client<StopMotors>("/StopMotors");           
+  
+  // loop logic
+  unsigned int retryCount = 0;
+  constexpr unsigned int maxRetries = 10;
+
+  while (retryCount < maxRetries)
+  {
+    client->wait_for_service(1.5s);
+    if (!client->service_is_ready()) 
+    {
+      retryCount++;
+      RCLCPP_ERROR(node_->get_logger(), 
+        "StopMotors service failed to start, check that service server is launched. Retries left: %d", 
+        maxRetries - retryCount);
+      continue;
+    }
+
+    auto req = std::make_shared<yumi_robot_manager_interfaces::srv::StopMotors::Request>();
+    auto resp = client->async_send_request(req);
+    
+    auto spin_status = rclcpp::spin_until_future_complete(temp_node->get_node_base_interface(), resp, 3s);
+    if (spin_status != rclcpp::executor::FutureReturnCode::SUCCESS)
+    {
+      retryCount++;
+      RCLCPP_ERROR(node_->get_logger(), 
+        "StopMotors service failed to execute (spin failed). Retries left: %d", maxRetries - retryCount);
+      continue;
+    }
+
+    auto status = resp.wait_for(1s);
+    if (status != std::future_status::ready)
+    {
+      retryCount++;
+      RCLCPP_ERROR(node_->get_logger(), 
+        "Client service request failed to execute. Retries left: %d", 
+        maxRetries - retryCount);
+      continue;
+    }
+
+    if(resp.get()->motors_off)
+    {
+      RCLCPP_INFO(node_->get_logger(), "Stopping Motors");
+      return true;
+    }
+    else
+    {
+      RCLCPP_INFO(node_->get_logger(), "Failed to turn off motors");
+      return false;
+    }
+  }
+
+  RCLCPP_ERROR(node_->get_logger(), "Failed to communicate with service server");
+  return false;
+}
 
 } // end namespace rws_clients

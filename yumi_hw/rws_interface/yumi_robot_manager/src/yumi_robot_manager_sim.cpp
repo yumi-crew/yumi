@@ -1,6 +1,5 @@
 #include <yumi_robot_manager/yumi_robot_manager_sim.h>
 
-// TODO:  * Change most of the prints to only print if log_severity is set to DEBUG.
 
 namespace yumi_robot_manager
 {
@@ -16,14 +15,8 @@ name_(name)
 bool
 YumiRobotManager::init()
 {
-  //--------------------------------------------------------------------------------------------------------------------
-  // Startup. Performs checking of StateMachine's required conditions.
-  //--------------------------------------------------------------------------------------------------------------------
-  
-
   // Construction
   node_ = rclcpp::Node::make_shared(name_); 
-
 
 
   // Setting up service server
@@ -51,6 +44,12 @@ YumiRobotManager::init()
     rmw_qos_profile_services_default
   );
 
+  stop_motors_srv_ = node_->create_service<StopMotors>(
+  "StopMotors",
+  std::bind(&YumiRobotManager::handle_StopMotors, this, _1, _2, _3),
+  rmw_qos_profile_services_default
+  );
+
   return true;
 }
 
@@ -59,65 +58,54 @@ YumiRobotManager::init()
 bool
 YumiRobotManager::start_state_machine()
 {
-  //--------------------------------------------------------------------------------------------------------------------
-  // Start StateMachine 
-  //--------------------------------------------------------------------------------------------------------------------
-
   return true;
 }
-
 
 
 bool 
 YumiRobotManager::go_to_state(std::string mode)
 {
-    return true;
-}
-
-
-bool 
-YumiRobotManager::run_setup_tests()
-{
   return true;
 }
 
+bool 
+YumiRobotManager::configure()
+{
+  return true;
+}
 
 void 
 YumiRobotManager::spin()
 {
-    rclcpp::spin(node_);
+  rclcpp::spin(node_);
 }
 
-//----------Helper Functions--------------------------------------------------------------------------------------------
 
+//----------Helper Functions--------------------------------------------------------------------------------------------
 bool 
-YumiRobotManager::get_configuration_data()
+YumiRobotManager::configure_egm()
 {
   return true;
 }
 
-
 void
 YumiRobotManager::busy_wait_until_idle()
 {
+  sleep(1);
 }
-
 
 void
 YumiRobotManager::wait_for_gripper_to_finish_motion()
 {
   // Assumption: Worst Case Execution Time < 2s
-  usleep(2*1000000);
+  sleep(2);
 }
 
-
 bool 
-YumiRobotManager::test_grippers()
+YumiRobotManager::calibrate_grippers()
 {
   return true;
 }
-
-
 
 bool
 YumiRobotManager::stop_egm()
@@ -125,26 +113,21 @@ YumiRobotManager::stop_egm()
   return true;
 }
 
-
-
 //---------- Service server handler functions---------------------------------------------------------------------------
-
 void 
 YumiRobotManager::handle_StopEgm(const std::shared_ptr<rmw_request_id_t> request_header,
                                     const std::shared_ptr<StopEgm::Request> request,
                                     const std::shared_ptr<StopEgm::Response> response)
 {
- (void) request_header;
-  if(request->to_stop)
+  (void) request_header;
+  (void) request;
+  if(stop_egm())
   {
-    if(stop_egm())
-    {
-      response->is_stopped = true;
-    }
-    else
-    {
-      response->is_stopped = false;
-    }
+    response->is_stopped = true;
+  }
+  else
+  {
+    response->is_stopped = false;
   }
 }
 
@@ -155,17 +138,15 @@ YumiRobotManager::handle_StartEgm(const std::shared_ptr<rmw_request_id_t> reques
                                      const std::shared_ptr<StartEgm::Response> response)
 {   
   (void) request_header;
-  if(request->to_start)
+  (void) request;
+  if(go_to_state("egm"))
   {
-    if(go_to_state("egm"))
-    {
-      response->is_started = true;
-    }
-    else
-    {
-      response->is_started = false;
-    } 
+    response->is_started = true;
   }
+  else
+  {
+    response->is_started = false;
+  } 
 }
 
 
@@ -175,7 +156,19 @@ YumiRobotManager::handle_IsReady(const std::shared_ptr<rmw_request_id_t> request
                                     const std::shared_ptr<IsReady::Response> response)
 {   
   (void) request_header;
+  (void) request;
   response->is_ready = true;
+}
+
+
+void
+YumiRobotManager::handle_StopMotors(const std::shared_ptr<rmw_request_id_t> request_header,
+                                    const std::shared_ptr<StopMotors::Request> request,
+                                    const std::shared_ptr<StopMotors::Response> response)
+{
+  (void) request_header;
+  (void) request;
+  response->motors_off = true;
 }
 
 

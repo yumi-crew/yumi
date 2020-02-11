@@ -18,6 +18,7 @@
 #include <yumi_robot_manager_interfaces/srv/stop_egm.hpp>
 #include <yumi_robot_manager_interfaces/srv/start_egm.hpp>
 #include <yumi_robot_manager_interfaces/srv/is_ready.hpp>
+#include <yumi_robot_manager_interfaces/srv/stop_motors.hpp>
 
 
 namespace yumi_robot_manager
@@ -25,6 +26,7 @@ namespace yumi_robot_manager
   using StopEgm  = yumi_robot_manager_interfaces::srv::StopEgm;
   using StartEgm = yumi_robot_manager_interfaces::srv::StartEgm;
   using IsReady  = yumi_robot_manager_interfaces::srv::IsReady;
+  using StopMotors = yumi_robot_manager_interfaces::srv::StopMotors;
 
 class YumiRobotManager : public abb::rws::RWSStateMachineInterface
 {
@@ -43,7 +45,7 @@ public:
   bool go_to_state(std::string mode);
 
   YUMI_ROBOT_MANAGER_PUBLIC
-  bool run_setup_tests();  
+  bool configure();  
 
   YUMI_ROBOT_MANAGER_PUBLIC
   bool stop_egm();
@@ -60,47 +62,24 @@ private:
   std::string requested_state_;
   bool is_ready_ = false;
 
-  std::unique_ptr<abb::rws::RWSStateMachineInterface::EGMSettings> egm_settings_;
-  std::unique_ptr<abb::rws::RWSStateMachineInterface::SGSettings> sg_settings_l_;
-  std::unique_ptr<abb::rws::RWSStateMachineInterface::SGSettings> sg_settings_r_;
-
-  std::string task_L_ = "T_ROB_L";    /// Fix
+  std::string task_L_ = "T_ROB_L";   
   std::string task_R_ = "T_ROB_R";
-
-  std::string mech_unit_L_ = "ROB_L"; // Fix
+  std::string mech_unit_L_ = "ROB_L"; 
   std::string mech_unit_R_ = "ROB_R";
 
-
   // Helper functions 
-  bool get_configuration_data();
-  bool test_grippers();
+  bool configure_egm();
+  bool calibrate_grippers();
   void busy_wait_until_idle();
   void wait_for_gripper_to_finish_motion();
 
-
-  // Useful data structures
-  typedef struct EGMData 
-  {
-    struct abb::rws::RWSStateMachineInterface::EGMSetupUCSettings setup_uc_settings;
-    struct abb::rws::RWSStateMachineInterface::EGMActivateSettings activate_settings;
-    struct abb::rws::RWSStateMachineInterface::EGMRunSettings run_settings;
-  } EGMData;
-
-  typedef struct SGData
-  {
-    abb::rws::RAPIDNum max_speed;
-    abb::rws::RAPIDNum hold_force;
-    abb::rws::RAPIDNum physical_limit;
-  } SGData;
-
-  EGMData egm_configuration_data_;
-  SGData sg_configuration_data_;
-
-  // Service server
+  std::shared_ptr<abb::rws::RWSStateMachineInterface::EGMSettings> egm_settings_l_;
+  std::shared_ptr<abb::rws::RWSStateMachineInterface::EGMSettings> egm_settings_r_;
+ 
   rclcpp::Service<StopEgm>::SharedPtr stop_egm_srv_;
   rclcpp::Service<StartEgm>::SharedPtr start_egm_srv_;
   rclcpp::Service<IsReady>::SharedPtr is_ready_srv_;
-
+  rclcpp::Service<StopMotors>::SharedPtr stop_motors_srv_;
 
   void handle_StopEgm(const std::shared_ptr<rmw_request_id_t> request_header,
                       const std::shared_ptr<StopEgm::Request> request,
@@ -113,9 +92,10 @@ private:
   void handle_IsReady( const std::shared_ptr<rmw_request_id_t> request_header,
                        const std::shared_ptr<IsReady::Request> request,
                        const std::shared_ptr<IsReady::Response> response);
-  
 
-
+  void handle_StopMotors(const std::shared_ptr<rmw_request_id_t> request_header,
+                         const std::shared_ptr<StopMotors::Request> request,
+                         const std::shared_ptr<StopMotors::Response> response);
 };
 
 } //namespace yumi_robot_manager

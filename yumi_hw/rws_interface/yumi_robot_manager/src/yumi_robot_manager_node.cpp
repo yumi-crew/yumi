@@ -40,6 +40,7 @@ int main(int argc, char* argv[])
   }
   printf("---------- Initialization Complete ----------\n\n");
   usleep(2*1000000);
+  // At this point in time, the StateMachines are verified to not be running. Motor state unknown.
 
 
 
@@ -52,17 +53,18 @@ int main(int argc, char* argv[])
   }
   printf("---------- StateMachine Started ----------\n\n");
   usleep(2*1000000);
+  // At this point the StateMachines are verified to be running, motors are on.
 
 
-
-  // Test SmartGrippers
+    // Configure 
   printf("\n---------- Starting Setup Tests ----------\n");
-  if(!robot_manager->run_setup_tests())
+  if(!robot_manager->configure())
    {
     printf("Failed to test the SmartGrippers\n");
     return -1;
   }
   printf("---------- Setup Tests Completed ----------\n\n");
+  
 
 
 

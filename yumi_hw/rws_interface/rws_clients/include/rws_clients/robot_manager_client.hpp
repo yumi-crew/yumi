@@ -13,6 +13,7 @@
 #include <yumi_robot_manager_interfaces/srv/stop_egm.hpp>
 #include <yumi_robot_manager_interfaces/srv/start_egm.hpp>
 #include <yumi_robot_manager_interfaces/srv/is_ready.hpp>
+#include <yumi_robot_manager_interfaces/srv/stop_motors.hpp>
 
 
 namespace rws_clients
@@ -35,6 +36,9 @@ public:
 
   RWS_CLIENTS_PUBLIC
   bool robot_is_ready();
+
+  RWS_CLIENTS_PUBLIC
+  bool stop_motors();
 
 
 private:

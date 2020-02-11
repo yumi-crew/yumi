@@ -16,6 +16,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/StartEgm.srv"
   "srv/StopEgm.srv"
   "srv/IsReady.srv"
+  "srv/StopMotors.srv"
 )
 
 ament_export_dependencies(rosidl_default_runtime)

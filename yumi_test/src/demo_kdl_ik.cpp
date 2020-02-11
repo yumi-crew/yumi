@@ -42,11 +42,13 @@ std::shared_ptr<rclcpp::Subscription<sensor_msgs::msg::JointState>> joint_state_
 std::shared_ptr<rclcpp::Subscription<sensor_msgs::msg::JointState>> joint_state_subscription_l;
 
 // Ctr+C handler
-void signal_callback_handler(int signum ) 
+void signal_callback_handler(int signum) 
 {
   std::cout << "Caught signal " << signum << std::endl;
   // Stop EGM 
   robot_manager->stop_egm();
+  // Turn off Motors
+  robot_manager->stop_motors();
   // Terminate ros node
   rclcpp::shutdown();
   // Terminate program
@@ -152,8 +154,8 @@ void busy_wait_until_reached(KDL::JntArray& goal, std::string arm, double allowe
     }
     for(int i = 0; i < 7; ++i)
     {
-      // std::cout << "Joint " << i << ", Actual: " << angles::to_degrees(recieved_joint_state_r[i]) 
-      //   << " Goal: " << angles::to_degrees(goal(i)) << " Error: " << std::abs(angles::to_degrees(recieved_joint_state_r[i]) - angles::to_degrees(goal(i))) << std::endl;
+      //std::cout << "Joint " << i << ", Actual: " << angles::to_degrees(recieved_joint_state_r[i]) 
+       // << " Goal: " << angles::to_degrees(goal(i)) << " Error: " << std::abs(angles::to_degrees(recieved_joint_state_r[i]) - angles::to_degrees(goal(i))) << std::endl;
     }
   }
   else if(arm == "l")
@@ -177,7 +179,18 @@ void blocking_cart_p2p_motion_right(std::array<double, 6> pose)
   KDL::JntArray q_seed = generate_q_seed("r");
   KDL::JntArray q_config = kdl_wrapper->inverse_kinematics_right(pose_frame, q_seed);
   generate_msg_and_publish_r(q_config);
-  busy_wait_until_reached(q_config, "r", angles::from_degrees(0.001));
+  busy_wait_until_reached(q_config, "r", angles::from_degrees(0.01));
+}
+
+// Blocking cartesian point-to-point motion. Converts desired end-effector pose to 
+// a joint configuration resulting in the pose. 
+void blocking_cart_p2p_motion_left(std::array<double, 6> pose)
+{
+  KDL::Frame pose_frame = vec_and_euler_angles_to_frame(pose);
+  KDL::JntArray q_seed = generate_q_seed("l");
+  KDL::JntArray q_config = kdl_wrapper->inverse_kinematics_left(pose_frame, q_seed);
+  generate_msg_and_publish_l(q_config);
+  busy_wait_until_reached(q_config, "l", angles::from_degrees(0.01));
 }
 
 KDL::JntArray array_to_joint_array(std::array<double, 7>& array)
@@ -198,8 +211,8 @@ void go_to_home_pos()
   KDL::JntArray q_r = array_to_joint_array(goal_r);
   generate_msg_and_publish_l(q_l);
   generate_msg_and_publish_r(q_r);
-  busy_wait_until_reached(q_r, "r", angles::from_degrees(0.001));
-  busy_wait_until_reached(q_l, "l", angles::from_degrees(0.001));
+  busy_wait_until_reached(q_r, "r", angles::from_degrees(0.01));
+  busy_wait_until_reached(q_l, "l", angles::from_degrees(0.01));
 }
 
 void spin(std::shared_ptr<rclcpp::executors::MultiThreadedExecutor> exe)
@@ -301,7 +314,7 @@ int main(int argc, char * argv[])
   auto future_handle_r = std::async(std::launch::async, spin, executor_r);
   auto future_handle_l = std::async(std::launch::async, spin, executor_l);
 
-  // This sleep must be larger than 2 seconds, this should be fixed
+  // This sleep must be larger than 2 seconds for the real robot, this should be fixed
   sleep(5);
 
 
@@ -311,12 +324,20 @@ int main(int argc, char * argv[])
 
   // Go to home position
   go_to_home_pos();
- 
   
   // Go to pose 1 {x, y, z, EZ, EY, EX}
   std::array<double, 6> pose1 = {0.281, -0.329, 0.297, 
                                 angles::from_degrees(123), angles::from_degrees(-5), angles::from_degrees(139)};
   blocking_cart_p2p_motion_right(pose1);
+  
+  
+  // Go to pose 2 {x, y, z, EZ, EY, EX}
+  std::array<double, 6> pose2 = {0.109, 0.345, 0.286, 
+                                angles::from_degrees(-33), angles::from_degrees(-24), angles::from_degrees(-170)};
+  blocking_cart_p2p_motion_left(pose2);
+
+  // Go to home position
+  // go_to_home_pos();
 
 
   

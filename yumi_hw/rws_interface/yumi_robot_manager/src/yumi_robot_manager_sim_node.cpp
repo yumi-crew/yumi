@@ -55,7 +55,7 @@ int main(int argc, char* argv[])
 
   // Test SmartGrippers
   printf("\n---------- Starting Setup Tests ----------\n");
-  if(!robot_manager->run_setup_tests())
+  if(!robot_manager->configure())
    {
     printf("Failed to test the SmartGrippers\n");
     return -1;

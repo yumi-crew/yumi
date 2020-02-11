@@ -3,8 +3,7 @@
 <package format="3">
   <name>yumi_robot_manager_interfaces</name>
   <version>1.0.0</version>
-  <description>Interface to the yumi robot manager</description>
-
+  <description>Interface to the YumiRobotManager</description>
   <maintainer email="mariunil@stud.ntnu.com">Marius Nilsen</maintainer>
   <license>Apache License 2.0</license>
 
