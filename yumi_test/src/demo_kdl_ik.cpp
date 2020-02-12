@@ -13,16 +13,13 @@
 #include <sg_control_interfaces/action/grip.hpp>
 #include <kdl_test/kdl_wrapper.h>
 
-
-// Global joint names 
-std::array<std::string, 7> joint_names_l = { 
-      "yumi_joint_1_l", "yumi_joint_2_l", "yumi_joint_7_l", "yumi_joint_3_l",
-      "yumi_joint_4_l", "yumi_joint_5_l", "yumi_joint_6_l"
-};
-std::array<std::string, 7> joint_names_r = { 
-      "yumi_joint_1_r", "yumi_joint_2_r", "yumi_joint_7_r", "yumi_joint_3_r",
-      "yumi_joint_4_r", "yumi_joint_5_r", "yumi_joint_6_r"
-};
+// Global joint names
+std::array<std::string, 7> joint_names_l = {
+    "yumi_joint_1_l", "yumi_joint_2_l", "yumi_joint_7_l", "yumi_joint_3_l",
+    "yumi_joint_4_l", "yumi_joint_5_l", "yumi_joint_6_l"};
+std::array<std::string, 7> joint_names_r = {
+    "yumi_joint_1_r", "yumi_joint_2_r", "yumi_joint_7_r", "yumi_joint_3_r",
+    "yumi_joint_4_r", "yumi_joint_5_r", "yumi_joint_6_r"};
 // Global storage of the latest joint states
 std::array<double, 7> recieved_joint_state_l, recieved_joint_state_r;
 KDL::JntArray recieved_joint_state_array_l, recieved_joint_state_array_r;
@@ -42,10 +39,10 @@ std::shared_ptr<rclcpp::Subscription<sensor_msgs::msg::JointState>> joint_state_
 std::shared_ptr<rclcpp::Subscription<sensor_msgs::msg::JointState>> joint_state_subscription_l;
 
 // Ctr+C handler
-void signal_callback_handler(int signum) 
+void signal_callback_handler(int signum)
 {
   std::cout << "Caught signal " << signum << std::endl;
-  // Stop EGM 
+  // Stop EGM
   robot_manager->stop_egm();
   // Turn off Motors
   robot_manager->stop_motors();
@@ -57,7 +54,7 @@ void signal_callback_handler(int signum)
 
 void callback_l(sensor_msgs::msg::JointState::UniquePtr msg)
 {
-  for(int i=0; i < 7; ++i)
+  for (int i = 0; i < 7; ++i)
   {
     recieved_joint_state_l[i] = msg->position[i];
     recieved_joint_state_array_l(i) = msg->position[i];
@@ -65,7 +62,7 @@ void callback_l(sensor_msgs::msg::JointState::UniquePtr msg)
 }
 void callback_r(sensor_msgs::msg::JointState::UniquePtr msg)
 {
-  for(int i=0; i < 7; ++i)
+  for (int i = 0; i < 7; ++i)
   {
     recieved_joint_state_r[i] = msg->position[i];
     recieved_joint_state_array_r(i) = msg->position[i];
@@ -74,7 +71,7 @@ void callback_r(sensor_msgs::msg::JointState::UniquePtr msg)
 
 // For ZYX euler angles
 KDL::Frame vec_and_euler_angles_to_frame(std::array<double, 6> pose)
-{ 
+{
   KDL::Vector vec(pose[0], pose[1], pose[2]);
   KDL::Rotation rot = KDL::Rotation().EulerZYX(pose[3], pose[4], pose[5]);
   return KDL::Frame(rot, vec);
@@ -83,22 +80,22 @@ KDL::Frame vec_and_euler_angles_to_frame(std::array<double, 6> pose)
 KDL::JntArray generate_q_seed(std::string arm)
 {
   KDL::JntArray q_seed(7);
-  
-  if(arm == "r")
+
+  if (arm == "r")
   {
-    for(int i=0; i <7; ++i)
+    for (int i = 0; i < 7; ++i)
     {
       q_seed(i) = recieved_joint_state_r[i];
       //std::cout << "q_seed " << i << " : " << q_seed(i) << std::endl;
     }
     return q_seed;
   }
-  else if(arm =="l")
+  else if (arm == "l")
   {
-    for(int i=0; i <7; ++i)
+    for (int i = 0; i < 7; ++i)
     {
       q_seed(i) = recieved_joint_state_l[i];
-      //std::cout << "q_seed " << i << " : " << q_seed(i) << std::endl;
+      // std::cout << "q_seed " << i << " : " << q_seed(i) << std::endl;
     }
     return q_seed;
   }
@@ -109,10 +106,10 @@ KDL::JntArray generate_q_seed(std::string arm)
   }
 }
 
-void generate_msg_and_publish_r(KDL::JntArray& q_config)
+void generate_msg_and_publish_r(KDL::JntArray &q_config)
 {
   ros2_control_interfaces::msg::JointControl cmd;
-  for(int i=0; i <7; ++i)
+  for (int i = 0; i < 7; ++i)
   {
     cmd.joints.push_back(joint_names_r[i]);
     cmd.goals.push_back(q_config(i));
@@ -121,10 +118,10 @@ void generate_msg_and_publish_r(KDL::JntArray& q_config)
   rclcpp::spin_some(node_p_r);
 }
 
-void generate_msg_and_publish_l(KDL::JntArray& q_config)
+void generate_msg_and_publish_l(KDL::JntArray &q_config)
 {
   ros2_control_interfaces::msg::JointControl cmd;
-  for(int i=0; i <7; ++i)
+  for (int i = 0; i < 7; ++i)
   {
     cmd.joints.push_back(joint_names_l[i]);
     cmd.goals.push_back(q_config(i));
@@ -134,33 +131,33 @@ void generate_msg_and_publish_l(KDL::JntArray& q_config)
 }
 
 // Not used
-double sum_error(std::array<double, 7>& actual, KDL::JntArray& goal)
+double sum_error(std::array<double, 7> &actual, KDL::JntArray &goal)
 {
   double total_error = 0;
-  for(int i =0; i <7; ++i)
+  for (int i = 0; i < 7; ++i)
   {
-    total_error += std::abs(actual[i]-goal(i));
+    total_error += std::abs(actual[i] - goal(i));
   }
   return total_error;
 }
 
-void busy_wait_until_reached(KDL::JntArray& goal, std::string arm, double allowed_joint_error)
+void busy_wait_until_reached(KDL::JntArray &goal, std::string arm, double allowed_joint_error)
 {
-  if(arm == "r")
+  if (arm == "r")
   {
-    while(!Equal(recieved_joint_state_array_r, goal, allowed_joint_error))
+    while (!Equal(recieved_joint_state_array_r, goal, allowed_joint_error))
     {
       sleep(0.004); //250hz
     }
-    for(int i = 0; i < 7; ++i)
+    for (int i = 0; i < 7; ++i)
     {
-      //std::cout << "Joint " << i << ", Actual: " << angles::to_degrees(recieved_joint_state_r[i]) 
-       // << " Goal: " << angles::to_degrees(goal(i)) << " Error: " << std::abs(angles::to_degrees(recieved_joint_state_r[i]) - angles::to_degrees(goal(i))) << std::endl;
+      //std::cout << "Joint " << i << ", Actual: " << angles::to_degrees(recieved_joint_state_r[i])
+      // << " Goal: " << angles::to_degrees(goal(i)) << " Error: " << std::abs(angles::to_degrees(recieved_joint_state_r[i]) - angles::to_degrees(goal(i))) << std::endl;
     }
   }
-  else if(arm == "l")
+  else if (arm == "l")
   {
-    while(!Equal(recieved_joint_state_array_l, goal, allowed_joint_error))
+    while (!Equal(recieved_joint_state_array_l, goal, allowed_joint_error))
     {
       sleep(0.004); //250hz
     }
@@ -171,8 +168,8 @@ void busy_wait_until_reached(KDL::JntArray& goal, std::string arm, double allowe
   }
 }
 
-// Blocking cartesian point-to-point motion. Converts desired end-effector pose to 
-// a joint configuration resulting in the pose. 
+// Blocking cartesian point-to-point motion. Converts desired end-effector pose to
+// a joint configuration resulting in the pose.
 void blocking_cart_p2p_motion_right(std::array<double, 6> pose)
 {
   KDL::Frame pose_frame = vec_and_euler_angles_to_frame(pose);
@@ -182,8 +179,8 @@ void blocking_cart_p2p_motion_right(std::array<double, 6> pose)
   busy_wait_until_reached(q_config, "r", angles::from_degrees(0.01));
 }
 
-// Blocking cartesian point-to-point motion. Converts desired end-effector pose to 
-// a joint configuration resulting in the pose. 
+// Blocking cartesian point-to-point motion. Converts desired end-effector pose to
+// a joint configuration resulting in the pose.
 void blocking_cart_p2p_motion_left(std::array<double, 6> pose)
 {
   KDL::Frame pose_frame = vec_and_euler_angles_to_frame(pose);
@@ -193,10 +190,10 @@ void blocking_cart_p2p_motion_left(std::array<double, 6> pose)
   busy_wait_until_reached(q_config, "l", angles::from_degrees(0.01));
 }
 
-KDL::JntArray array_to_joint_array(std::array<double, 7>& array)
+KDL::JntArray array_to_joint_array(std::array<double, 7> &array)
 {
   KDL::JntArray jnt_array(7);
-  for(int i=0; i<7; ++i)
+  for (int i = 0; i < 7; ++i)
   {
     jnt_array(i) = angles::from_degrees(array[i]);
   }
@@ -221,7 +218,7 @@ void spin(std::shared_ptr<rclcpp::executors::MultiThreadedExecutor> exe)
 }
 
 // Joints are always given as {1,2,7,3,4,5,6}
-int main(int argc, char * argv[])
+int main(int argc, char *argv[])
 {
   // Ctrl+C handler
   signal(SIGINT, signal_callback_handler);
@@ -242,65 +239,61 @@ int main(int argc, char * argv[])
 
   // Loading URDf and constructing the KdlWrapper
   urdf::Model robot_model;
-  if(!robot_model.initFile("/home/marius/abb_ws/src/yumi/yumi_description/urdf/yumi.urdf"))
+  if (!robot_model.initFile("/home/markus/abb_ws/src/yumi/yumi_description/urdf/yumi.urdf"))
   {
     printf("unable to load urdf\n");
     return -1;
   }
   kdl_wrapper = std::make_shared<KdlWrapper>(robot_model);
-  if(!kdl_wrapper->init())
+  if (!kdl_wrapper->init())
   {
     printf("initialization of kdlWrapper failed\n");
     return -1;
   }
- 
+
   joint_state_subscription_l = node_s_l->create_subscription<sensor_msgs::msg::JointState>(
-    ns_l+"/joint_states", 
-    10, 
-    callback_l
-  );
+      ns_l + "/joint_states",
+      10,
+      callback_l);
   joint_command_publisher_l = node_p_l->create_publisher<ros2_control_interfaces::msg::JointControl>(
-    ns_l+"/joint_commands", 
-    10
-  );
+      ns_l + "/joint_commands",
+      10);
   joint_state_subscription_r = node_s_r->create_subscription<sensor_msgs::msg::JointState>(
-    ns_r+"/joint_states", 
-    10, 
-    callback_r
-  );
+      ns_r + "/joint_states",
+      10,
+      callback_r);
   joint_command_publisher_r = node_p_r->create_publisher<ros2_control_interfaces::msg::JointControl>(
-    ns_r+"/joint_commands", 
-    10
-  );
+      ns_r + "/joint_commands",
+      10);
 
   // Initialize the left gripper
   auto grip_action_client_l = std::make_shared<rws_clients::GripClient>("grip_client_left", ns_l);
-  if(!grip_action_client_l->init())
+  if (!grip_action_client_l->init())
   {
     printf("Unable to initalize the left gripper client\n");
     return -1;
   }
   // Initialize the right gripper
   auto grip_action_client_r = std::make_shared<rws_clients::GripClient>("grip_client_right", ns_r);
-  if(!grip_action_client_r->init())
+  if (!grip_action_client_r->init())
   {
     printf("Unable to initalize the right gripper client\n");
     return -1;
   }
 
   // Initialize the robot manager client
-  if(!robot_manager->init())
+  if (!robot_manager->init())
   {
     printf("Failed to initialize the robot manager client\n");
     return -1;
   }
   // Blocking loop
-  while(!robot_manager->robot_is_ready())
+  while (!robot_manager->robot_is_ready())
   {
     sleep(0.01);
   }
   // Start EGM mode
-  if(!robot_manager->start_egm())
+  if (!robot_manager->start_egm())
   {
     printf("Failed to start egm\n");
     return -1;
@@ -317,40 +310,32 @@ int main(int argc, char * argv[])
   // This sleep must be larger than 2 seconds for the real robot, this should be fixed
   sleep(5);
 
-
   // Movements
   //--------------------------------------------------------------------------------------------------------------------
 
-
   // Go to home position
   go_to_home_pos();
-  
+
   // Go to pose 1 {x, y, z, EZ, EY, EX}
-  std::array<double, 6> pose1 = {0.281, -0.329, 0.297, 
-                                angles::from_degrees(123), angles::from_degrees(-5), angles::from_degrees(139)};
+  std::array<double, 6> pose1 = {0.281, -0.329, 0.297,
+                                 angles::from_degrees(123), angles::from_degrees(-5), angles::from_degrees(139)};
   blocking_cart_p2p_motion_right(pose1);
-  
-  
+
   // Go to pose 2 {x, y, z, EZ, EY, EX}
-  std::array<double, 6> pose2 = {0.109, 0.345, 0.286, 
-                                angles::from_degrees(-33), angles::from_degrees(-24), angles::from_degrees(-170)};
+  std::array<double, 6> pose2 = {0.109, 0.345, 0.286,
+                                 angles::from_degrees(-33), angles::from_degrees(-24), angles::from_degrees(-170)};
   blocking_cart_p2p_motion_left(pose2);
 
   // Go to home position
-  // go_to_home_pos();
+  go_to_home_pos();
 
-
-  
   //--------------------------------------------------------------------------------------------------------------------
 
-
-
-
   printf("motion completed, please ctrl+c\n");
-  while(1)
+  while (1)
   {
     sleep(1);
   }
-  
+
   return 0;
 }
