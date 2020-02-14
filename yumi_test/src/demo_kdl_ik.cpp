@@ -7,10 +7,6 @@
 #include <ros2_control_interfaces/msg/joint_control.hpp>
 #include <rws_clients/grip_client.hpp>
 #include <rws_clients/robot_manager_client.hpp>
-#include <yumi_robot_manager_interfaces/srv/is_ready.hpp>
-#include <yumi_robot_manager_interfaces/srv/stop_egm.hpp>
-#include <yumi_robot_manager_interfaces/srv/start_egm.hpp>
-#include <sg_control_interfaces/action/grip.hpp>
 #include <kdl_test/kdl_wrapper.h>
 
 // Global joint names
@@ -320,6 +316,9 @@ int main(int argc, char *argv[])
   std::array<double, 6> pose1 = {0.281, -0.329, 0.297,
                                  angles::from_degrees(123), angles::from_degrees(-5), angles::from_degrees(139)};
   blocking_cart_p2p_motion_right(pose1);
+  std::array<double, 6> pose12 = {0.300, -0.250, 0.297,
+                                 angles::from_degrees(123), angles::from_degrees(-5), angles::from_degrees(139)};
+  blocking_cart_p2p_motion_right(pose12);
 
   // Go to pose 2 {x, y, z, EZ, EY, EX}
   std::array<double, 6> pose2 = {0.109, 0.345, 0.286,
