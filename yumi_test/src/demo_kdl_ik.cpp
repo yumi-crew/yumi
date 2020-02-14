@@ -233,9 +233,19 @@ int main(int argc, char *argv[])
   // Constructing the robot_manager
   robot_manager = std::make_shared<rws_clients::RobotManagerClient>("robot_manager_client");
 
+  // Finding path to urdf
+  char buf[20];
+  if(getlogin_r(buf, 20) != 0)
+  {
+    printf("Unable to find username\n");
+    return -1;
+  }
+  std::string username = buf;
+  std::string path = "/home/"+username+"/abb_ws/src/yumi/yumi_description/urdf/yumi.urdf";
+
   // Loading URDf and constructing the KdlWrapper
   urdf::Model robot_model;
-  if (!robot_model.initFile("/home/markus/abb_ws/src/yumi/yumi_description/urdf/yumi.urdf"))
+  if (!robot_model.initFile(path))
   {
     printf("unable to load urdf\n");
     return -1;
