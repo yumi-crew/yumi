@@ -10,7 +10,7 @@ repositories:
   ros2_control:
     type: git
     url: https://github.com/yumi-crew/ros2_control.git
-    version: master
+    version: eloquent
   kdl_test:
     type: git
     url: https://github.com/yumi-crew/kdl_test.git
