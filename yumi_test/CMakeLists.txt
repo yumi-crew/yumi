@@ -23,6 +23,11 @@ find_package(kdl_test REQUIRED)
 find_package(urdf REQUIRED)
 find_package(orocos_kdl REQUIRED)
 
+find_package(pose_estimation REQUIRED)
+find_package(object_pose_estimator REQUIRED)
+find_package(pose_estimation_interface REQUIRED)
+find_package(zivid_interfaces REQUIRED)
+
 
 # Sine wave 
 add_executable(sine_wave src/sine_wave.cpp)
@@ -100,6 +105,26 @@ ament_target_dependencies(graph_bringup
                           rws_clients 
 )
 
+# demo_go_to_chessboard                      
+add_executable(demo_go_to_chessboard src/demo_go_to_chessboard.cpp)
+target_include_directories(demo_go_to_chessboard PRIVATE include)          
+ament_target_dependencies(demo_go_to_chessboard 
+                          rclcpp                            
+                          sensor_msgs
+                          angles                             
+                          ros2_control_interfaces 
+                          sg_control_interfaces
+                          yumi_robot_manager_interfaces
+                          rws_clients
+                          kdl_test 
+                          urdf
+                          orocos_kdl
+                          pose_estimation_interface
+                          zivid_interfaces
+                          object_pose_estimator
+                          pose_estimation
+)
+
 
 install(DIRECTORY include/ DESTINATION include)
 
@@ -110,6 +135,7 @@ install(TARGETS
   demo
   demo_kdl_ik
   graph_bringup
+  demo_go_to_chessboard
   DESTINATION lib/${PROJECT_NAME}
 )
 
