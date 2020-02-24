@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
 {
   
   rclcpp::init(argc, argv);
-  auto robot = std::make_shared<abb_egm_hardware::AbbEgmHardware>("abb_egm_hardware");
+  auto robot = std::make_shared<abb_egm_hardware::AbbEgmHardware>("abb_egm_hardware_sim");
   hardware_interface::hardware_interface_ret_t ret;
 
   // To avoid a race condition, wait to ensure all parameter servers are ready.
@@ -50,11 +50,12 @@ int main(int argc, char* argv[])
   auto executor = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
   controller_manager::ControllerManager controller_manager(robot, executor, nodegroup_namespace+"/controller_manager"); 
 
-  controller_manager.load_controller("controllers", "ros_controllers::JointPositionController",
-                                     "joint_position_controller");
+  // controller_manager.load_controller("controllers", "ros_controllers::JointPositionController",
+  //                                    "joint_position_controller");
   controller_manager.load_controller("controllers", "ros_controllers::JointStateController",
                                      "joint_state_controller");
-
+  controller_manager.load_controller("controllers", "ros_controllers::JointTrajectoryController",
+                                     "joint_trajectory_controller");
 
   // Pass namespace to controllers as well
   auto controllers = controller_manager.get_loaded_controller();
@@ -83,7 +84,7 @@ int main(int argc, char* argv[])
     return -1;
   }
   
-  RCLCPP_INFO(controller_manager.get_logger(),"Entering EGM control loop");
+  std::cout << "Entering EGM control loop" << std::endl;
   // Real-time control loop
   rclcpp::WallRate loop_rate(250);
   while (rclcpp::ok())
