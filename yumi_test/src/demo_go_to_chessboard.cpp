@@ -53,9 +53,9 @@ void signal_callback_handler(int signum)
   pose_estimation_manager->change_state(
       "pose_estimation", lifecycle_msgs::msg::Transition::TRANSITION_DEACTIVATE, 10s);
   pose_estimation_manager->change_state(
-      "zivid_camera", lifecycle_msgs::msg::Transition::TRANSITION_INACTIVE_SHUTDOWN, 10s);
+      "zivid_camera", lifecycle_msgs::msg::Transition::TRANSITION_CLEANUP, 10s);
   pose_estimation_manager->change_state(
-      "pose_estimation", lifecycle_msgs::msg::Transition::TRANSITION_INACTIVE_SHUTDOWN, 10s);
+      "pose_estimation", lifecycle_msgs::msg::Transition::TRANSITION_CLEANUP, 10s);
 
   // Stop EGM
   robot_manager->stop_egm();
@@ -196,16 +196,16 @@ void blocking_cart_p2p_motion_right(std::array<double, 6> pose)
 {
   KDL::Frame pose_frame = vec_and_euler_angles_to_frame(pose);
   KDL::JntArray q_seed = generate_q_seed("r");
-  KDL::JntArray q_config = kdl_wrapper->inverse_kinematics_right(pose_frame, q_seed);
-  generate_msg_and_publish_r(q_config);
-  busy_wait_until_reached(q_config, "r", angles::from_degrees(0.01));
-}
-
-void blocking_cart_p2p_motion_right_quat(std::vector<float> pose)
-{
-  KDL::Frame pose_frame = vec_and_quat_to_frame(pose);
-  KDL::JntArray q_seed = generate_q_seed("r");
-  KDL::JntArray q_config = kdl_wrapper->inverse_kinematics_right(pose_frame, q_seed);
+  KDL::JntArray q_config;
+  try
+  {
+    q_config = kdl_wrapper->inverse_kinematics_right(pose_frame, q_seed);
+  }
+  catch (const std::exception &e)
+  {
+    std::cout << e.what() << std::endl;
+    return;
+  }
   generate_msg_and_publish_r(q_config);
   busy_wait_until_reached(q_config, "r", angles::from_degrees(0.01));
 }
@@ -216,7 +216,16 @@ void blocking_cart_p2p_motion_left(std::array<double, 6> pose)
 {
   KDL::Frame pose_frame = vec_and_euler_angles_to_frame(pose);
   KDL::JntArray q_seed = generate_q_seed("l");
-  KDL::JntArray q_config = kdl_wrapper->inverse_kinematics_left(pose_frame, q_seed);
+  KDL::JntArray q_config;
+  try
+  {
+    q_config = kdl_wrapper->inverse_kinematics_left(pose_frame, q_seed);
+  }
+  catch (const std::exception &e)
+  {
+    std::cout << e.what() << std::endl;
+    return;
+  }
   generate_msg_and_publish_l(q_config);
   busy_wait_until_reached(q_config, "l", angles::from_degrees(0.01));
 }
@@ -363,6 +372,11 @@ int main(int argc, char *argv[])
   auto transition_success2 = pose_estimation_manager->change_state(
       "pose_estimation", lifecycle_msgs::msg::Transition::TRANSITION_CONFIGURE, 5s);
 
+  pose_estimation_manager->add_camera_parameter("zivid_camera.capture.frame_0.iris", rclcpp::ParameterValue(17));
+  pose_estimation_manager->add_camera_parameter("zivid_camera.capture.frame_1.iris", rclcpp::ParameterValue(25));
+  pose_estimation_manager->add_camera_parameter("zivid_camera.capture.frame_2.iris", rclcpp::ParameterValue(30));
+  pose_estimation_manager->call_set_param_srv(10s);
+
   auto state3 = pose_estimation_manager->get_state("zivid_camera", 3s);
   auto state4 = pose_estimation_manager->get_state("pose_estimation", 3s);
 
@@ -383,7 +397,7 @@ int main(int argc, char *argv[])
   go_to_home_pos();
 
   // // Go to pose 1 {x, y, z, EZ, EY, EX}
-  // std::array<double, 6> pose1 = {0.281, -0.329, 0.297,
+  // std::array<double, 6> pose1 = {0.381, -0.329, 0.397,
   //                                angles::from_degrees(123), angles::from_degrees(-5), angles::from_degrees(139)};
   // blocking_cart_p2p_motion_right(pose1);
   // std::array<double, 6> pose12 = {0.300, -0.250, 0.297,
@@ -403,19 +417,19 @@ int main(int argc, char *argv[])
     est_success = pose_estimation_manager->call_estimate_pose_srv(10s);
     if (est_success)
     {
-      auto grasp_pose = pose_listener->get_graspable_chessboard_pose((float)0.05, true);
+      auto grasp_pose = pose_listener->get_graspable_chessboard_pose(0.05, true);
 
       std::array<double, 6> pose;
       std::copy_n(grasp_pose.begin(), 6, pose.begin());
-      std::cout << std::endl;
-
-      for (auto p : pose)
-      {
-        std::cout << p << std::endl;
-      }
+      
+      // std::cout << std::endl;
+      // for (auto p : pose)
+      // {
+      //   std::cout << p << std::endl;
+      // }
       blocking_cart_p2p_motion_right(pose);
+      // blocking_cart_p2p_motion_left(pose);
     }
   }
-
   return 0;
 }

@@ -5,7 +5,7 @@ from launch_ros.actions import ComposableNodeContainer, Node
 from launch_ros.descriptions import ComposableNode
 
 
-def generate_launch_description(viz: bool = False):
+def generate_launch_description():
 
     pkgShareDir = get_package_share_directory('yumi_launch')
 
@@ -17,7 +17,8 @@ def generate_launch_description(viz: bool = False):
     assert os.path.exists(urdf)
 
     rviz_config_dir = os.path.join(get_package_share_directory(
-        'yumi_description'), 'config', 'yumi.rviz')
+        'yumi_description'), 'config', 'yumi_zivid.rviz')
+    print(rviz_config_dir)    
     assert os.path.exists(rviz_config_dir)
 
     """Generate launch description with multiple components."""
@@ -27,11 +28,11 @@ def generate_launch_description(viz: bool = False):
         package='rclcpp_components',
         node_executable='component_container',
         composable_node_descriptions=[
-            ComposableNode(
-                package='zivid_camera',
-                node_plugin='zivid_camera::ZividCamera',
-                node_name='zivid_camera',
-            ),
+            # ComposableNode(
+                # package='zivid_camera',
+                # node_plugin='zivid_camera::ZividCamera',
+                # node_name='zivid_camera',
+                # parameters=[{"zivid.camera.num_capture_frames" : 3}]),
             ComposableNode(
                 package='pose_estimation',
                 node_plugin='pose_estimation::PoseEstimation',
@@ -93,6 +94,11 @@ def generate_launch_description(viz: bool = False):
              node_namespace='/r',
              output='screen'),
 
+        # zivid manual composition
+        Node(package='zivid_camera',
+             node_executable='manual_composition',
+             parameters=[{"zivid.camera.num_capture_frames" : 3}],
+             output='screen'),
         ################ Rviz launch ##################
         Node(package='rviz2',
              node_executable='rviz2',
