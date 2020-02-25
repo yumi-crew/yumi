@@ -22,6 +22,9 @@ find_package(yumi_robot_manager_interfaces REQUIRED)
 find_package(kdl_test REQUIRED)
 find_package(urdf REQUIRED)
 find_package(orocos_kdl REQUIRED)
+find_package(moveit2_demo_yumi REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system)
+
 
 # find_package(pose_estimation REQUIRED)
 # find_package(object_pose_estimator REQUIRED)
@@ -92,6 +95,15 @@ ament_target_dependencies(demo_kdl_ik
                           urdf
                           orocos_kdl
 )
+# demo_moveit2                         
+add_executable(demo_moveit2 src/demo_moveit2.cpp)
+target_include_directories(demo_moveit2 PRIVATE include)
+ament_target_dependencies(demo_moveit2 
+                          rclcpp                           
+                          rws_clients
+                          moveit2_demo_yumi
+                          Boost                                      
+)
 # graph_bringup                            
 add_executable(graph_bringup src/graph_bringup.cpp)
 target_include_directories(graph_bringup PRIVATE include)
@@ -135,13 +147,13 @@ install(TARGETS
   demo
   demo_kdl_ik
   graph_bringup
+  demo_moveit2
   # demo_go_to_chessboard
   DESTINATION lib/${PROJECT_NAME}
 )
 
-install(DIRECTORY
-  launch
-  DESTINATION share/${PROJECT_NAME})
+install(DIRECTORY launch
+        DESTINATION share/${PROJECT_NAME})
 
 
 ament_package()

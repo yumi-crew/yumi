@@ -20,6 +20,7 @@
   <depend>kdl_test</depend>
   <depend>urdf</depend>
   <depend>orocos_kdl</depend>
+  <depend>moveit2_demo_yumi</depend>
 
   <!-- <depend>object_pose_estimator</depend>
   <depend>pose_estimation</depend> -->
