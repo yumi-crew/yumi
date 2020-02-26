@@ -17,7 +17,7 @@
   <depend>sg_control_interfaces</depend>
   <depend>yumi_robot_manager_interfaces</depend>
   <depend>ros2_control_interfaces</depend>
-  <depend>kdl_test</depend>
+  <depend>kdl_wrapper</depend>
   <depend>urdf</depend>
   <depend>orocos_kdl</depend>
 

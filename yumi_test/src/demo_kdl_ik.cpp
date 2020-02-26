@@ -7,7 +7,7 @@
 #include <ros2_control_interfaces/msg/joint_control.hpp>
 #include <rws_clients/grip_client.hpp>
 #include <rws_clients/robot_manager_client.hpp>
-#include <kdl_test/kdl_wrapper.h>
+#include <kdl_wrapper/kdl_wrapper.h>
 
 // Global joint names
 std::array<std::string, 7> joint_names_l = {

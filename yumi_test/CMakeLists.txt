@@ -19,7 +19,7 @@ find_package(rws_clients REQUIRED)
 find_package(ros2_control_interfaces REQUIRED)
 find_package(sg_control_interfaces REQUIRED)
 find_package(yumi_robot_manager_interfaces REQUIRED)
-find_package(kdl_test REQUIRED)
+find_package(kdl_wrapper REQUIRED)
 find_package(urdf REQUIRED)
 find_package(orocos_kdl REQUIRED)
 
@@ -88,7 +88,7 @@ ament_target_dependencies(demo_kdl_ik
                           sg_control_interfaces
                           yumi_robot_manager_interfaces
                           rws_clients
-                          kdl_test 
+                          kdl_wrapper 
                           urdf
                           orocos_kdl
 )
@@ -116,7 +116,7 @@ ament_target_dependencies(demo_go_to_chessboard
                           sg_control_interfaces
                           yumi_robot_manager_interfaces
                           rws_clients
-                          kdl_test 
+                          kdl_wrapper 
                           urdf
                           orocos_kdl
                           pose_estimation_interface
