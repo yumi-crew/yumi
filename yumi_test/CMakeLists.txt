@@ -19,7 +19,7 @@ find_package(rws_clients REQUIRED)
 find_package(ros2_control_interfaces REQUIRED)
 find_package(sg_control_interfaces REQUIRED)
 find_package(yumi_robot_manager_interfaces REQUIRED)
-find_package(kdl_test REQUIRED)
+find_package(kdl_wrapper REQUIRED)
 find_package(urdf REQUIRED)
 find_package(orocos_kdl REQUIRED)
 find_package(moveit2_demo_yumi REQUIRED)
@@ -91,7 +91,7 @@ ament_target_dependencies(demo_kdl_ik
                           sg_control_interfaces
                           yumi_robot_manager_interfaces
                           rws_clients
-                          kdl_test 
+                          kdl_wrapper 
                           urdf
                           orocos_kdl
 )
@@ -118,24 +118,24 @@ ament_target_dependencies(graph_bringup
 )
 
 # demo_go_to_chessboard                      
-# add_executable(demo_go_to_chessboard src/demo_go_to_chessboard.cpp)
-# target_include_directories(demo_go_to_chessboard PRIVATE include)          
-# ament_target_dependencies(demo_go_to_chessboard 
-#                           rclcpp                            
-#                           sensor_msgs
-#                           angles                             
-#                           ros2_control_interfaces 
-#                           sg_control_interfaces
-#                           yumi_robot_manager_interfaces
-#                           rws_clients
-#                           kdl_test 
-#                           urdf
-#                           orocos_kdl
-#                           pose_estimation_interface
-#                           zivid_interfaces
-#                           object_pose_estimator
-#                           pose_estimation
-# )
+add_executable(demo_go_to_chessboard src/demo_go_to_chessboard.cpp)
+target_include_directories(demo_go_to_chessboard PRIVATE include)          
+ament_target_dependencies(demo_go_to_chessboard 
+                          rclcpp                            
+                          sensor_msgs
+                          angles                             
+                          ros2_control_interfaces 
+                          sg_control_interfaces
+                          yumi_robot_manager_interfaces
+                          rws_clients
+                          kdl_wrapper 
+                          urdf
+                          orocos_kdl
+                          pose_estimation_interface
+                          zivid_interfaces
+                          object_pose_estimator
+                          pose_estimation
+)
 
 
 install(DIRECTORY include/ DESTINATION include)

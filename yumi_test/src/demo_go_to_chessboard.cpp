@@ -7,7 +7,7 @@
 #include <ros2_control_interfaces/msg/joint_control.hpp>
 #include <rws_clients/grip_client.hpp>
 #include <rws_clients/robot_manager_client.hpp>
-#include <kdl_test/kdl_wrapper.h>
+#include <kdl_wrapper/kdl_wrapper.h>
 
 #include "object_pose_estimator.hpp"
 #include "pose_listener.hpp"

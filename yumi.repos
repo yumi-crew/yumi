@@ -11,9 +11,9 @@ repositories:
     type: git
     url: https://github.com/yumi-crew/ros2_control.git
     version: eloquent
-  kdl_test:
+  kdl_wrapper:
     type: git
-    url: https://github.com/yumi-crew/kdl_test.git
+    url: https://github.com/yumi-crew/kdl_wrapper.git
     version: master
   pose_estimation:
     type: git
