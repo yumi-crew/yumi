@@ -68,11 +68,12 @@
     </collision>
   </link>
 
-  <!-- zivid optical frame -->
+  <!-- zivid optical frame 
+  origin is found by base-eye calibration-->
   <joint name="zivid_optical_joint" type="fixed">
     <parent link="yumi_base_link"/>
     <child link="zivid_optical_frame"/>
-    <origin rpy="3.14 0 -1.5707" xyz="0.320 0 0.700"/>
+    <origin rpy="3.14159 0.0 -1.57079" xyz="0.300 0 0.800"/>
   </joint>
   <link name="zivid_optical_frame">
   </link>
@@ -846,6 +847,20 @@
       <material name="Blue"/>
     </collision>
   </link>
+  <!-- joint between base and grip center, right hand -->
+  <joint name="gripper_r_center_joint" type="fixed">
+    <parent link="gripper_r_base"/>
+    <child link="gripper_r_center"/>
+    <origin rpy="0 0 3.14159265359" xyz="0.0 0.0 0.1137"/>
+  </joint>
+  <link name="gripper_r_center"> </link>
+  <!-- Joint between base and grip center, left hand -->
+  <joint name="gripper_l_center_joint" type="fixed">
+    <parent link="gripper_l_base"/>
+    <child link="gripper_l_center"/>
+    <origin rpy="0 0 3.14159265359" xyz="0.0 0.0 0.1137"/>
+  </joint>
+  <link name="gripper_l_center"> </link>
   <!-- Plugin for the mimic o/c joint - AFAIK, that shouldn't be necessary any more starting with Gazebo 3.0 -->
   <gazebo>
     <plugin filename="libgazebo_mimic_plugin.so" name="mimic_plugin">
