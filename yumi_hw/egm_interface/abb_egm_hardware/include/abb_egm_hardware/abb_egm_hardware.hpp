@@ -78,6 +78,8 @@ private:
   // Udp endpoint robot will accept commands from.
   unsigned short port_; 
 
+  // Hardcored for seven joints
+  abb::egm::RobotAxes num_axes_ = abb::egm::RobotAxes::Seven;
   abb::egm::BaseConfiguration configuration_;
   std::unique_ptr<abb::egm::EGMControllerInterface> egm_interface_;
   abb::egm::wrapper::Input state_;
@@ -88,15 +90,12 @@ private:
 
   unsigned short n_joints_;
   std::vector<std::string> joint_names_; 
-  
   std::vector<double> joint_position_; 
   std::vector<double> joint_velocity_; 
   std::vector<double> joint_effort_; 
   std::vector<double> joint_position_command_; 
-
-  // maximum number of joints of 10 implied here
-  std::array<bool, 10> read_op_; 
-  std::array<bool, 10> write_op_; 
+  bool *read_op_; 
+  bool *write_op_; 
 
   // fix, should be read from config file
   std::array<std::string, 7> read_op_handle_names_ = { "read1", "read2", "read7", "read3", 
@@ -104,12 +103,13 @@ private:
   std::array<std::string, 7> write_op_handle_names_ = { "write1", "write2", "write7", "write3",
                                                         "write4", "write5", "write6" };
 
-  // Loading of robot info
+
+  // Loading of robot info from namepsaced parameter server
   hardware_interface::hardware_interface_ret_t get_port();
   hardware_interface::hardware_interface_ret_t get_joint_names();
   hardware_interface::hardware_interface_ret_t get_robot_name();
 
-  // Helper functions
+  // Helper function
   hardware_interface::hardware_interface_ret_t initialize_vectors();
                                                                                                         
 };

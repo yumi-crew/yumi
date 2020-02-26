@@ -1,4 +1,4 @@
-// Copyright 2019 Norwegian University of Science and Technology.
+// Copyright 2020 Norwegian University of Science and Technology.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,9 +13,7 @@
 // limitations under the License.
 
 #include <rclcpp/rclcpp.hpp>
-
 #include "controller_manager/controller_manager.hpp"
-
 #include "abb_egm_hardware/abb_egm_hardware.hpp"
 
 
@@ -27,7 +25,6 @@ void spin(std::shared_ptr<rclcpp::executors::MultiThreadedExecutor> exe)
 
 int main(int argc, char* argv[])
 {
-  
   rclcpp::init(argc, argv);
   auto robot = std::make_shared<abb_egm_hardware::AbbEgmHardware>("abb_egm_hardware");
   hardware_interface::hardware_interface_ret_t ret;
@@ -35,21 +32,12 @@ int main(int argc, char* argv[])
   // To avoid a race condition, wait to ensure all parameter servers are ready.
   rclcpp::sleep_for(std::chrono::milliseconds(2000));
 
-
   // Initialize the robot
   if (robot->init() != hardware_interface::HW_RET_OK)
   {
     fprintf(stderr, "Failed to initialize hardware");
     return -1;
   }
-
-  // Reads to initialize the joint arrays
-  ret = robot->read();
-  if (ret != hardware_interface::HW_RET_OK)
-  {
-    fprintf(stderr, "read failed!\n");
-  }
-
 
   // Now load and initialize the controllers
   // As there is no ROS2 equivalent to ROS1 nodegroups we will manually pass along namespace
@@ -61,7 +49,8 @@ int main(int argc, char* argv[])
                                      "joint_state_controller");
   controller_manager.load_controller("controllers", "ros_controllers::JointTrajectoryController",
                                      "joint_trajectory_controller");
-
+  // controller_manager.load_controller("controllers", "ros_controllers::JointPositionController",
+  //                                    "joint_position_controller");
 
   // Pass namespace to controllers as well
   auto controllers = controller_manager.get_loaded_controller();
@@ -90,7 +79,6 @@ int main(int argc, char* argv[])
     return -1;
   }
   
-  std::cout << "!!! entering control loop" << std::endl;
   // Real-time control loop
   while (rclcpp::ok())
   {
@@ -101,7 +89,6 @@ int main(int argc, char* argv[])
       fprintf(stderr, "read failed!\n");
     }
 
-    // (joint_position_controller): Updates joint_position_command_ 
     controller_manager.update();
 
     // Writes the contents of joint_position_command_ to robot
@@ -116,6 +103,5 @@ int main(int argc, char* argv[])
   // teardown
   executor->cancel();
   fprintf(stderr, "Cancelled");
-
   return 0;
 }

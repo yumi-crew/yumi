@@ -54,7 +54,7 @@ def generate_launch_description():
     ompl_planning_pipeline_config['ompl'].update(ompl_planning_yaml)
 
     #demo_moveit2
-    demo_moveit2 = Node( 
+    demo_moveit2 = Node(        
                                package='yumi_test',
                                node_executable='demo_moveit2',
                                output='screen',
