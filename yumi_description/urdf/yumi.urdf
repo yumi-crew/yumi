@@ -73,7 +73,7 @@
   <joint name="zivid_optical_joint" type="fixed">
     <parent link="yumi_base_link"/>
     <child link="zivid_optical_frame"/>
-    <origin rpy="3.14159 0.0 -1.57079" xyz="0.300 0 0.800"/>
+    <origin rpy="-2.8595 -0.14513 -1.6163251" xyz="0.18817 0.06293 0.68891"/>
   </joint>
   <link name="zivid_optical_frame">
   </link>

@@ -108,7 +108,6 @@ KDL::JntArray generate_q_seed(std::string arm)
     for (int i = 0; i < 7; ++i)
     {
       q_seed(i) = recieved_joint_state_r[i];
-      //std::cout << "q_seed " << i << " : " << q_seed(i) << std::endl;
     }
     return q_seed;
   }
@@ -117,7 +116,6 @@ KDL::JntArray generate_q_seed(std::string arm)
     for (int i = 0; i < 7; ++i)
     {
       q_seed(i) = recieved_joint_state_l[i];
-      // std::cout << "q_seed " << i << " : " << q_seed(i) << std::endl;
     }
     return q_seed;
   }
@@ -197,14 +195,19 @@ void blocking_cart_p2p_motion_right(std::array<double, 6> pose)
   KDL::Frame pose_frame = vec_and_euler_angles_to_frame(pose);
   KDL::JntArray q_seed = generate_q_seed("r");
   KDL::JntArray q_config;
-  try
+  bool success{false};
+  while (!success)
   {
-    q_config = kdl_wrapper->inverse_kinematics_right(pose_frame, q_seed);
-  }
-  catch (const std::exception &e)
-  {
-    std::cout << e.what() << std::endl;
-    return;
+    try
+    {
+      q_config = kdl_wrapper->inverse_kinematics_right(pose_frame, q_seed);
+      success = true;
+    }
+    catch (const std::exception &e)
+    {
+      std::cout << e.what() << std::endl;
+      return;
+    }
   }
   generate_msg_and_publish_r(q_config);
   busy_wait_until_reached(q_config, "r", angles::from_degrees(0.01));
@@ -396,39 +399,18 @@ int main(int argc, char *argv[])
   // Go to home position (start pose)
   go_to_home_pos();
 
-  // // Go to pose 1 {x, y, z, EZ, EY, EX}
-  // std::array<double, 6> pose1 = {0.381, -0.329, 0.397,
-  //                                angles::from_degrees(123), angles::from_degrees(-5), angles::from_degrees(139)};
-  // blocking_cart_p2p_motion_right(pose1);
-  // std::array<double, 6> pose12 = {0.300, -0.250, 0.297,
-  //                                 angles::from_degrees(123), angles::from_degrees(-5), angles::from_degrees(139)};
-  // blocking_cart_p2p_motion_right(pose12);
-
-  // // Go to pose 2 {x, y, z, EZ, EY, EX}
-  // std::array<double, 6> pose2 = {0.109, 0.345, 0.286,
-  //                                angles::from_degrees(-33), angles::from_degrees(-24), angles::from_degrees(-170)};
-  // blocking_cart_p2p_motion_left(pose2);
-
-  //--------------------------------------------------------------------------------------------------------------------
 
   while (1)
   {
     cap_success = pose_estimation_manager->call_capture_srv(10s);
-    est_success = pose_estimation_manager->call_estimate_pose_srv(10s);
+    est_success = pose_estimation_manager->call_estimate_pose_srv(20s);
     if (est_success)
     {
       auto grasp_pose = pose_listener->get_graspable_chessboard_pose(0.05, true);
 
       std::array<double, 6> pose;
       std::copy_n(grasp_pose.begin(), 6, pose.begin());
-      
-      // std::cout << std::endl;
-      // for (auto p : pose)
-      // {
-      //   std::cout << p << std::endl;
-      // }
       blocking_cart_p2p_motion_right(pose);
-      // blocking_cart_p2p_motion_left(pose);
     }
   }
   return 0;
