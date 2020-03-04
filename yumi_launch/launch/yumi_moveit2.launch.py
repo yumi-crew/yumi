@@ -48,8 +48,8 @@ def generate_launch_description():
 
     # Globals
     yumi_robot_manager = Node(package= 'yumi_robot_manager',
-                              node_executable='yumi_robot_manager_node',
-                              output='screen')
+                              node_executable='yumi_robot_manager_node')
+                              #output='screen')
     
     global_joint_state = Node(package='yumi_sim',
                               node_executable='global_joint_state_node')
@@ -79,7 +79,7 @@ def generate_launch_description():
                                  node_executable='abb_egm_hardware_node',
                                  node_namespace='/r',
                                  arguments=['/r'],
-                                 #output='screen',
+                                 output='screen',
                                  parameters=[os.path.join(get_package_share_directory("yumi_launch"), "config", "yumi_right_controllers.yaml")])
                                       
     param_server_right = Node(package='parameter_server', 

@@ -22,9 +22,8 @@ find_package(yumi_robot_manager_interfaces REQUIRED)
 find_package(kdl_wrapper REQUIRED)
 find_package(urdf REQUIRED)
 find_package(orocos_kdl REQUIRED)
-find_package(moveit2_demo_yumi REQUIRED)
+find_package(moveit2_wrapper REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
-
 
 # find_package(pose_estimation REQUIRED)
 # find_package(object_pose_estimator REQUIRED)
@@ -34,7 +33,6 @@ find_package(Boost REQUIRED COMPONENTS system)
 
 # Sine wave 
 add_executable(sine_wave src/sine_wave.cpp)
-target_include_directories(sine_wave PRIVATE include)
 ament_target_dependencies(sine_wave 
                           rclcpp                            
                           sensor_msgs
@@ -46,7 +44,6 @@ ament_target_dependencies(sine_wave
 )
 # Sine wave inf 
 add_executable(sine_wave_inf src/sine_wave_inf.cpp)
-target_include_directories(sine_wave_inf PRIVATE include)
 ament_target_dependencies(sine_wave_inf 
                           rclcpp                            
                           sensor_msgs
@@ -58,7 +55,6 @@ ament_target_dependencies(sine_wave_inf
 )
 # Step
 add_executable(step src/step.cpp)
-target_include_directories(step PRIVATE include)
 ament_target_dependencies(step 
                           rclcpp                            
                           sensor_msgs
@@ -82,7 +78,6 @@ ament_target_dependencies(demo
 )
 # demo_kdl_ik                         
 add_executable(demo_kdl_ik src/demo_kdl_ik.cpp)
-target_include_directories(demo_kdl_ik PRIVATE include)
 ament_target_dependencies(demo_kdl_ik 
                           rclcpp                            
                           sensor_msgs
@@ -97,16 +92,16 @@ ament_target_dependencies(demo_kdl_ik
 )
 # demo_moveit2                         
 add_executable(demo_moveit2 src/demo_moveit2.cpp)
-target_include_directories(demo_moveit2 PRIVATE include)
 ament_target_dependencies(demo_moveit2 
-                          rclcpp                           
+                          rclcpp     
+                          sensor_msgs                      
                           rws_clients
-                          moveit2_demo_yumi
-                          Boost                                      
+                          moveit2_wrapper
+                          Boost
+                          angles                                      
 )
 # graph_bringup                            
 add_executable(graph_bringup src/graph_bringup.cpp)
-target_include_directories(graph_bringup PRIVATE include)
 ament_target_dependencies(graph_bringup 
                           rclcpp                            
                           sensor_msgs
@@ -117,28 +112,25 @@ ament_target_dependencies(graph_bringup
                           rws_clients 
 )
 
-# demo_go_to_chessboard                      
-add_executable(demo_go_to_chessboard src/demo_go_to_chessboard.cpp)
-target_include_directories(demo_go_to_chessboard PRIVATE include)          
-ament_target_dependencies(demo_go_to_chessboard 
-                          rclcpp                            
-                          sensor_msgs
-                          angles                             
-                          ros2_control_interfaces 
-                          sg_control_interfaces
-                          yumi_robot_manager_interfaces
-                          rws_clients
-                          kdl_wrapper 
-                          urdf
-                          orocos_kdl
-                          pose_estimation_interface
-                          zivid_interfaces
-                          object_pose_estimator
-                          pose_estimation
-)
-
-
-install(DIRECTORY include/ DESTINATION include)
+# # demo_go_to_chessboard                      
+# add_executable(demo_go_to_chessboard src/demo_go_to_chessboard.cpp)
+# target_include_directories(demo_go_to_chessboard PRIVATE include)          
+# ament_target_dependencies(demo_go_to_chessboard 
+#                           rclcpp                            
+#                           sensor_msgs
+#                           angles                             
+#                           ros2_control_interfaces 
+#                           sg_control_interfaces
+#                           yumi_robot_manager_interfaces
+#                           rws_clients
+#                           kdl_wrapper 
+#                           urdf
+#                           orocos_kdl
+#                           pose_estimation_interface
+#                           zivid_interfaces
+#                           object_pose_estimator
+#                           pose_estimation
+# )
 
 install(TARGETS 
   sine_wave

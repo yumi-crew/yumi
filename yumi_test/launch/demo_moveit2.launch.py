@@ -36,6 +36,7 @@ def generate_launch_description():
     # Component yaml files are grouped in separate namespaces
     robot_description_config = load_file('yumi_description', 'urdf/yumi.urdf')
     robot_description = {'robot_description' : robot_description_config}
+    robot_description_path = {'robot_description_path' : os.path.join(get_package_share_directory('yumi_description'), 'urdf/yumi.urdf')}
 
     robot_description_semantic_config = load_file('yumi_description', 'moveit2_config/yumi.srdf')
     robot_description_semantic = {'robot_description_semantic' : robot_description_semantic_config}
@@ -54,15 +55,15 @@ def generate_launch_description():
     ompl_planning_pipeline_config['ompl'].update(ompl_planning_yaml)
 
     #demo_moveit2
-    demo_moveit2 = Node(        
-                               package='yumi_test',
-                               node_executable='demo_moveit2',
-                               output='screen',
-                               parameters=[moveit_cpp_yaml_file_name,
-                                           robot_description,
-                                           robot_description_semantic,
-                                           kinematics_yaml,
-                                           ompl_planning_pipeline_config,
-                                           moveit_controllers])
+    demo_moveit2 = Node(package='yumi_test',
+                        node_executable='demo_moveit2',
+                        output='screen',
+                        parameters=[moveit_cpp_yaml_file_name,
+                                    robot_description,
+                                    robot_description_path,
+                                    robot_description_semantic,
+                                    kinematics_yaml,
+                                    ompl_planning_pipeline_config,
+                                    moveit_controllers])
 
     return LaunchDescription([ demo_moveit2 ])

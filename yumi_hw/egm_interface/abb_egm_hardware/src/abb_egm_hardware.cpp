@@ -219,7 +219,6 @@ AbbEgmHardware::write()
   }
 
   //command_.PrintDebugString();
-
   egm_interface_->write(command_);
   return hardware_interface::HW_RET_OK;
 }

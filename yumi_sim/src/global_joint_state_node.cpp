@@ -27,17 +27,24 @@ sensor_msgs::msg::JointState combine_joint_states()
 {
   sensor_msgs::msg::JointState combined;
   combined.name = {
-      "yumi_joint_1_l", "yumi_joint_1_r", "yumi_joint_2_l", "yumi_joint_2_r",
-      "yumi_joint_7_l", "yumi_joint_7_r", "yumi_joint_3_l", "yumi_joint_3_r",
-      "yumi_joint_4_l", "yumi_joint_4_r", "yumi_joint_5_l", "yumi_joint_5_r",
-      "yumi_joint_6_l", "yumi_joint_6_r", "gripper_l_joint", "gripper_r_joint",
+      "yumi_joint_1_l", "yumi_joint_2_l", "yumi_joint_7_l", "yumi_joint_3_l",
+      "yumi_joint_4_l", "yumi_joint_5_l", "yumi_joint_6_l", 
+      "yumi_joint_1_r", "yumi_joint_2_r", "yumi_joint_7_r", "yumi_joint_3_r", 
+      "yumi_joint_4_r", "yumi_joint_5_r", "yumi_joint_6_r", 
+      "gripper_l_joint", "gripper_r_joint",
       };
 
-  for (int i = 0; i < 8; i++)
+  for (int i = 0; i < 7; i++)
   {
     combined.position.push_back(recieved_joint_state_l[i]);
+  }
+  for (int i = 0; i < 7; i++)
+  {
     combined.position.push_back(recieved_joint_state_r[i]);
   }
+  
+  combined.position.push_back(recieved_joint_state_l[7]);
+  combined.position.push_back(recieved_joint_state_r[7]);
   return combined;
 }
 

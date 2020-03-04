@@ -1,4 +1,4 @@
-demo_moveit2:
+onsket_nodenavn:
   ros__parameters:
     planning_scene_monitor_options:
       name: "planning_scene_monitor"

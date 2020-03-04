@@ -29,8 +29,8 @@ int main(int argc, char* argv[])
   auto robot = std::make_shared<abb_egm_hardware::AbbEgmHardware>("abb_egm_hardware");
   hardware_interface::hardware_interface_ret_t ret;
 
-  // To avoid a race condition, wait to ensure all parameter servers are ready.
-  rclcpp::sleep_for(std::chrono::milliseconds(2000));
+  // Wait to ensure all parameter servers are ready.
+  rclcpp::sleep_for(std::chrono::seconds(2));
 
   // Initialize the robot
   if (robot->init() != hardware_interface::HW_RET_OK)
