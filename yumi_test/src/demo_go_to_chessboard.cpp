@@ -196,19 +196,19 @@ void blocking_cart_p2p_motion_right(std::array<double, 6> pose)
   KDL::JntArray q_seed = generate_q_seed("r");
   KDL::JntArray q_config;
   bool success{false};
-  while (!success)
-  {
-    try
-    {
+  // while (!success)
+  // {
+  //   try
+  //   {
       q_config = kdl_wrapper->inverse_kinematics_right(pose_frame, q_seed);
-      success = true;
-    }
-    catch (const std::exception &e)
-    {
-      std::cout << e.what() << std::endl;
-      return;
-    }
-  }
+    //   success = true;
+    // }
+    // catch (const std::exception &e)
+    // {
+    //   std::cout << e.what() << std::endl;
+    //   return;
+    // }
+  // }
   generate_msg_and_publish_r(q_config);
   busy_wait_until_reached(q_config, "r", angles::from_degrees(0.01));
 }
