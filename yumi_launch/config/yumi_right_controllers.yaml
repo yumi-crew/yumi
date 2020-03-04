@@ -1,0 +1,26 @@
+/r/joint_trajectory_controller:
+  ros__parameters:
+    joints:
+      - yumi_joint_1_r
+      - yumi_joint_2_r
+      - yumi_joint_7_r
+      - yumi_joint_3_r
+      - yumi_joint_4_r
+      - yumi_joint_5_r
+      - yumi_joint_6_r
+    write_op_modes: 
+      - write1
+      - write2
+      - write7
+      - write3
+      - write4
+      - write5
+      - write6
+    read_op_modes:
+      - read1
+      - read2
+      - read7
+      - read3
+      - read4
+      - read5
+      - read6

@@ -10,7 +10,6 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 find_package(ament_cmake REQUIRED)
-
 find_package(Boost REQUIRED COMPONENTS system thread regex)
 find_package(rcutils REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -19,11 +18,10 @@ find_package(hardware_interface REQUIRED)
 find_package(controller_interface REQUIRED)
 find_package(controller_manager REQUIRED)
 find_package(abb_libegm REQUIRED)
-
 find_package(parameter_server_interfaces REQUIRED)
 
 
-
+# abb_egm_hardware
 add_library(abb_egm_hardware SHARED src/abb_egm_hardware.cpp)
 target_include_directories(abb_egm_hardware PRIVATE include)
 ament_target_dependencies(abb_egm_hardware
@@ -41,7 +39,8 @@ target_compile_definitions(abb_egm_hardware PRIVATE
                            
 #abb_egm_hardware_sim
 add_library(abb_egm_hardware_sim SHARED src/abb_egm_hardware_sim.cpp)
-target_include_directories(abb_egm_hardware_sim PRIVATE include)
+target_link_libraries(abb_egm_hardware_sim ${Boost_LIBRARIES})
+target_include_directories(abb_egm_hardware_sim PRIVATE include )
 ament_target_dependencies(abb_egm_hardware_sim
                           angles
                           rcutils
@@ -56,7 +55,7 @@ ament_target_dependencies(abb_egm_hardware_sim
 target_compile_definitions(abb_egm_hardware_sim PRIVATE
                            "ABB_EGM_HARDWARE_BUILDING_DLL")
 
-
+# abb_egm_hardware_node
 add_executable(abb_egm_hardware_node src/abb_egm_hardware_node.cpp)
 target_include_directories(abb_egm_hardware_node PRIVATE include)
 target_link_libraries(abb_egm_hardware_node abb_egm_hardware ${Boost_LIBRARIES})
@@ -65,6 +64,7 @@ ament_target_dependencies(abb_egm_hardware_node
                           abb_libegm
                           hardware_interface)
 
+# abb_egm_hardware_sim_node
 add_executable(abb_egm_hardware_sim_node src/abb_egm_hardware_sim_node.cpp)
 target_include_directories(abb_egm_hardware_sim_node PRIVATE include)
 target_link_libraries(abb_egm_hardware_sim_node abb_egm_hardware_sim ${Boost_LIBRARIES})
@@ -72,6 +72,7 @@ ament_target_dependencies(abb_egm_hardware_sim_node
                           rclcpp
                           abb_libegm
                           hardware_interface)
+
 
 install(DIRECTORY include/ DESTINATION include)
 

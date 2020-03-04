@@ -1,0 +1,23 @@
+/l/abb_egm_hardware_sim:
+  ros__parameters:
+    start_position:
+      joints:
+        - yumi_joint_1_l
+        - yumi_joint_2_l
+        - yumi_joint_7_l
+        - yumi_joint_3_l
+        - yumi_joint_4_l
+        - yumi_joint_5_l
+        - yumi_joint_6_l
+      values:
+        - 0.0
+        - -2.2689
+        - 2.3562
+        - 0.5235
+        - 0.0
+        - 0.5235
+        - 0.0
+
+
+
+      

@@ -1,4 +1,4 @@
-// Copyright 2019 Norwegian University of Science and Technology.
+// Copyright 2020 Norwegian University of Science and Technology.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,14 +22,12 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <rcutils/logging_macros.h>
-
 #include <angles/angles.h>
+#include <boost/asio/io_service.hpp>
+#include <boost/thread.hpp>
 
 #include <hardware_interface/robot_hardware.hpp>
 #include <hardware_interface/types/hardware_interface_return_values.hpp>
-
-#include <abb_libegm/egm_controller_interface.h>
-#include <abb_libegm/egm_wrapper.pb.h>
 #include <abb_egm_hardware/visibility_control.h>
 
 // parameter server services
@@ -39,12 +37,12 @@
 
 
 
-
 namespace abb_egm_hardware
 {
 class AbbEgmHardware : public hardware_interface::RobotHardware
 {
 public:
+
   AbbEgmHardware(const std::string& name);
 
   ABB_EGM_HARDWARE_PUBLIC
@@ -76,13 +74,6 @@ private:
 
   // Udp endpoint robot will accept commands from.
   unsigned short port_; 
-
-  
-  abb::egm::BaseConfiguration configuration_;
-  std::unique_ptr<abb::egm::EGMControllerInterface> egm_interface_;
-  abb::egm::wrapper::Input state_;
-  abb::egm::wrapper::Output command_;
-  
 
   unsigned int sequence_number_ = 0.0;
   bool first_packet_ = true;

@@ -8,6 +8,7 @@ install(DIRECTORY config
                   launch
                   meshes
                   urdf
+                  moveit2_config
         DESTINATION share/${PROJECT_NAME})
 
 ament_export_dependencies(urdf)

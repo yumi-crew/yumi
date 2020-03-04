@@ -17,6 +17,8 @@
 namespace abb_egm_hardware
 {
 
+static const rclcpp::Logger LOGGER = rclcpp::get_logger("abb_egm_hardware_sim");
+
 // namespaced helper functions..........................................................................................
 unsigned int random_char()
 {
@@ -123,22 +125,6 @@ AbbEgmHardware::init()
     }
  
   }
-  
-  // fix
-  if(n_joints_ == 7)
-    configuration_.axes = abb::egm::RobotAxes::Seven;
-  if(n_joints_ == 6)
-    configuration_.axes = abb::egm::RobotAxes::Six;
-
-
-  std::cout << "n_joints_: " << n_joints_ << std::endl;
-
-  for(auto x : joint_names_)
-  {
-    std::cout << "joint: " << x << std::endl;
-  } 
-
- 
 
   return hardware_interface::HW_RET_OK;
 }
@@ -156,7 +142,7 @@ AbbEgmHardware::read()
 hardware_interface::hardware_interface_ret_t 
 AbbEgmHardware::write()
 { 
-  usleep(1*100000); //0.1 seconds
+  //usleep(1*100000); //0.1 seconds
 	for (size_t index = 0; index < n_joints_; ++index)
 	{
     joint_position_[index] = joint_position_command_[index];
@@ -346,24 +332,23 @@ AbbEgmHardware::get_robot_name()
 hardware_interface::hardware_interface_ret_t 
 AbbEgmHardware::initialize_vectors()
 {
-  // Set size of vectors so no dynamic memory allocation takes place in control loop.
+  // Set start values
+  joint_position_ = node_->declare_parameter("start_position.values", std::vector<double>());
+  joint_position_command_ = joint_position_;
+  joint_velocity_.assign(n_joints_, 0.0);
+  joint_effort_.assign(n_joints_, 0.0);
+
+  // Resize handle vectors
   joint_state_handles_.resize(n_joints_);
   joint_command_handles_.resize(n_joints_);
   read_op_handles_.resize(n_joints_);
   write_op_handles_.resize(n_joints_);
-
-  // Set size and zero intialize
-  joint_position_.assign(n_joints_, 0.0);
-  joint_velocity_.assign(n_joints_, 0.0);
-  joint_effort_.assign(n_joints_, 0.0);
-  joint_position_command_.assign(n_joints_, 0.0);
-
+ 
   for (int i = 0; i < n_joints_; ++i)
   {
     read_op_[i] = false;
     write_op_[i] = true;
   }
-
   
   return hardware_interface::HW_RET_OK;
 }

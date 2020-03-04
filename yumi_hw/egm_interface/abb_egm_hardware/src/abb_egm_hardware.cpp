@@ -124,15 +124,10 @@ AbbEgmHardware::init()
  
   }
   
-  // fix
-  if(n_joints_ == 7)
-    configuration_.axes = abb::egm::RobotAxes::Seven;
-  if(n_joints_ == 6)
-    configuration_.axes = abb::egm::RobotAxes::Six;
-
   // Create an EGM interface:
   // * Sets up an EGM server (that the robot controller's EGM client can connect to).
   // * Provides APIs to the user (for setting motion references, that are sent in reply to the EGM client's request).
+  configuration_.axes = num_axes_;
   egm_interface_.reset(new abb::egm::EGMControllerInterface(io_service_, port_, configuration_));
 
   if (!egm_interface_->isInitialized())
@@ -166,12 +161,8 @@ AbbEgmHardware::init()
     rclcpp::sleep_for(std::chrono::milliseconds(500));
   }
 
-
-  // then read in the states of the robot so the controllers can fetch it upon activation
-  //this->read();
-
+  // Ensure command_ is empty
   command_.Clear();
-
   return hardware_interface::HW_RET_OK;
 }
 
@@ -228,7 +219,6 @@ AbbEgmHardware::write()
   }
 
   //command_.PrintDebugString();
-
   egm_interface_->write(command_);
   return hardware_interface::HW_RET_OK;
 }
@@ -415,25 +405,26 @@ AbbEgmHardware::get_robot_name()
 hardware_interface::hardware_interface_ret_t 
 AbbEgmHardware::initialize_vectors()
 {
-  // Set size of vectors so no dynamic memory allocation takes place in control loop.
+  // Set sizes
   joint_state_handles_.resize(n_joints_);
   joint_command_handles_.resize(n_joints_);
   read_op_handles_.resize(n_joints_);
   write_op_handles_.resize(n_joints_);
+  read_op_ = new bool[n_joints_];
+  write_op_ = new bool[n_joints_];
 
-  // Set size and zero intialize
+  // Set sizes and zero intialize
   joint_position_.assign(n_joints_, 0.0);
   joint_velocity_.assign(n_joints_, 0.0);
   joint_effort_.assign(n_joints_, 0.0);
   joint_position_command_.assign(n_joints_, 0.0);
-
+  
   for (int i = 0; i < n_joints_; ++i)
   {
     read_op_[i] = false;
     write_op_[i] = true;
   }
 
-  
   return hardware_interface::HW_RET_OK;
 }
 
