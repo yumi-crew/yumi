@@ -154,32 +154,37 @@ int main(int argc, char **argv)
 
   // Go to home position (start pose)
   std::cout << "RIGHT --- moveit2.state_to_state_motion" << std::endl;
-  if (!moveit2.state_to_state_motion("right_arm", home_r, 2))
+  if (!moveit2.state_to_state_motion("right_arm", home_r, 2, false))
   {
     std::cout << "RIGHT --- state_to_state_motion returned false" << std::endl;
     return -1;
   }
   std::cout << "LEFT --- moveit2.state_to_state_motion" << std::endl;
-  if (!moveit2.state_to_state_motion("left_arm", home_l, 2))
+  if (!moveit2.state_to_state_motion("left_arm", home_l, 2, false))
   {
     std::cout << "LEFT --- state_to_state_motion returned false" << std::endl;
     return -1;
   }
   bool cap_success{false};
   bool est_success{false};
-  std::vector<float> grasp_pose;
+  std::vector<float> grasp_pose; grasp_pose.resize(7);
   while (1)
   {
-    cap_success = pose_estimation_manager->call_capture_srv(10s);
-    est_success = pose_estimation_manager->call_estimate_pose_srv(20s);
+    std::cout << "before call_capture_srv" << std::endl;
+    cap_success = pose_estimation_manager->call_capture_srv(5s);
+    std::cout << "before call_estimate_pose_srv" << std::endl;
+    est_success = pose_estimation_manager->call_estimate_pose_srv(5s);
     if (est_success)
     {
-      grasp_pose = pose_listener->get_graspable_chessboard_pose(0.05, true);
+      std::cout << "before get_graspable_chessboard_pose" << std::endl;
+      grasp_pose = pose_listener->get_graspable_chessboard_pose(0.05, false);
 
-      std::vector<double> pose;
-      std::copy_n(grasp_pose.begin(), 6, pose.begin());
+      std::vector<double> pose; pose.resize(7);
+      std::cout << "before copy_n" << std::endl;
+      std::copy_n(grasp_pose.begin(), 7, pose.begin());
       // blocking_cart_p2p_motion_right(pose);
-      if(!moveit2.pose_to_pose_motion("right_arm", pose, 2, false))
+      std::cout << "before pose_to_pose_motion" << std::endl;
+      if(!moveit2.pose_to_pose_motion("right_arm", pose, 2, false, true))
       {
         std::cout << "pose_to_pose motion failed" << std::endl;
       }

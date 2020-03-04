@@ -108,53 +108,54 @@ int main(int argc, char** argv)
   moveit2.launch_planning_scene();
   sleep(3); // wait to ensure the that moveit2 updates its representation of the robots position before the plannign scene is launched
 
-  
-  // std::cout << "RIGHT --- before moveit2.state_to_state_motion" << std::endl;
-  // if(!moveit2.state_to_state_motion("right_arm", {0.798, -0.815, -0.503, 0.687, -1.197, 0.190, -2.138}, 2))
-  // {
-  //   std::cout << "RIGHT --- state_to_state_motion returned false" << std::endl;
-  //   return -1;
-  // } 
- 
 
 
-  // std::cout << "RIGHT --- moveit2.state_to_state_motion" << std::endl;
-  // if(!moveit2.state_to_state_motion("right_arm", home_r, 2))
-  // {
-  //   std::cout << "RIGHT --- state_to_state_motion returned false" << std::endl;
-  //   return -1;
-  // } 
-
-
-  // if(!moveit2.pose_to_pose_motion("right_arm", {0.464, -0.110, 0.469, -21.96, -19.29, -113.49}, 2))
-  // {
-  //   std::cout << "RIGHT --- pose_to_pose_motion returned false" << std::endl;
-  //   return -1;
-  // } 
-
-  
-
-  // std::cout << "LEFT --- before moveit2.state_to_state_motion" << std::endl;
-  // if(!moveit2.state_to_state_motion("left_arm", {-0.765, -0.929, 0.711, 0.819, 1.527, 0.025, -0.919}, 2))
-  // {
-  //   std::cout << "LEFT --- state_to_state_motion returned false" << std::endl;
-  //   return -1;
-  // } 
-
-  std::cout << "DUAL --- before moveit2.dual_arm_pose_to_pose_motion" << std::endl;
-  if(!moveit2.dual_arm_pose_to_pose_motion({0.4269, 0.1373, 0.4158, -160.89, 30.32, -113.20}, {0.464, -0.110, 0.469, -21.96, -19.29, -113.49}, 10))
+  std::cout << "DUAL --- before moveit2.state_to_state" << std::endl;
+  if(!moveit2.dual_arm_state_to_state_motion({-0.765, -0.929, 0.711, 0.819, 1.527, 0.025, -0.919}, {0.798, -0.815, -0.503, 0.687, -1.197, 0.190, -2.138}, 10))
   {
     std::cout << "DUAL --- dual_arm_pose_to_pose_motion returned false" << std::endl;
     return -1;
-  } 
-  
+  }
+  std::cout << "DUAL --- before moveit2.state_to_state" << std::endl;
+  if(!moveit2.dual_arm_state_to_state_motion(home_l, home_r, 10))
+  {
+    std::cout << "DUAL --- dual_arm_pose_to_pose_motion returned false" << std::endl;
+    return -1;
+  }
 
-  // std::cout << "LEFT --- moveit2.state_to_state_motion" << std::endl;
-  // if(!moveit2.state_to_state_motion("left_arm", home_l, 2))
+
+  std::cout << "RIGHT --- before moveit2.state_to_state_motion" << std::endl;
+  if(!moveit2.state_to_state_motion("right_arm", {0.798, -0.815, -0.503, 0.687, -1.197, 0.190, -2.138}, 2))
+  {
+    std::cout << "RIGHT --- state_to_state_motion returned false" << std::endl;
+    return -1;
+  } 
+  std::cout << "RIGHT --- moveit2.state_to_state_motion" << std::endl;
+  if(!moveit2.state_to_state_motion("right_arm", home_r, 2))
+  {
+    std::cout << "RIGHT --- state_to_state_motion returned false" << std::endl;
+    return -1;
+  } 
+
+
+  if(!moveit2.pose_to_pose_motion("left_arm", {0.464, -0.110, 0.469, -21.96, -19.29, -113.49}, 2))
+  {
+    std::cout << "RIGHT --- pose_to_pose_motion returned false" << std::endl;
+    return -1;
+  } 
+  std::cout << "LEFT --- before moveit2.state_to_state_motion" << std::endl;
+  if(!moveit2.state_to_state_motion("left_arm", home_l, 2))
+  {
+    std::cout << "LEFT --- state_to_state_motion returned false" << std::endl;
+    return -1;
+  } 
+
+  // std::cout << "DUAL --- before moveit2.dual_arm_pose_to_pose_motion" << std::endl;
+  // if(!moveit2.dual_arm_pose_to_pose_motion({0.4269, 0.1373, 0.4158, -160.89, 30.32, -113.20}, {0.464, -0.110, 0.469, -21.96, -19.29, -113.49}, 10))
   // {
-  //   std::cout << "LEFT --- state_to_state_motion returned false" << std::endl;
+  //   std::cout << "DUAL --- dual_arm_pose_to_pose_motion returned false" << std::endl;
   //   return -1;
-  // } 
+  
 
   
   // moveit2.dual_arm_state_to_state_motion({-0.765, -0.929, 0.711, 0.819, 1.527, 0.025, -0.919}, 
