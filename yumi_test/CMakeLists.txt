@@ -26,7 +26,7 @@ find_package(moveit2_wrapper REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
 
 find_package(pose_estimation REQUIRED)
-find_package(object_pose_estimator REQUIRED)
+find_package(pose_estimation_manager REQUIRED)
 find_package(pose_estimation_interface REQUIRED)
 find_package(zivid_interfaces REQUIRED)
 
@@ -110,7 +110,7 @@ ament_target_dependencies(demo_moveit2_2chessboard
                           angles
                           pose_estimation_interface
                           zivid_interfaces
-                          object_pose_estimator
+                          pose_estimation_manager
                           pose_estimation                                      
 )
 # graph_bringup                            
@@ -140,7 +140,7 @@ ament_target_dependencies(demo_go_to_chessboard
                           orocos_kdl
                           pose_estimation_interface
                           zivid_interfaces
-                          object_pose_estimator
+                          pose_estimation_manager
                           pose_estimation
 )
 

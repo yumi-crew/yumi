@@ -9,8 +9,8 @@
 #include <rws_clients/robot_manager_client.hpp>
 #include <kdl_wrapper/kdl_wrapper.h>
 
-#include "object_pose_estimator.hpp"
-#include "pose_listener.hpp"
+#include "pose_estimation_manager.hpp"
+
 
 using namespace std::chrono_literals;
 
@@ -39,8 +39,8 @@ std::shared_ptr<rclcpp::Publisher<ros2_control_interfaces::msg::JointControl>> j
 std::shared_ptr<rclcpp::Subscription<sensor_msgs::msg::JointState>> joint_state_subscription_r;
 std::shared_ptr<rclcpp::Subscription<sensor_msgs::msg::JointState>> joint_state_subscription_l;
 
-std::shared_ptr<ObjectPoseEstimator> pose_estimation_manager; // declaration for signal handling (ctrl+c)
-std::shared_ptr<PoseListener> pose_listener;
+std::shared_ptr<PoseEstimationManager> pose_estimation_manager; // declaration for signal handling (ctrl+c)
+
 
 // Ctr+C handler
 void signal_callback_handler(int signum)
@@ -360,9 +360,7 @@ int main(int argc, char *argv[])
   auto future_handle_r = std::async(std::launch::async, spin, executor_r);
   auto future_handle_l = std::async(std::launch::async, spin, executor_l);
 
-  pose_estimation_manager = std::make_shared<ObjectPoseEstimator>("object_pose_estimator");
-
-  pose_listener = std::make_shared<PoseListener>();
+  pose_estimation_manager = std::make_shared<PoseEstimationManager>("pose_estimation_manager");
 
   rclcpp::executors::MultiThreadedExecutor exe;
   exe.add_node(pose_estimation_manager);
@@ -406,7 +404,7 @@ int main(int argc, char *argv[])
     est_success = pose_estimation_manager->call_estimate_pose_srv(20s);
     if (est_success)
     {
-      auto grasp_pose = pose_listener->get_graspable_chessboard_pose(0.05, true);
+      auto grasp_pose = pose_estimation_manager->pose_transformer->chessboard_pose_to_base_frame(0.05, true);
 
       std::array<double, 6> pose;
       std::copy_n(grasp_pose.begin(), 6, pose.begin());

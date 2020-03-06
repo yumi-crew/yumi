@@ -6,8 +6,7 @@
 #include <rws_clients/robot_manager_client.hpp>
 #include <rws_clients/grip_client.hpp>
 
-#include "object_pose_estimator.hpp"
-#include "pose_listener.hpp"
+#include "pose_estimation_manager.hpp"
 
 using namespace std::chrono_literals;
 
@@ -18,8 +17,8 @@ std::shared_ptr<rws_clients::RobotManagerClient> robot_manager;
 std::vector<double> home_l = {0.0, -2.26, 2.35, 0.52, 0.0, 0.52, 0.0};
 std::vector<double> home_r = {0.0, -2.26, -2.35, 0.52, 0.0, 0.52, 0.0};
 
-std::shared_ptr<ObjectPoseEstimator> pose_estimation_manager; // declaration for signal handling (ctrl+c)
-std::shared_ptr<PoseListener> pose_listener;
+std::shared_ptr<PoseEstimationManager> pose_estimation_manager; // declaration for signal handling (ctrl+c)
+
 
 // Ctr+C handler
 void signal_callback_handler(int signum)
@@ -114,9 +113,7 @@ int main(int argc, char **argv)
   }
 
   // zivid + pose_estimation
-  pose_estimation_manager = std::make_shared<ObjectPoseEstimator>("object_pose_estimator");
-
-  pose_listener = std::make_shared<PoseListener>();
+  pose_estimation_manager = std::make_shared<PoseEstimationManager>("pose_estimation_manager");
 
   rclcpp::executors::MultiThreadedExecutor exe;
   exe.add_node(pose_estimation_manager);
@@ -177,7 +174,7 @@ int main(int argc, char **argv)
     if (est_success)
     {
       std::cout << "before get_graspable_chessboard_pose" << std::endl;
-      grasp_pose = pose_listener->get_graspable_chessboard_pose(0.05, false);
+      grasp_pose = pose_estimation_manager->pose_transformer->chessboard_pose_to_base_frame(0.05, false);
 
       std::vector<double> pose; pose.resize(7);
       std::cout << "before copy_n" << std::endl;
