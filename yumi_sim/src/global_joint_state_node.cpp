@@ -26,6 +26,7 @@ void signal_callback_handler(int signum)
 sensor_msgs::msg::JointState combine_joint_states()
 {
   sensor_msgs::msg::JointState combined;
+  combined.header.stamp = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME)->now();
   combined.name = {
       "yumi_joint_1_l", "yumi_joint_2_l", "yumi_joint_7_l", "yumi_joint_3_l",
       "yumi_joint_4_l", "yumi_joint_5_l", "yumi_joint_6_l", 

@@ -100,9 +100,10 @@ def generate_launch_description():
                      node_executable='rviz2',
                      node_name='rviz2',
                      arguments=['-d', rviz_config_dir],
-                     parameters=[robot_description])
+                     parameters=[robot_description],
+                     output='screen')
 
-    # # Publish base link TF
+    # Publish base link TF
     static_tf = Node(package='tf2_ros',
                      node_executable='static_transform_publisher',
                      node_name='static_transform_publisher',
@@ -130,11 +131,17 @@ def generate_launch_description():
              parameters=[{"zivid.camera.num_capture_frames" : 3}],
              output='screen')
 
-    return LaunchDescription([ rviz_node, static_tf,
+    state_publisher = Node(package='robot_state_publisher',
+                            node_executable='robot_state_publisher',
+                            node_name='robot_state_publisher',
+                            output='screen',
+                            arguments=[urdf])
+
+    return LaunchDescription([ zivid_camera, rviz_node, static_tf,
                                yumi_robot_manager, global_joint_state,
                                abb_egm_hardware_sim_left, param_server_left, sg_control_left,
                                abb_egm_hardware_sim_right, param_server_right, sg_control_right,
-                               container, zivid_camera])
+                               container, state_publisher])
    
       
       

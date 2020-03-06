@@ -173,7 +173,7 @@ int main(int argc, char **argv)
     std::cout << "before call_capture_srv" << std::endl;
     cap_success = pose_estimation_manager->call_capture_srv(5s);
     std::cout << "before call_estimate_pose_srv" << std::endl;
-    est_success = pose_estimation_manager->call_estimate_pose_srv(5s);
+    est_success = pose_estimation_manager->call_estimate_pose_srv(10s);
     if (est_success)
     {
       std::cout << "before get_graspable_chessboard_pose" << std::endl;
@@ -184,10 +184,16 @@ int main(int argc, char **argv)
       std::copy_n(grasp_pose.begin(), 7, pose.begin());
       // blocking_cart_p2p_motion_right(pose);
       std::cout << "before pose_to_pose_motion" << std::endl;
-      if(!moveit2.pose_to_pose_motion("right_arm", pose, 2, false, true))
+      if(!moveit2.pose_to_pose_motion("right_arm", pose, 2, true, true))
       {
         std::cout << "pose_to_pose motion failed" << std::endl;
       }
+      sleep(2);
+      if (!moveit2.state_to_state_motion("right_arm", home_r, 2, true))
+      {
+        std::cout << "RIGHT --- state_to_state_motion returned false" << std::endl;
+      }
+
     }
   }
   return 0;

@@ -349,6 +349,24 @@ AbbEgmHardware::initialize_vectors()
     read_op_[i] = false;
     write_op_[i] = true;
   }
+
+
+  // joint_state_handles_.resize(n_joints_);
+  // joint_command_handles_.resize(n_joints_);
+  // read_op_handles_.resize(n_joints_);
+  // write_op_handles_.resize(n_joints_);
+
+  // // Set size and zero intialize
+  // joint_position_.assign(n_joints_, 0.0);
+  // joint_velocity_.assign(n_joints_, 0.0);
+  // joint_effort_.assign(n_joints_, 0.0);
+  // joint_position_command_.assign(n_joints_, 0.0);
+
+  // for (int i = 0; i < n_joints_; ++i)
+  // {
+  //   read_op_[i] = false;
+  //   write_op_[i] = true;
+  // }
   
   return hardware_interface::HW_RET_OK;
 }

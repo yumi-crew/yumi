@@ -155,7 +155,7 @@ int main(int argc, char** argv)
   // {
   //   std::cout << "DUAL --- dual_arm_pose_to_pose_motion returned false" << std::endl;
   //   return -1;
-  
+  // }
 
   
   // moveit2.dual_arm_state_to_state_motion({-0.765, -0.929, 0.711, 0.819, 1.527, 0.025, -0.919}, 
