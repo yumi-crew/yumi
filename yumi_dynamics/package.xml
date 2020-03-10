@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>yumi_dynamics</name>
+  <version>1.0.0</version>
+  <description>Dynamics module for yumi</description>
+  <maintainer email="markubjo@stud.ntnu.no">Markus Bjønnes</maintainer>
+  <license>Apache License 2.0</license>
+  <author email="markubjo@stud.ntnu.no">Markus Bjønnes</author>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>Eigen3</depend>
+  <depend>urdf</depend>
+  <depend>sensor_msgs</depend>
+  <depend>kdl_wrapper</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

@@ -1,17 +1,22 @@
 #pragma once
 
-
 #include <urdf/model.h>
 #include <kdl_wrapper/kdl_wrapper.h>
+#include <eigen3/Eigen/Core>
 
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
+#include <geometry_msgs/msg/wrench_stamped.hpp>
 
-
+namespace yumi_dynamics
+{
 class ExternalForce
 {
 public:
   ExternalForce(urdf::Model);
+  void estimate_TCP_wrench(geometry_msgs::msg::WrenchStamped &wrench_l, geometry_msgs::msg::WrenchStamped &wrench_r);
+  void init();
+
 
 
 private:
@@ -23,12 +28,24 @@ private:
 
   std::vector<float> torques_l;
   std::vector<float> torques_r;
+  std::vector<float> ext_torques_l;
+  std::vector<float> ext_torques_r;
 
-  rclcpp::Subscription<sensor_msgs::msg::JointState> joint_state_sub_;
-  //rclcpp::Subscription<> torque_sub_;
+  Eigen::MatrixXd ext_torques_eig_l;
+  Eigen::MatrixXd ext_torques_eig_r;
+
+  int joints_r;
+  int joints_l;
+
+  KDL::Jacobian jacobian_l;
+  KDL::Jacobian jacobian_r;
+
+  std::shared_ptr<rclcpp::Node> ext_force_node_;
+  std::shared_ptr<rclcpp::Publisher<geometry_msgs::msg::WrenchStamped>> wrench_pub_;
 
   void joint_state_callback(sensor_msgs::msg::JointState::UniquePtr jnt_msg);
-  void torque_callback();
+  void external_torques_callback(sensor_msgs::msg::JointState::UniquePtr jnt_msg);
+  void torques_callback(sensor_msgs::msg::JointState::UniquePtr jnt_msg);
+  void populate_wrench_msg(geometry_msgs::msg::WrenchStamped &wrench_msg, Eigen::VectorXd &wrench);
 };
-
-
+} // namespace yumi_dynamics
