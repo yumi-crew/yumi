@@ -14,10 +14,7 @@ class ExternalForce
 {
 public:
   ExternalForce(urdf::Model);
-  void estimate_TCP_wrench(geometry_msgs::msg::WrenchStamped &wrench_l, geometry_msgs::msg::WrenchStamped &wrench_r);
-  void init();
-
-
+  void estimate_TCP_wrench();//geometry_msgs::msg::WrenchStamped &wrench_l, geometry_msgs::msg::WrenchStamped &wrench_r);
 
 private:
   KdlWrapper kdl_wrapper_;
@@ -40,12 +37,14 @@ private:
   KDL::Jacobian jacobian_l;
   KDL::Jacobian jacobian_r;
 
+  std::shared_ptr<rclcpp::executors::MultiThreadedExecutor> exec_;
   std::shared_ptr<rclcpp::Node> ext_force_node_;
-  std::shared_ptr<rclcpp::Publisher<geometry_msgs::msg::WrenchStamped>> wrench_pub_;
+  std::shared_ptr<rclcpp::Publisher<geometry_msgs::msg::WrenchStamped>> wrench_pub_r_;
+  std::shared_ptr<rclcpp::Publisher<geometry_msgs::msg::WrenchStamped>> wrench_pub_l_;
 
   void joint_state_callback(sensor_msgs::msg::JointState::UniquePtr jnt_msg);
   void external_torques_callback(sensor_msgs::msg::JointState::UniquePtr jnt_msg);
   void torques_callback(sensor_msgs::msg::JointState::UniquePtr jnt_msg);
-  void populate_wrench_msg(geometry_msgs::msg::WrenchStamped &wrench_msg, Eigen::VectorXd &wrench);
+  void populate_wrench_msg(geometry_msgs::msg::WrenchStamped &wrench_msg, Eigen::Matrix<double, 6, 1> &wrench);
 };
 } // namespace yumi_dynamics
