@@ -29,6 +29,7 @@ find_package(pose_estimation REQUIRED)
 find_package(pose_estimation_manager REQUIRED)
 find_package(pose_estimation_interface REQUIRED)
 find_package(zivid_interfaces REQUIRED)
+find_package(Threads REQUIRED)
 
 
 # Sine wave 
@@ -143,6 +144,9 @@ ament_target_dependencies(demo_go_to_chessboard
                           pose_estimation_manager
                           pose_estimation
 )
+add_executable(socket_test src/socket_test.cpp)
+target_link_libraries (socket_test ${CMAKE_THREAD_LIBS_INIT})
+
 
 install(TARGETS 
   sine_wave
@@ -154,6 +158,7 @@ install(TARGETS
   demo_moveit2
   demo_go_to_chessboard
   demo_moveit2_2chessboard
+  socket_test
   DESTINATION lib/${PROJECT_NAME}
 )
 
