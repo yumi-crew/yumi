@@ -9,6 +9,7 @@ ExternalForce::ExternalForce(urdf::Model robot) : kdl_wrapper_(robot)
 
   joints_r = kdl_wrapper_.get_right_arm().getNrOfJoints();
   joints_l = kdl_wrapper_.get_left_arm().getNrOfJoints();
+  
   q_l.resize(joints_l);
   q_r.resize(joints_r);
   q_dot_l.resize(joints_l);
@@ -36,9 +37,6 @@ ExternalForce::ExternalForce(urdf::Model robot) : kdl_wrapper_(robot)
                                                                                this, std::placeholders::_1));
   wrench_pub_l_ = ext_force_node_->create_publisher<geometry_msgs::msg::WrenchStamped>("/l/TCP_wrench", 10);
   wrench_pub_r_ = ext_force_node_->create_publisher<geometry_msgs::msg::WrenchStamped>("/r/TCP_wrench", 10);
-
-  exec_ = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
-  exec_->add_node(ext_force_node_);
 }
 
 void ExternalForce::joint_state_callback(sensor_msgs::msg::JointState::UniquePtr jnt_msg)
@@ -80,7 +78,7 @@ void ExternalForce::estimate_TCP_wrench() //geometry_msgs::msg::WrenchStamped &w
     jacobian_l = kdl_wrapper_.calculate_jacobian("right_arm", q_l);
     jacobian_r = kdl_wrapper_.calculate_jacobian("left_arm", q_r);
   }
-  catch(const std::exception &e)
+  catch (const std::exception &e)
   {
     std::cout << e.what() << std::endl;
   }
@@ -91,15 +89,15 @@ void ExternalForce::estimate_TCP_wrench() //geometry_msgs::msg::WrenchStamped &w
   Eigen::MatrixXd jac_t_pinv_r =
       ((jacobian_r.data * jacobian_r.data.transpose()).inverse() * jacobian_r.data);
 
-  //for testing without actual torque values
-  std::vector<double> test_torques = {1.0, 6.0, 1.0, 0.1, 0.5, 2.0, 5.3};
+  // //for testing without actual torque values
+  // std::vector<double> test_torques = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
-  for (int i = 0; i < std::min(joints_r, joints_l); ++i)
-  {
-    ext_torques_eig_l(i) = test_torques[i];
-    ext_torques_eig_r(i) = test_torques[i];
-  }
-  // end test
+  // for (int i = 0; i < std::min(joints_r, joints_l); ++i)
+  // {
+  //   ext_torques_eig_l(i) = test_torques[i];
+  //   ext_torques_eig_r(i) = test_torques[i];
+  // }
+  // // end test
 
   // calculate the TCP wrenches
   Eigen::Matrix<double, 6, 1> W_l = jac_t_pinv_l * ext_torques_eig_l;
@@ -107,17 +105,17 @@ void ExternalForce::estimate_TCP_wrench() //geometry_msgs::msg::WrenchStamped &w
 
   geometry_msgs::msg::WrenchStamped wrench_l, wrench_r;
 
-  populate_wrench_msg(wrench_l, W_l);
-  populate_wrench_msg(wrench_r, W_r);
+  populate_wrench_msg("TCP_left_arm", wrench_l, W_l);
+  populate_wrench_msg("TCP_right_arm", wrench_r, W_r);
 
   wrench_pub_l_->publish(wrench_l);
   wrench_pub_r_->publish(wrench_r);
-  // rclcpp::spin_some(ext_force_node_);
 }
 
-void ExternalForce::populate_wrench_msg(geometry_msgs::msg::WrenchStamped &wrench_msg, Eigen::Matrix<double, 6, 1> &wrench)
+void ExternalForce::populate_wrench_msg(std::string mech_unit, geometry_msgs::msg::WrenchStamped &wrench_msg, Eigen::Matrix<double, 6, 1> &wrench)
 {
-  // populate header aswell
+  wrench_msg.header.frame_id = mech_unit;
+  wrench_msg.header.stamp = rclcpp::Clock(RCL_ROS_TIME).now();
 
   wrench_msg.wrench.force.x = wrench[0];
   wrench_msg.wrench.force.y = wrench[1];
