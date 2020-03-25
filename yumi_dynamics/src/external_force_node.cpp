@@ -2,8 +2,14 @@
 #include "kdl_wrapper/kdl_wrapper.h"
 #include <urdf/model.h>
 #include <rclcpp/rclcpp.hpp>
-// #include <geometry_msgs/msg/wrench_stamped.hpp>
+#include <future>
+
 #include <unistd.h>
+
+void spin(std::shared_ptr<rclcpp::executors::MultiThreadedExecutor> exe)
+{
+  exe->spin();
+}
 
 int main(int argc, char *argv[])
 {
@@ -27,7 +33,6 @@ int main(int argc, char *argv[])
   }
 
   std::shared_ptr<yumi_dynamics::ExternalForce> ext_F = std::make_shared<yumi_dynamics::ExternalForce>(robot_model);
-
 
   rclcpp::WallRate loop_rate(250);
   while (1)

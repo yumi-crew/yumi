@@ -11,8 +11,10 @@
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <angles/angles.h>
 
-std::array<double, 8> recieved_joint_state_l{0, 0, 0, 0, 0, 0, 0, 0.02};
-std::array<double, 8> recieved_joint_state_r{0, 0, 0, 0, 0, 0, 0, 0.02};
+std::array<double, 8> recieved_joint_pos_l{0, 0, 0, 0, 0, 0, 0, 0.02};
+std::array<double, 8> recieved_joint_pos_r{0, 0, 0, 0, 0, 0, 0, 0.02};
+std::array<double, 8> recieved_joint_vel_l{0, 0, 0, 0, 0, 0, 0, 0};
+std::array<double, 8> recieved_joint_vel_r{0, 0, 0, 0, 0, 0, 0, 0};
 
 void signal_callback_handler(int signum)
 {
@@ -28,24 +30,39 @@ sensor_msgs::msg::JointState combine_joint_states()
   sensor_msgs::msg::JointState combined;
   combined.header.stamp = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME)->now();
   combined.name = {
-      "yumi_joint_1_l", "yumi_joint_2_l", "yumi_joint_7_l", "yumi_joint_3_l",
-      "yumi_joint_4_l", "yumi_joint_5_l", "yumi_joint_6_l", 
-      "yumi_joint_1_r", "yumi_joint_2_r", "yumi_joint_7_r", "yumi_joint_3_r", 
-      "yumi_joint_4_r", "yumi_joint_5_r", "yumi_joint_6_r", 
-      "gripper_l_joint", "gripper_r_joint",
-      };
+      "yumi_joint_1_l",
+      "yumi_joint_2_l",
+      "yumi_joint_7_l",
+      "yumi_joint_3_l",
+      "yumi_joint_4_l",
+      "yumi_joint_5_l",
+      "yumi_joint_6_l",
+      "yumi_joint_1_r",
+      "yumi_joint_2_r",
+      "yumi_joint_7_r",
+      "yumi_joint_3_r",
+      "yumi_joint_4_r",
+      "yumi_joint_5_r",
+      "yumi_joint_6_r",
+      "gripper_l_joint",
+      "gripper_r_joint",
+  };
 
   for (int i = 0; i < 7; i++)
   {
-    combined.position.push_back(recieved_joint_state_l[i]);
+    combined.position.push_back(recieved_joint_pos_l[i]);
+    combined.velocity.push_back(recieved_joint_vel_l[i]);
   }
   for (int i = 0; i < 7; i++)
   {
-    combined.position.push_back(recieved_joint_state_r[i]);
+    combined.position.push_back(recieved_joint_pos_r[i]);
+    combined.velocity.push_back(recieved_joint_vel_r[i]);
   }
-  
-  combined.position.push_back(recieved_joint_state_l[7]);
-  combined.position.push_back(recieved_joint_state_r[7]);
+
+  combined.position.push_back(recieved_joint_pos_l[7]);
+  combined.position.push_back(recieved_joint_pos_r[7]);
+  combined.velocity.push_back(recieved_joint_vel_l[7]);
+  combined.velocity.push_back(recieved_joint_vel_r[7]);
   return combined;
 }
 
@@ -54,7 +71,8 @@ void callback_l(sensor_msgs::msg::JointState::UniquePtr msg)
 {
   for (int i = 0; i < 7; i++)
   {
-    recieved_joint_state_l[i] = msg->position[i];
+    recieved_joint_pos_l[i] = msg->position[i];
+    recieved_joint_vel_l[i] = msg->velocity[i];
   }
 }
 
@@ -62,7 +80,8 @@ void callback_r(sensor_msgs::msg::JointState::UniquePtr msg)
 {
   for (int i = 0; i < 7; i++)
   {
-    recieved_joint_state_r[i] = msg->position[i];
+    recieved_joint_pos_r[i] = msg->position[i];
+    recieved_joint_vel_r[i] = msg->velocity[i];
   }
 }
 
