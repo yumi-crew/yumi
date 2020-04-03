@@ -140,7 +140,7 @@ int main(int argc, char **argv)
       "pose_estimation", lifecycle_msgs::msg::Transition::TRANSITION_ACTIVATE, 5s);
   auto state5 = pose_estimation_manager->get_state("zivid_camera", 3s);
   auto state6 = pose_estimation_manager->get_state("pose_estimation", 3s);
-
+  pose_estimation_manager->call_init_surface_match_srv("/home/markus/Documents/models_ply/", 50s);
   sleep(4); // wait to ensure joint_state_controller is publishing the joint states
   std::cout << "before moveit2.launch_planning_scene()" << std::endl;
   moveit2.launch_planning_scene();
@@ -170,7 +170,7 @@ int main(int argc, char **argv)
     std::cout << "before call_capture_srv" << std::endl;
     cap_success = pose_estimation_manager->call_capture_srv(5s);
     std::cout << "before call_estimate_pose_srv" << std::endl;
-    est_success = pose_estimation_manager->call_estimate_pose_srv(10s);
+    est_success = pose_estimation_manager->call_estimate_pose_srv("chessboard", 10s);
     if (est_success)
     {
       std::cout << "before get_graspable_chessboard_pose" << std::endl;

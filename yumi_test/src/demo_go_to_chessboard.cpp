@@ -401,7 +401,7 @@ int main(int argc, char *argv[])
   while (1)
   {
     cap_success = pose_estimation_manager->call_capture_srv(10s);
-    est_success = pose_estimation_manager->call_estimate_pose_srv(20s);
+    est_success = pose_estimation_manager->call_estimate_pose_srv("chessboard", 20s);
     if (est_success)
     {
       auto grasp_pose = pose_estimation_manager->pose_transformer->chessboard_pose_to_base_frame(0.05, true);

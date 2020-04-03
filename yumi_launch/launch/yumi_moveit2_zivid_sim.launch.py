@@ -110,7 +110,6 @@ def generate_launch_description():
                      arguments=['0.0', '0.0', '0.0', '0.0', '0.0', '0.0', 'yumi_base_link', 'yumi_body'])
     
 
-    """Generate launch description with multiple components."""
     container = ComposableNodeContainer(
         node_name='pose_estimation_container',
         node_namespace='',
