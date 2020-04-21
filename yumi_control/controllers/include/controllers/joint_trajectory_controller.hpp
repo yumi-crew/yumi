@@ -13,6 +13,7 @@
 #include <controllers/visibility_control.h>
 #include "trajectory_msgs/msg/joint_trajectory.hpp"
 #include "trajectory_msgs/msg/joint_trajectory_point.hpp"
+#include <std_msgs/msg/bool.hpp>
 
 
 
@@ -73,6 +74,7 @@ private:
 
   bool subscriber_is_active_ = false;
   rclcpp::Subscription<trajectory_msgs::msg::JointTrajectory>::SharedPtr joint_command_subscriber_ = nullptr;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr stop_command_subscriber_;
 
   TrajectoryPointConstIter prev_traj_point_ptr_;
   std::shared_ptr<Trajectory> * traj_point_active_ptr_ = nullptr;
@@ -81,10 +83,13 @@ private:
   std::shared_ptr<trajectory_msgs::msg::JointTrajectory> traj_msg_home_ptr_ = nullptr;
 
   bool is_halted = false;
+  bool is_stopped = false;
+  bool new_trajectory = false;
 
   bool reset();
   void set_op_mode(const hardware_interface::OperationMode & mode);
   void halt();
+  void stop_command_callback(std_msgs::msg::Bool::UniquePtr msg);
 };
 
 }  // namespace ros_controllers

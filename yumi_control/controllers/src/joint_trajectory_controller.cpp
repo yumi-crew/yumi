@@ -22,10 +22,6 @@
   Trajectories are specified as a set of waypoints to be reached at specific time instants, 
   which the controller attempts to execute as well as the mechanism allows. Waypoints consist of positions, 
   and optionally velocities and accelerations.
-
-
-
-
 */
 
 namespace ros_controllers
@@ -53,14 +49,14 @@ controller_interface::controller_interface_ret_t
 JointTrajectoryController::init(std::weak_ptr<hardware_interface::RobotHardware> robot_hardware,
                                 const std::string & controller_name)
 {
-  // initialize lifecycle node
+  // Initialize lifecycle node
   auto ret = ControllerInterface::init(robot_hardware, controller_name);
   if (ret != CONTROLLER_INTERFACE_RET_SUCCESS) 
   {
     return ret;
   }
 
-  // with the lifecycle node being initialized, we can declare parameters
+  // With the lifecycle node initialized, we can declare parameters
   lifecycle_node_->declare_parameter<std::vector<std::string>>("joints", joint_names_);
   lifecycle_node_->declare_parameter<std::vector<std::string>>("write_op_modes", write_op_names_);
 
@@ -80,7 +76,12 @@ JointTrajectoryController::update()
     return CONTROLLER_INTERFACE_RET_SUCCESS;
   }
 
-  // when no traj msg has been received yet
+  if(is_stopped || !new_trajectory)
+  {
+    return CONTROLLER_INTERFACE_RET_SUCCESS;
+  }
+
+  // When no traj msg has been received yet
   if (!traj_point_active_ptr_ || (*traj_point_active_ptr_)->is_empty()) 
   {
     return CONTROLLER_INTERFACE_RET_SUCCESS;
@@ -218,6 +219,7 @@ JointTrajectoryController::on_configure(const rclcpp_lifecycle::State & previous
       // always replace old msg with new one for now
       if (subscriber_is_active_) 
       {
+        new_trajectory = true;
         traj_external_point_ptr_->update(msg);
       }
     };
@@ -229,6 +231,10 @@ JointTrajectoryController::on_configure(const rclcpp_lifecycle::State & previous
   // will be auto namespaced via the nodes namespace
   joint_command_subscriber_ = lifecycle_node_->create_subscription<trajectory_msgs::msg::JointTrajectory>(
     "~/joint_trajectory", rclcpp::SystemDefaultsQoS(), callback);
+  
+  stop_command_subscriber_ = lifecycle_node_->create_subscription<std_msgs::msg::Bool>("~/arm_stop", 
+    rclcpp::SystemDefaultsQoS(), 
+    std::bind(&JointTrajectoryController::stop_command_callback, this, std::placeholders::_1));
 
   // TODO(karsten1987): no lifecyle for subscriber yet
   // joint_command_subscriber_->on_activate();
@@ -313,8 +319,6 @@ rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 JointTrajectoryController::on_shutdown(const rclcpp_lifecycle::State & previous_state)
 {
   (void) previous_state;
-  // TODO(karsten1987): what to do?
-
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
@@ -335,6 +339,22 @@ JointTrajectoryController::halt()
     registered_joint_cmd_handles_[index]->set_cmd(registered_joint_state_handles_[index]->get_position());
   }
   set_op_mode(hardware_interface::OperationMode::ACTIVE);
+}
+
+void
+JointTrajectoryController::stop_command_callback(std_msgs::msg::Bool::UniquePtr msg)
+{
+  if(msg->data == true) 
+  {
+    is_stopped = true;
+    traj_point_active_ptr_ = nullptr;
+    new_trajectory = false;
+  }
+  else if(msg->data == false)
+  {
+    traj_point_active_ptr_ = &traj_external_point_ptr_;
+    is_stopped = false;
+  }
 }
 
 }  // namespace ros_controllers

@@ -21,14 +21,12 @@
   <depend>urdf</depend>
   <depend>orocos_kdl</depend>
   <depend>moveit2_wrapper</depend>
+  <depend>motion_coordinator</depend>
 
   <depend>pose_estimation_manager</depend>
   <depend>pose_estimation</depend>
   <depend>pose_estimation_interface</depend>
-
-
-
-  
+ 
   <export>
     <build_type>ament_cmake</build_type>
   </export>
