@@ -15,6 +15,7 @@
 #pragma once
 
 #include <moveit2_wrapper/moveit2_wrapper.hpp>
+#include <moveit2_wrapper/table_monitor.hpp>
 #include <rws_clients/robot_manager_client.hpp>
 #include <rws_clients/grip_client.hpp>
 
@@ -29,7 +30,8 @@ public:
   /* Initialize the MotionCoordinator. */
   bool init();
 
-  /** Activates YuMi and launches the planning scene. 
+  /** 
+   * Activates YuMi and launches the planning scene. 
    * 
    * @return true if YuMi is ready to be operated.
    */
@@ -39,27 +41,60 @@ public:
   void terminate_egm_session();
 
  /**
-   * Moves the last_link of the planning component to the desired pose.
-   * 
-   * @param pose desired pose. [quaternions]
-   * @param eulerzyx flag indicating if ZYX-Euler angles are used instead for quaternions.
-   * @param num_retries number of allowed attempts at planning a trajectory.
-   * @param visualize flag indicating whether the generated trajectory should be visualized before execution.
-   *                  Visualization is only available for blocking motion.
-   * @param blocking flag indicating if the function call should be blocking.
-   * @param replan flag indicating whether the motion should replan upon changes in the planning scene during motion.
-   *               Replanning is only available for blocking motion.
-   * 
-   * @return true if the planner was able to plan to the goal.
-   */
+  * Moves the registered end-effector link of the planning component to the desired pose.
+  * 
+  * @param pose desired pose. [quaternions]
+  * @param eulerzyx flag indicating if ZYX-Euler angles [degrees] are used instead for quaternions.
+  * @param num_retries number of allowed attempts at planning a trajectory.
+  * @param visualize flag indicating whether the generated trajectory should be visualized before execution.
+  *                  Visualization is only available when no other planning_component is in motion.
+  * @param blocking flag indicating if the function call should be blocking.
+  * @param replan flag indicating whether the motion should replan upon changes in the planning scene during motion.
+  *               Replanning is only available for blocking motion.
+  */
   void move_to_pose(std::string planning_component, std::vector<double> pose, bool eulerzyx=false, int num_retries=0, 
                     bool visualize=false, bool blocking=true, bool replan=false);
 
+  /* (IN-CONSTRUCTION) Moves the last link of the planning component to hover-point of a registered object. */
+  void move_to_object(std::string planning_component, std::string object_id, bool eulerzyx=false, int num_retries=0, 
+                      bool visualize=false, bool blocking=true, bool replan=false);
+  
+  /** 
+   * Moves the registered end-effector link of the planning component in a straight-line in cartesian space to the 
+   * desired pose. 
+   * 
+   * @param pose desired pose. [quaternions]
+   * @param eulerzyx flag indicating if ZYX-Euler angles [degrees] are used instead for quaternions.
+   * @param visualize flag indicating whether the generated trajectory should be visualized before execution.
+   *                  Visualization is only available when no other planning_component is in motion.
+   * @param blocking flag indicating if the function call should be blocking.
+   * @param speed_scaling scaling factor used to scale the velocity of the trajectory.
+   * @param percentage desired 'linearity' of the computed cartesian straight-line path, 1 indicate a perfectly
+   *                   straight line.
+   */
+  void linear_move_to_pose(std::string planning_component, std::vector<double> pose, bool eulerzyx, 
+                           bool visualization=false, bool blocking=true, double speed_scaling=1, double percentage=1);
+
+  /** 
+   * Moves the planning component to its registered home configuration. 
+   * 
+   * @param num_retries number of allowed attempts at planning a trajectory.
+   * @param visualize flag indicating whether the generated trajectory should be visualized before execution.
+   *                  Visualization is only available when no other planning_component is in motion.
+   * @param blocking flag indicating if the function call should be blocking.
+   * @param replan flag indicating whether the motion should replan upon changes in the planning scene during motion.
+   *               Replanning is only available for blocking motion.
+   */
+  void move_to_home(std::string planning_component, int num_retries=0, bool visualize=false, bool blocking=true,
+                    bool replan=false);
+  
   /* Randomly side-shifts the bin. Returns the new position. */
   std::vector<double> random_move_bin(std::vector<double> old_pos);
 
   /* Return whether a planning_component is moving. */
   bool planning_component_in_motion(std::string planning_component);
+
+  std::vector<double> find_object(std::string object_id);
 
   std::shared_ptr<rclcpp::Node> get_node() { return node_; };
 
@@ -70,13 +105,14 @@ private:
   std::shared_ptr<rws_clients::GripClient> left_gripper_;
   std::shared_ptr<rws_clients::GripClient> right_gripper_;
   std::shared_ptr<moveit2_wrapper::Moveit2Wrapper> moveit2_wrapper_;
+  std::shared_ptr<moveit2_wrapper::TableMonitor> table_monitor_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_subscription_;
 
   bool robot_ready_ = false;
   double replan_delay_ = 1.0;
+  double speed_scale_ = 0.1;
+  double acc_scale_ = 0.1;
   std::mutex should_replan_mutex_;
-  std::vector<double> home_l = {0.0, -2.26, 2.35, 0.52, 0.0, 0.52, 0.0};
-  std::vector<double> home_r = {0.0, -2.26, -2.35, 0.52, 0.0, 0.52, 0.0};
   
   /* Stops the trajectory controller of a registered planning_component. */
   void stop_motion(std::string planning_component);

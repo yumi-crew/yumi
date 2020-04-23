@@ -53,7 +53,14 @@ bool MotionCoordinator::init()
   }
   if(!moveit2_wrapper_->init())
   {
-    RCLCPP_ERROR(node_->get_logger(), "Moveit2Wrapper failed to initialize.");
+    RCLCPP_ERROR(node_->get_logger(), "moveit2_wrapper failed to initialize.");
+    return false;
+  }
+
+  table_monitor_ = std::make_shared<moveit2_wrapper::TableMonitor>(moveit2_wrapper_->get_moveit_cpp());
+  if(!table_monitor_->init())
+  {
+    RCLCPP_ERROR(node_->get_logger(), "table_monitor failed to initialize.");
     return false;
   } 
   return true;
@@ -127,7 +134,7 @@ void MotionCoordinator::allow_motion(std::string planning_component)
 void MotionCoordinator::move_to_pose(std::string planning_component, std::vector<double> pose, bool eulerzyx, 
                                      int num_retries, bool visualize, bool blocking, bool replan)
 {
-  //std::cout << "move_to_pose() called for planning component '" << planning_component << "'" <<  std::endl;
+  std::cout << "move_to_pose() called for planning component '" << planning_component << "'" <<  std::endl;
 
   if(replan && !blocking) 
   { 
@@ -135,21 +142,24 @@ void MotionCoordinator::move_to_pose(std::string planning_component, std::vector
     return;
   }
   auto planning_component_hash = moveit2_wrapper_->get_planning_components_hash();
+  std::string ee_link = planning_component_hash->at(planning_component).ee_link;
   
   // If it should replan upon changed planning_scene
   if(replan)
   {
     // Run initial motion non-blocking.
-    moveit2_wrapper_->pose_to_pose_motion(planning_component, pose, eulerzyx, num_retries, visualize, false);
+    moveit2_wrapper_->pose_to_pose_motion(planning_component, ee_link, pose,eulerzyx, num_retries, visualize, false, 
+                                          speed_scale_);
 
-    while(!moveit2_wrapper_->is_pose_reached(planning_component, pose, eulerzyx))
+    while(!moveit2_wrapper_->pose_reached(planning_component, ee_link, pose, eulerzyx))
     {
       if(planning_component_hash->at(planning_component).should_replan)
       {
         stop_motion(planning_component);
         sleep(replan_delay_);
         allow_motion(planning_component);
-        moveit2_wrapper_->pose_to_pose_motion(planning_component, pose, eulerzyx, num_retries, visualize, false);
+        moveit2_wrapper_->pose_to_pose_motion(planning_component, ee_link, pose, eulerzyx, num_retries, visualize, 
+                                              false, speed_scale_);
         should_replan_mutex_.lock();
         planning_component_hash->at(planning_component).should_replan = false; 
         should_replan_mutex_.unlock();
@@ -161,7 +171,111 @@ void MotionCoordinator::move_to_pose(std::string planning_component, std::vector
   }
   else
   {
-    moveit2_wrapper_->pose_to_pose_motion(planning_component, pose, eulerzyx, num_retries, visualize, blocking);
+    moveit2_wrapper_->pose_to_pose_motion(planning_component, ee_link, pose, eulerzyx, num_retries, visualize, blocking,
+                                          speed_scale_);
+  }
+}
+
+
+void MotionCoordinator::move_to_object(std::string planning_component, std::string object_id, bool eulerzyx, 
+                                       int num_retries, bool visualize, bool blocking, bool replan)
+{
+  std::cout << "move_to_object() called for planning component '" << planning_component << "'" <<  std::endl;
+
+  std::vector<double> pose; //remove
+  if(replan && !blocking) 
+  { 
+    RCLCPP_WARN_STREAM(node_->get_logger(), "Replanning is only available for blocking motion."); 
+    return;
+  }
+  auto planning_component_hash = moveit2_wrapper_->get_planning_components_hash();
+  std::string ee_link = planning_component_hash->at(planning_component).ee_link;
+  
+  // If it should replan upon changed planning_scene
+  if(replan)
+  {
+    // Run initial motion non-blocking.
+    moveit2_wrapper_->pose_to_pose_motion(planning_component, ee_link, pose, eulerzyx, num_retries, visualize, false, 
+                                          speed_scale_);
+
+    while(!moveit2_wrapper_->pose_reached(planning_component, ee_link, pose, eulerzyx))
+    {
+      if(planning_component_hash->at(planning_component).should_replan)
+      {
+        stop_motion(planning_component);
+        sleep(replan_delay_);
+        allow_motion(planning_component);
+        moveit2_wrapper_->pose_to_pose_motion(planning_component, ee_link, pose, eulerzyx, num_retries, visualize, 
+                                              false, speed_scale_);
+        should_replan_mutex_.lock();
+        planning_component_hash->at(planning_component).should_replan = false; 
+        should_replan_mutex_.unlock();
+      }
+    }
+    RCLCPP_INFO_STREAM(node_->get_logger(), "Goal pose of planning component '" << planning_component 
+      << "' considered reached.");
+    planning_component_hash->at(planning_component).in_motion = false;
+  }
+  else
+  {
+    moveit2_wrapper_->pose_to_pose_motion(planning_component, ee_link, pose, eulerzyx, num_retries, visualize, blocking,
+                                          speed_scale_);
+  }
+}
+
+
+void MotionCoordinator::linear_move_to_pose(std::string planning_component, std::vector<double> pose, bool eulerzyx, 
+                                            bool visualization, bool blocking, double speed_scaling, double percentage)
+{
+  std::cout << "linear_move_to_pose() called for planning component '" << planning_component << "'" <<  std::endl;
+
+  auto planning_components_hash = moveit2_wrapper_->get_planning_components_hash();
+  std::string link = planning_components_hash->at(planning_component).ee_link;
+ 
+  moveit2_wrapper_->cartesian_pose_to_pose_motion(planning_component, link, pose, eulerzyx, visualization, 
+                                                  blocking, percentage, speed_scaling, 1 );
+}
+
+
+void MotionCoordinator::move_to_home(std::string planning_component, int num_retries, bool visualize, bool blocking, 
+                                     bool replan)
+{
+  std::cout << "move_to_home() called for planning component '" << planning_component << "'" <<  std::endl;
+
+  if(replan && !blocking) 
+  { 
+    RCLCPP_WARN_STREAM(node_->get_logger(), "Replanning is only available for blocking motion."); 
+    return;
+  }
+  auto planning_component_hash = moveit2_wrapper_->get_planning_components_hash();
+  std::vector<double> home =  planning_component_hash->at(planning_component).home_configuration;
+  
+  // If it should replan upon changed planning_scene
+  if(replan)
+  {
+    // Run initial motion non-blocking.
+    moveit2_wrapper_->state_to_state_motion(planning_component, home, num_retries, visualize, false, speed_scale_);
+
+    while(!moveit2_wrapper_->state_reached(planning_component, home))
+    {
+      if(planning_component_hash->at(planning_component).should_replan)
+      {
+        stop_motion(planning_component);
+        sleep(replan_delay_);
+        allow_motion(planning_component);
+        moveit2_wrapper_->state_to_state_motion(planning_component, home, num_retries, visualize, false, speed_scale_);
+        should_replan_mutex_.lock();
+        planning_component_hash->at(planning_component).should_replan = false; 
+        should_replan_mutex_.unlock();
+      }
+    }
+    RCLCPP_INFO_STREAM(node_->get_logger(), "Goal state of planning component '" << planning_component 
+      << "' considered reached.");
+    planning_component_hash->at(planning_component).in_motion = false;
+  }
+  else
+  {
+    moveit2_wrapper_->state_to_state_motion(planning_component, home, num_retries, visualize, blocking, speed_scale_);
   }
 }
 
@@ -197,10 +311,16 @@ void MotionCoordinator::joint_state_callback(sensor_msgs::msg::JointState::Uniqu
   if(counter != 14) robot_ready_ = true;
 }
 
+
 bool MotionCoordinator::planning_component_in_motion(std::string planning_component)
 {
   auto planning_component_hash = moveit2_wrapper_->get_planning_components_hash();
   return planning_component_hash->at(planning_component).in_motion;
+}
+
+
+std::vector<double> MotionCoordinator::find_object(std::string object_id)
+{
 }
 
 

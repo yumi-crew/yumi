@@ -96,8 +96,8 @@ int main(int argc, char** argv)
   moveit2.launch_planning_scene();
   
 
-  moveit2.pose_to_pose_motion("left_arm",  {0.426,  0.137, 0.415, -160.89, 30.32, -113.20}, 2, true, false, false); // Euler Angles
-  moveit2.pose_to_pose_motion("right_arm", {0.464, -0.110, 0.469, -21.96, -19.29, -113.49}, 2, false, false, true); // Euler Angles
+  moveit2.pose_to_pose_motion("left_arm",  "gripper_l_base", {0.426,  0.137, 0.415, -160.89, 30.32, -113.20}, 2, true, false, false); // Euler Angles
+  moveit2.pose_to_pose_motion("right_arm", "gripper_r_base", {0.464, -0.110, 0.469, -21.96, -19.29, -113.49}, 2, false, false, true); // Euler Angles
 
   // // Return home
   // moveit2.state_to_state_motion("left_arm", home_l, 2);
