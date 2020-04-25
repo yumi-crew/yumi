@@ -62,7 +62,9 @@ bool MotionCoordinator::init()
   {
     RCLCPP_ERROR(node_->get_logger(), "table_monitor failed to initialize.");
     return false;
-  } 
+  }
+
+  std::cout << "init successfully " << std::endl;
   return true;
 }
 
@@ -84,6 +86,12 @@ bool MotionCoordinator::activate()
   // Subscription no longer needed.
   joint_state_subscription_.reset(); 
   moveit2_wrapper_->launch_planning_scene();
+  
+  if(!table_monitor_->activate())
+  {
+    RCLCPP_ERROR(node_->get_logger(), "table_monitor failed to activate. ");
+    return false;
+  }
   return true;
 }
 
@@ -148,21 +156,19 @@ void MotionCoordinator::move_to_pose(std::string planning_component, std::vector
   if(replan)
   {
     // Run initial motion non-blocking.
-    moveit2_wrapper_->pose_to_pose_motion(planning_component, ee_link, pose,eulerzyx, num_retries, visualize, false, 
-                                          speed_scale_);
+    moveit2_wrapper_->pose_to_pose_motion(planning_component, ee_link, pose,eulerzyx, num_retries, visualize, replan, 
+                                          false, speed_scale_);
 
     while(!moveit2_wrapper_->pose_reached(planning_component, ee_link, pose, eulerzyx))
     {
       if(planning_component_hash->at(planning_component).should_replan)
       {
-        stop_motion(planning_component);
-        sleep(replan_delay_);
-        allow_motion(planning_component);
-        moveit2_wrapper_->pose_to_pose_motion(planning_component, ee_link, pose, eulerzyx, num_retries, visualize, 
-                                              false, speed_scale_);
+        stop(planning_component);
         should_replan_mutex_.lock();
         planning_component_hash->at(planning_component).should_replan = false; 
         should_replan_mutex_.unlock();
+        moveit2_wrapper_->pose_to_pose_motion(planning_component, ee_link, pose, eulerzyx, num_retries, visualize, 
+                                              replan, false, speed_scale_);
       }
     }
     RCLCPP_INFO_STREAM(node_->get_logger(), "Goal pose of planning component '" << planning_component 
@@ -171,18 +177,17 @@ void MotionCoordinator::move_to_pose(std::string planning_component, std::vector
   }
   else
   {
-    moveit2_wrapper_->pose_to_pose_motion(planning_component, ee_link, pose, eulerzyx, num_retries, visualize, blocking,
-                                          speed_scale_);
+    moveit2_wrapper_->pose_to_pose_motion(planning_component, ee_link, pose, eulerzyx, num_retries, visualize, replan, 
+                                          blocking, speed_scale_);
   }
 }
 
 
-void MotionCoordinator::move_to_object(std::string planning_component, std::string object_id, bool eulerzyx, 
+void MotionCoordinator::move_to_object(std::string planning_component, std::string object_id, double hover_height,  
                                        int num_retries, bool visualize, bool blocking, bool replan)
 {
   std::cout << "move_to_object() called for planning component '" << planning_component << "'" <<  std::endl;
 
-  std::vector<double> pose; //remove
   if(replan && !blocking) 
   { 
     RCLCPP_WARN_STREAM(node_->get_logger(), "Replanning is only available for blocking motion."); 
@@ -190,26 +195,46 @@ void MotionCoordinator::move_to_object(std::string planning_component, std::stri
   }
   auto planning_component_hash = moveit2_wrapper_->get_planning_components_hash();
   std::string ee_link = planning_component_hash->at(planning_component).ee_link;
+
+  std::vector<double> pose = table_monitor_->find_object(object_id); 
+  if(pose.empty())
+  { 
+    stop(planning_component);
+    RCLCPP_WARN_STREAM(node_->get_logger(), "Can't find object, moving to home.");
+    move_to_home(planning_component, num_retries, true, blocking, false);
+    return; 
+  }
+  else apply_gripper_transform(pose, object_id, hover_height); 
   
   // If it should replan upon changed planning_scene
   if(replan)
   {
     // Run initial motion non-blocking.
-    moveit2_wrapper_->pose_to_pose_motion(planning_component, ee_link, pose, eulerzyx, num_retries, visualize, false, 
-                                          speed_scale_);
+    moveit2_wrapper_->pose_to_pose_motion(planning_component, ee_link, pose, false, num_retries, visualize, replan, 
+                                          false, speed_scale_);
 
-    while(!moveit2_wrapper_->pose_reached(planning_component, ee_link, pose, eulerzyx))
+    while(!moveit2_wrapper_->pose_reached(planning_component, ee_link, pose, false))
     {
       if(planning_component_hash->at(planning_component).should_replan)
       {
-        stop_motion(planning_component);
-        sleep(replan_delay_);
-        allow_motion(planning_component);
-        moveit2_wrapper_->pose_to_pose_motion(planning_component, ee_link, pose, eulerzyx, num_retries, visualize, 
-                                              false, speed_scale_);
+        stop(planning_component);
+        pose = table_monitor_->find_object(object_id); 
+
+        if(pose.empty())
+        { 
+          stop(planning_component);
+          RCLCPP_WARN_STREAM(node_->get_logger(), "Can't find object, moving to home.");
+          move_to_home(planning_component, num_retries, true, blocking, false);
+          return; 
+        }
+        else apply_gripper_transform(pose, object_id, hover_height);
+
         should_replan_mutex_.lock();
         planning_component_hash->at(planning_component).should_replan = false; 
         should_replan_mutex_.unlock();
+        moveit2_wrapper_->pose_to_pose_motion(planning_component, ee_link, pose, false, num_retries, visualize, replan, 
+                                              false, speed_scale_);
+        
       }
     }
     RCLCPP_INFO_STREAM(node_->get_logger(), "Goal pose of planning component '" << planning_component 
@@ -218,8 +243,8 @@ void MotionCoordinator::move_to_object(std::string planning_component, std::stri
   }
   else
   {
-    moveit2_wrapper_->pose_to_pose_motion(planning_component, ee_link, pose, eulerzyx, num_retries, visualize, blocking,
-                                          speed_scale_);
+    moveit2_wrapper_->pose_to_pose_motion(planning_component, ee_link, pose, false, num_retries, visualize, replan, 
+                                          blocking, speed_scale_);
   }
 }
 
@@ -232,7 +257,7 @@ void MotionCoordinator::linear_move_to_pose(std::string planning_component, std:
   auto planning_components_hash = moveit2_wrapper_->get_planning_components_hash();
   std::string link = planning_components_hash->at(planning_component).ee_link;
  
-  moveit2_wrapper_->cartesian_pose_to_pose_motion(planning_component, link, pose, eulerzyx, visualization, 
+  moveit2_wrapper_->cartesian_pose_to_pose_motion(planning_component, link, pose, eulerzyx, visualization, false, 
                                                   blocking, percentage, speed_scaling, 1 );
 }
 
@@ -254,16 +279,16 @@ void MotionCoordinator::move_to_home(std::string planning_component, int num_ret
   if(replan)
   {
     // Run initial motion non-blocking.
-    moveit2_wrapper_->state_to_state_motion(planning_component, home, num_retries, visualize, false, speed_scale_);
+    moveit2_wrapper_->state_to_state_motion(planning_component, home, num_retries, visualize, replan, false, 
+                                            speed_scale_);
 
     while(!moveit2_wrapper_->state_reached(planning_component, home))
     {
       if(planning_component_hash->at(planning_component).should_replan)
       {
-        stop_motion(planning_component);
-        sleep(replan_delay_);
-        allow_motion(planning_component);
-        moveit2_wrapper_->state_to_state_motion(planning_component, home, num_retries, visualize, false, speed_scale_);
+        stop(planning_component);
+        moveit2_wrapper_->state_to_state_motion(planning_component, home, num_retries, visualize, replan, false, 
+                                                speed_scale_);
         should_replan_mutex_.lock();
         planning_component_hash->at(planning_component).should_replan = false; 
         should_replan_mutex_.unlock();
@@ -275,7 +300,8 @@ void MotionCoordinator::move_to_home(std::string planning_component, int num_ret
   }
   else
   {
-    moveit2_wrapper_->state_to_state_motion(planning_component, home, num_retries, visualize, blocking, speed_scale_);
+    moveit2_wrapper_->state_to_state_motion(planning_component, home, num_retries, visualize, replan, blocking, 
+                                            speed_scale_);
   }
 }
 
@@ -287,9 +313,9 @@ std::vector<double> MotionCoordinator::random_move_bin(std::vector<double> old_p
   double side_shift = 0;
   if(rnum>10) side_shift += rnum;
   else side_shift -= rnum;
+  std::vector<double> new_pose{old_pos[0], old_pos[1]+side_shift/100, old_pos[2], 0, 0, 0, 1};
 
-  std::vector<double> new_pos{old_pos[0], old_pos[1]+side_shift/100, old_pos[2]};
-  moveit2_wrapper_->move_collison_object("bin", new_pos);
+  table_monitor_->move_object("bin", new_pose);
 
   auto planning_components_hash = moveit2_wrapper_->get_planning_components_hash();
   should_replan_mutex_.lock();
@@ -297,7 +323,20 @@ std::vector<double> MotionCoordinator::random_move_bin(std::vector<double> old_p
   planning_components_hash->at("right_arm").should_replan = true;
   planning_components_hash->at("both_arms").should_replan = true;
   should_replan_mutex_.unlock();
-  return new_pos;
+  return {new_pose[0], new_pose[1], new_pose[2]};
+}
+
+
+void MotionCoordinator::remove_object(std::string object_id)
+{ 
+  table_monitor_->remove_object_from_scene(object_id, true); 
+
+  auto planning_components_hash = moveit2_wrapper_->get_planning_components_hash();
+  should_replan_mutex_.lock();
+  planning_components_hash->at("left_arm").should_replan = true;
+  planning_components_hash->at("right_arm").should_replan = true;
+  planning_components_hash->at("both_arms").should_replan = true;
+  should_replan_mutex_.unlock();
 }
 
 
@@ -319,9 +358,24 @@ bool MotionCoordinator::planning_component_in_motion(std::string planning_compon
 }
 
 
-std::vector<double> MotionCoordinator::find_object(std::string object_id)
+void MotionCoordinator::apply_gripper_transform(std::vector<double>& pose, std::string object_id, double hover_height)
 {
+  KDL::Rotation rot = KDL::Rotation().Quaternion(pose[3], pose[4], pose[5], pose[6]);
+  rot.DoRotX(3.14);
+  rot.GetQuaternion(pose[3], pose[4], pose[5], pose[6]);
+
+  std::vector<double> dim = table_monitor_->get_object_dimensions(object_id);
+  
+  // half the height of the object + length of gripper + hover height 
+  pose[2] += (dim[2]/2.0) + (0.135) + hover_height;
 }
 
+
+void MotionCoordinator::stop(std::string planning_component)
+{
+  stop_motion(planning_component);
+  sleep(replan_delay_);
+  allow_motion(planning_component);
+}
 
 } // namespace motion_coordinator

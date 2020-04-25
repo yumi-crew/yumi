@@ -55,8 +55,19 @@ public:
   void move_to_pose(std::string planning_component, std::vector<double> pose, bool eulerzyx=false, int num_retries=0, 
                     bool visualize=false, bool blocking=true, bool replan=false);
 
-  /* (IN-CONSTRUCTION) Moves the last link of the planning component to hover-point of a registered object. */
-  void move_to_object(std::string planning_component, std::string object_id, bool eulerzyx=false, int num_retries=0, 
+  /**
+  * Moves the registered end-effector link of the planning component to a registered object.
+  * 
+  * @param object_id object registered in the TableMonitor.
+  * @param hover_height the desired height over the object.
+  * @param num_retries number of allowed attempts at planning a trajectory.
+  * @param visualize flag indicating whether the generated trajectory should be visualized before execution.
+  *                  Visualization is only available when no other planning_component is in motion.
+  * @param blocking flag indicating if the function call should be blocking.
+  * @param replan flag indicating whether the motion should replan upon changes in the planning scene during motion.
+  *               Replanning is only available for blocking motion.
+  */
+  void move_to_object(std::string planning_component, std::string object_id, double hover_height, int num_retries=0, 
                       bool visualize=false, bool blocking=true, bool replan=false);
   
   /** 
@@ -87,14 +98,18 @@ public:
    */
   void move_to_home(std::string planning_component, int num_retries=0, bool visualize=false, bool blocking=true,
                     bool replan=false);
-  
-  /* Randomly side-shifts the bin. Returns the new position. */
-  std::vector<double> random_move_bin(std::vector<double> old_pos);
 
   /* Return whether a planning_component is moving. */
   bool planning_component_in_motion(std::string planning_component);
 
-  std::vector<double> find_object(std::string object_id);
+  /* Stops the execution a planning component's trajectory. */
+  void stop(std::string planning_component);
+
+  /* [Testing] Randomly side-shifts the bin. Returns the new position. */
+  std::vector<double> random_move_bin(std::vector<double> old_pos);
+
+  /* [Testing] Removes a registered object. */
+  void remove_object(std::string object_id);
 
   std::shared_ptr<rclcpp::Node> get_node() { return node_; };
 
@@ -121,6 +136,7 @@ private:
   void allow_motion(std::string planning_component);
 
   void joint_state_callback(sensor_msgs::msg::JointState::UniquePtr msg);
+  void apply_gripper_transform(std::vector<double>& pose, std::string object_id, double hover_height);
 };
 
 } // namespace motion_coordinator
