@@ -9,9 +9,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-
 find_package(ament_cmake REQUIRED)
-
 find_package(rclcpp REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rclcpp_action REQUIRED)
@@ -23,9 +21,6 @@ find_package(Poco 1.4.3 REQUIRED
                         Foundation
                         XML)
 find_package(sg_control_interfaces REQUIRED)
-
-
-
 
 # sg_control
 add_library(sg_control SHARED src/sg_control.cpp)

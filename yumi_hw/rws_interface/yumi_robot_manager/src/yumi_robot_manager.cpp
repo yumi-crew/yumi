@@ -1,5 +1,18 @@
-#include <yumi_robot_manager/yumi_robot_manager.hpp>
+// Copyright 2020 Norwegian University of Science and Technology.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
+#include <yumi_robot_manager/yumi_robot_manager.hpp>
 
 namespace yumi_robot_manager
 {
@@ -8,12 +21,10 @@ YumiRobotManager::YumiRobotManager(const std::string &name, const std::string &i
 : 
 name_(name),
 abb::rws::RWSStateMachineInterface(ip_address)
-{
-}
+{}
 
 
-bool
-YumiRobotManager::init()
+bool YumiRobotManager::init()
 {
   //--------------------------------------------------------------------------------------------------------------------
   // Setup. Performs checking of StateMachine's required conditions. StateMachine is verified to not be running
@@ -29,7 +40,7 @@ YumiRobotManager::init()
   RCLCPP_INFO(node_->get_logger(), "Connecting to Robot...");
   while(!runtime_info.rws_connected)
   {
-    RCLCPP_INFO(node_->get_logger(), "Connection failed. Check robot is connected. Retrying...");
+    RCLCPP_WARN(node_->get_logger(), "Connection failed. Check robot is connected. Retrying...");
     runtime_info = this->collectRuntimeInfo();
     usleep(2*1000000);
   }
@@ -51,7 +62,7 @@ YumiRobotManager::init()
   {
     RCLCPP_WARN(node_->get_logger(), "StateMachine should not be running during initialization. Stopping StateMachine...");
     this->stopRAPIDExecution();
-    usleep(1*100000);
+    sleep(1);
     if(this->isRAPIDRunning().isTrue())
     {
       RCLCPP_ERROR(node_->get_logger(), "Unable to stop StateMachine");
@@ -93,8 +104,7 @@ YumiRobotManager::init()
 }
 
 
-bool
-YumiRobotManager::start_state_machine()
+bool YumiRobotManager::start_state_machine()
 { 
   // Motor check. Check if motors are on, turn on if not.
   RCLCPP_INFO(node_->get_logger(), "Checking if motors are on...");
@@ -102,7 +112,7 @@ YumiRobotManager::start_state_machine()
   {
     if(!this->setMotorsOn())
     {
-      RCLCPP_INFO(node_->get_logger(), "Not able to turn on motors");
+      RCLCPP_WARN(node_->get_logger(), "Not able to turn on motors");
     }
   }
   RCLCPP_INFO(node_->get_logger(), "Motors are on.");  
@@ -149,8 +159,7 @@ YumiRobotManager::start_state_machine()
 }
 
 
-bool 
-YumiRobotManager::go_to_state(std::string mode)
+bool YumiRobotManager::go_to_state(std::string mode)
 {
   requested_state_ = boost::algorithm::to_lower_copy(mode);
 
@@ -202,7 +211,6 @@ YumiRobotManager::go_to_state(std::string mode)
     return true;
   }
 
-
   // STATE_RUN_RAPID_ROUTINE
   if(requested_state_ == "rapid")
   {
@@ -216,16 +224,13 @@ YumiRobotManager::go_to_state(std::string mode)
     return false;
   }
   
-
   requested_state_ = {};
   return false;
 }
 
 
-bool 
-YumiRobotManager::configure()
-{ 
-  // configure_egm() && 
+bool YumiRobotManager::configure()
+{  
   if(calibrate_grippers())
   {
     is_ready_ = true;
@@ -239,16 +244,14 @@ YumiRobotManager::configure()
 }
 
 
-void 
-YumiRobotManager::spin()
+void YumiRobotManager::spin()
 {
   rclcpp::spin(node_);
 }
 
 
 //----------Helper Functions--------------------------------------------------------------------------------------------
-bool 
-YumiRobotManager::configure_egm()
+bool YumiRobotManager::configure_egm()
 {
   bool left_successfull = false;
   if(this->services().egm().getSettings(task_L_, egm_settings_l_.get())) // Fetchen funker ikke
@@ -297,26 +300,24 @@ YumiRobotManager::configure_egm()
 }
 
 
-void
-YumiRobotManager::busy_wait_until_idle()
+void YumiRobotManager::busy_wait_until_idle()
 {
-  while( !(this->services().main().isStateIdle(task_L_).isTrue() && this->services().main().isStateIdle(task_R_).isTrue()) )
+  while(!(this->services().main().isStateIdle(task_L_).isTrue() 
+        && this->services().main().isStateIdle(task_R_).isTrue()))
   {
     usleep(0.1*1000000); 
   }
 }
 
 
-void
-YumiRobotManager::wait_for_gripper_to_finish_motion()
+void YumiRobotManager::wait_for_gripper_to_finish_motion()
 {
   // Assumption: Worst Case Execution Time < 2s
   usleep(2*1000000);
 }
 
 
-bool 
-YumiRobotManager::calibrate_grippers()
+bool YumiRobotManager::calibrate_grippers()
 {
   // RAPID execution check. Check if StateMachine is running.
   if(!this->isRAPIDRunning().isTrue())
@@ -345,8 +346,7 @@ YumiRobotManager::calibrate_grippers()
 }
 
 
-bool
-YumiRobotManager::stop_egm()
+bool YumiRobotManager::stop_egm()
 {
   if(!this->services().egm().signalEGMStop())
   {
@@ -358,10 +358,9 @@ YumiRobotManager::stop_egm()
 
 
 //---------- Service server handler functions---------------------------------------------------------------------------
-void 
-YumiRobotManager::handle_StopEgm(const std::shared_ptr<rmw_request_id_t> request_header,
-                                 const std::shared_ptr<StopEgm::Request> request,
-                                 const std::shared_ptr<StopEgm::Response> response)
+void YumiRobotManager::handle_StopEgm(const std::shared_ptr<rmw_request_id_t> request_header,
+                                      const std::shared_ptr<StopEgm::Request> request,
+                                      const std::shared_ptr<StopEgm::Response> response)
 {
   (void) request_header;
   (void) request;
@@ -375,10 +374,9 @@ YumiRobotManager::handle_StopEgm(const std::shared_ptr<rmw_request_id_t> request
   }
 }
 
-void
-YumiRobotManager::handle_StartEgm(const std::shared_ptr<rmw_request_id_t> request_header,
-                                  const std::shared_ptr<StartEgm::Request> request,
-                                  const std::shared_ptr<StartEgm::Response> response)
+void YumiRobotManager::handle_StartEgm(const std::shared_ptr<rmw_request_id_t> request_header,
+                                       const std::shared_ptr<StartEgm::Request> request,
+                                       const std::shared_ptr<StartEgm::Response> response)
 {   
   (void) request_header;
   (void) request;
@@ -392,8 +390,8 @@ YumiRobotManager::handle_StartEgm(const std::shared_ptr<rmw_request_id_t> reques
   } 
 }
 
-void
-YumiRobotManager::handle_IsReady(const std::shared_ptr<rmw_request_id_t> request_header,
+
+void YumiRobotManager::handle_IsReady(const std::shared_ptr<rmw_request_id_t> request_header,
                                  const std::shared_ptr<IsReady::Request> request,
                                  const std::shared_ptr<IsReady::Response> response)
 {   
@@ -402,8 +400,7 @@ YumiRobotManager::handle_IsReady(const std::shared_ptr<rmw_request_id_t> request
   response->is_ready = is_ready_;
 }
 
-void
-YumiRobotManager::handle_StopMotors(const std::shared_ptr<rmw_request_id_t> request_header,
+void YumiRobotManager::handle_StopMotors(const std::shared_ptr<rmw_request_id_t> request_header,
                                     const std::shared_ptr<StopMotors::Request> request,
                                     const std::shared_ptr<StopMotors::Response> response)
 {

@@ -1,25 +1,33 @@
-#ifndef YUMI_ROBOT_MANAGER__YUMI_ROBOT_MANAGER_HPP_
-#define YUMI_ROBOT_MANAGER__YUMI_ROBOT_MANAGER_HPP_
+// Copyright 2020 Norwegian University of Science and Technology.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#pragma once
 
 #include <string>
 #include <unistd.h>
 #include <boost/algorithm/string.hpp>
-
 #include <rclcpp/rclcpp.hpp>
 #include <rcutils/logging_macros.h>
-
 #include <abb_librws/rws_rapid.h>
 #include <abb_librws/rws_client.h>
 #include <abb_librws/rws_interface.h>
 #include <abb_librws/rws_state_machine_interface.h>
-
 #include <yumi_robot_manager/visibility_control.h>
-
 #include <yumi_robot_manager_interfaces/srv/stop_egm.hpp>
 #include <yumi_robot_manager_interfaces/srv/start_egm.hpp>
 #include <yumi_robot_manager_interfaces/srv/is_ready.hpp>
 #include <yumi_robot_manager_interfaces/srv/stop_motors.hpp>
-
 
 namespace yumi_robot_manager
 {
@@ -31,7 +39,6 @@ namespace yumi_robot_manager
 class YumiRobotManager : public abb::rws::RWSStateMachineInterface
 {
 public:
-
   YUMI_ROBOT_MANAGER_PUBLIC
   YumiRobotManager(const std::string &name, const std::string &ip_address);
   
@@ -53,9 +60,7 @@ public:
   YUMI_ROBOT_MANAGER_PUBLIC
   void spin();
 
- 
 private:
-
   std::string name_;
   std::shared_ptr<rclcpp::Node> node_;
   bool first_execution_ = true;
@@ -100,5 +105,3 @@ private:
 
 } //namespace yumi_robot_manager
 
-
-#endif  // YUMI_ROBOT_MANAGER__YUMI_ROBOT_MANAGER_HPP_

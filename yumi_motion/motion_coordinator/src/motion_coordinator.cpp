@@ -222,7 +222,6 @@ void MotionCoordinator::move_to_object(std::string planning_component, std::stri
 
         if(pose.empty())
         { 
-          stop(planning_component);
           RCLCPP_WARN_STREAM(node_->get_logger(), "Can't find object, moving to home.");
           move_to_home(planning_component, num_retries, true, blocking, false);
           return; 
@@ -306,16 +305,17 @@ void MotionCoordinator::move_to_home(std::string planning_component, int num_ret
 }
 
 
-std::vector<double> MotionCoordinator::random_move_bin(std::vector<double> old_pos)
+std::vector<double> MotionCoordinator::random_move_object(std::string object_id, std::vector<double> old_pos, double side_shift)
 { 
-  srand((unsigned)time(NULL));
-  double rnum = rand()%(12-8)+8; 
-  double side_shift = 0;
-  if(rnum>10) side_shift += rnum;
-  else side_shift -= rnum;
-  std::vector<double> new_pose{old_pos[0], old_pos[1]+side_shift/100, old_pos[2], 0, 0, 0, 1};
-
-  table_monitor_->move_object("bin", new_pose);
+  std::mt19937 rng((unsigned)time(NULL));
+  std::uniform_int_distribution<int> gen(0, 1000);
+  int r = gen(rng);
+  double shift = 0;
+  if(r%2) shift = side_shift;
+  else shift = -side_shift;
+  std::vector<double> new_pose{old_pos[0], old_pos[1]+shift, old_pos[2], 0, 0, 0, 1};
+  
+  table_monitor_->move_object(object_id, new_pose);
 
   auto planning_components_hash = moveit2_wrapper_->get_planning_components_hash();
   should_replan_mutex_.lock();
@@ -376,6 +376,24 @@ void MotionCoordinator::stop(std::string planning_component)
   stop_motion(planning_component);
   sleep(replan_delay_);
   allow_motion(planning_component);
+}
+
+
+void MotionCoordinator::add_object(std::string object_id, std::vector<double> pose)
+{
+  table_monitor_->add_object_to_scene(object_id, pose);  
+}
+
+void MotionCoordinator::grip_in(std::string gripper)
+{
+  if(gripper == "left") left_gripper_->perform_grip(100);
+  if(gripper == "right") right_gripper_->perform_grip(100);
+}
+
+void MotionCoordinator::grip_out(std::string gripper)
+{
+  if(gripper == "left") left_gripper_->perform_grip(0);
+  if(gripper == "right") right_gripper_->perform_grip(0);
 }
 
 } // namespace motion_coordinator

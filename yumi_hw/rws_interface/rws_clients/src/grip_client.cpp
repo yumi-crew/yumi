@@ -1,33 +1,37 @@
-#include <rws_clients/grip_client.hpp>
+// Copyright 2020 Norwegian University of Science and Technology.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
+#include <rws_clients/grip_client.hpp>
 
 namespace rws_clients
 {
-
-
 
 GripClient::GripClient(std::string name, std::string ns)
 : 
 Node(name, rclcpp::NodeOptions()), 
 goal_done_(false),
 namespace_(ns)
-{
-}
+{}
 
-bool
-GripClient::init()
+bool GripClient::init()
 {
   using std::placeholders::_1;
 
-
   // if global namespace, namespace_ becomes /, giving a invalid topic names. 
   // client should be gripper specific, global gripper clients are therfore not supported.
-  if(namespace_.compare("/") == 0)
-  {
-    return false;
-  }
+  if(namespace_.compare("/") == 0) { return false; }
 
-  // Start action client
   action_client_ = rclcpp_action::create_client<Grip>(
     this->get_node_base_interface(),
     this->get_node_graph_interface(),
@@ -40,38 +44,34 @@ GripClient::init()
     std::chrono::milliseconds(500),
     std::bind(&GripClient::send_goal, this)
   );
-
   return true;
 }
 
 
-bool 
-GripClient::is_goal_done() const
+bool GripClient::is_goal_done() const
 {
   return goal_done_;
 }
 
 
-void 
-GripClient::perform_grip(int percentage_closed)
+void GripClient::perform_grip(int percentage_closed)
 {
   percentage_closed_ = percentage_closed;
   send_goal();
 }
 
 
-void 
-GripClient::send_goal()
+void GripClient::send_goal()
 {
   using namespace std::placeholders;
 
   timer_->cancel();
   goal_done_ = false;
 
-
   if (!action_client_) 
   {
     RCLCPP_ERROR(this->get_logger(), "Action client not initialized");
+    return;
   }
   if (!action_client_->wait_for_action_server(std::chrono::seconds(10))) 
   {
@@ -80,10 +80,8 @@ GripClient::send_goal()
     return;
   }
 
-
   auto goal_msg = Grip::Goal();
   goal_msg.grip_percentage_closed = percentage_closed_;
-
 
   RCLCPP_INFO(this->get_logger(), "Sending goal");
   auto send_goal_options = rclcpp_action::Client<Grip>::SendGoalOptions();
@@ -94,9 +92,7 @@ GripClient::send_goal()
 }
 
 
-
-void 
-GripClient::goal_response_callback(std::shared_future<GoalHandleGrip::SharedPtr> future)
+void GripClient::goal_response_callback(std::shared_future<GoalHandleGrip::SharedPtr> future)
 {
   auto goal_handle = future.get();
   if (!goal_handle) 
@@ -110,20 +106,14 @@ GripClient::goal_response_callback(std::shared_future<GoalHandleGrip::SharedPtr>
 }
 
 
-
-void 
-GripClient::feedback_callback(GoalHandleGrip::SharedPtr, const std::shared_ptr<const Grip::Feedback> feedback)
+void GripClient::feedback_callback(GoalHandleGrip::SharedPtr, const std::shared_ptr<const Grip::Feedback> feedback)
 {
-  RCLCPP_INFO( this->get_logger(),"Feedback on Grip command recieved, Gripper is %d percentage open", (int)feedback->curr_grip_percentage_closed);
+  RCLCPP_INFO_STREAM(this->get_logger(),"Gripper is at position" <<  feedback->position);
 }
 
 
-
-void 
-GripClient::result_callback(const GoalHandleGrip::WrappedResult &result)
+void GripClient::result_callback(const GoalHandleGrip::WrappedResult &result)
 {
-  
-
   switch (result.code) 
   {
     case rclcpp_action::ResultCode::SUCCEEDED:
@@ -145,7 +135,5 @@ GripClient::result_callback(const GoalHandleGrip::WrappedResult &result)
   RCLCPP_INFO(this->get_logger(), "Result received, Gripper is %d percentage open", (int)result.result->res_grip);
   goal_done_ = true;
 }
-
-
 
 } //end namespace rws_clients

@@ -105,11 +105,17 @@ public:
   /* Stops the execution a planning component's trajectory. */
   void stop(std::string planning_component);
 
-  /* [Testing] Randomly side-shifts the bin. Returns the new position. */
-  std::vector<double> random_move_bin(std::vector<double> old_pos);
+  /* [Testing] Randomly side-shifts an registered object. Returns the new position. */
+  std::vector<double> random_move_object(std::string object_id, std::vector<double> old_pos, double side_shift);
 
   /* [Testing] Removes a registered object. */
   void remove_object(std::string object_id);
+
+  /* Add a registered object tot he planning scene. */
+  void add_object(std::string object_id, std::vector<double> pose);
+
+  void grip_in(std::string gripper);
+  void grip_out(std::string gripper);
 
   std::shared_ptr<rclcpp::Node> get_node() { return node_; };
 
@@ -124,7 +130,7 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_subscription_;
 
   bool robot_ready_ = false;
-  double replan_delay_ = 1.0;
+  double replan_delay_ = 0.0;
   double speed_scale_ = 0.1;
   double acc_scale_ = 0.1;
   std::mutex should_replan_mutex_;

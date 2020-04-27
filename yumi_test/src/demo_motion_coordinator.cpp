@@ -39,15 +39,19 @@ int main(int argc, char** argv)
 
 
   std::thread run_demo([yumi_motion_coordinator]() {
-    std::vector<double> bin_pos;
-    sleep(3);
-    bin_pos = yumi_motion_coordinator->random_move_bin({0.40, 0.0, -0.11});
-    sleep(3);
-    bin_pos = yumi_motion_coordinator->random_move_bin(bin_pos);
-    sleep(3);
+    yumi_motion_coordinator->add_object("screwdriver", {0.40, 0.0, -0.11});
+    std::vector<double> position;
+    sleep(6);
+    //position = yumi_motion_coordinator->random_move_object("screwdriver", {0.40, 0.0, -0.11}, 0.04);
+    // sleep(3);
+    // bin_pos = yumi_motion_coordinator->random_move_bin(bin_pos);
+    
+    // while(1)
+    // {
+    //   position = yumi_motion_coordinator->random_move_object("screwdriver", position, 0.04);
+    //   sleep(1);
+    // }
   });
-
-  yumi_motion_coordinator->move_to_object("left_arm", "bin", 0.1, 3, true, true, true);
 
 
   std::cout << "Motion completed, please ctrl+c" << std::endl;
