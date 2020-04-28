@@ -58,8 +58,8 @@ public:
   /**
   * Moves the registered end-effector link of the planning component to a registered object.
   * 
-  * @param object_id object registered in the TableMonitor.
-  * @param hover_height the desired height over the object.
+  * @param object_id registered object.
+  * @param hover_height the desired stopping-height over the object.
   * @param num_retries number of allowed attempts at planning a trajectory.
   * @param visualize flag indicating whether the generated trajectory should be visualized before execution.
   *                  Visualization is only available when no other planning_component is in motion.
@@ -84,7 +84,23 @@ public:
    *                   straight line.
    */
   void linear_move_to_pose(std::string planning_component, std::vector<double> pose, bool eulerzyx, 
-                           bool visualization=false, bool blocking=true, double speed_scaling=1, double percentage=1);
+                           bool visualize=false, bool blocking=true, double speed_scaling=1,double percentage=1); 
+                          
+  /** 
+   * Moves the registered end-effector link of the planning component in a straight-line in cartesian space to 
+   * a registered object.
+   * 
+   * @param object_id registered object.
+   * @param hover_height the desired stopping-height over the object.
+   * @param visualize flag indicating whether the generated trajectory should be visualized before execution.
+   *                  Visualization is only available when no other planning_component is in motion.
+   * @param blocking flag indicating if the function call should be blocking.
+   * @param speed_scaling scaling factor used to scale the velocity of the trajectory.
+   * @param percentage desired 'linearity' of the computed cartesian straight-line path, 1 indicate a perfectly
+   *                   straight line.
+   */
+  void linear_move_to_object(std::string planning_component, std::string object_id, double hover_height, 
+                             bool visualize=false, bool blocking=true, double speed_scaling=1, double percentage=1);
 
   /** 
    * Moves the planning component to its registered home configuration. 
@@ -96,7 +112,7 @@ public:
    * @param replan flag indicating whether the motion should replan upon changes in the planning scene during motion.
    *               Replanning is only available for blocking motion.
    */
-  void move_to_home(std::string planning_component, int num_retries=0, bool visualize=false, bool blocking=true,
+  void move_to_home(std::string planning_component, int num_retries=2, bool visualize=false, bool blocking=true,
                     bool replan=false);
 
   /* Return whether a planning_component is moving. */
@@ -106,13 +122,13 @@ public:
   void stop(std::string planning_component);
 
   /* [Testing] Randomly side-shifts an registered object. Returns the new position. */
-  std::vector<double> random_move_object(std::string object_id, std::vector<double> old_pos, double side_shift);
+  std::vector<double> random_move_object(std::string object_id, std::vector<double> old_position, double side_shift);
 
   /* [Testing] Removes a registered object. */
   void remove_object(std::string object_id);
 
-  /* Add a registered object tot he planning scene. */
-  void add_object(std::string object_id, std::vector<double> pose);
+  /* [Testing] Add a registered object to the planning scene. */
+  void add_object(std::string object_id, std::vector<double> pose, bool eulerzyx);
 
   void grip_in(std::string gripper);
   void grip_out(std::string gripper);
@@ -130,11 +146,11 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_subscription_;
 
   bool robot_ready_ = false;
-  double replan_delay_ = 0.0;
+  double replan_delay_ = 1.0;
   double speed_scale_ = 0.1;
   double acc_scale_ = 0.1;
   std::mutex should_replan_mutex_;
-  
+
   /* Stops the trajectory controller of a registered planning_component. */
   void stop_motion(std::string planning_component);
 

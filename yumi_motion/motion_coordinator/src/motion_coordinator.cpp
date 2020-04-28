@@ -38,29 +38,29 @@ bool MotionCoordinator::init()
 
   if(!yumi_manager_->init())
   {
-    RCLCPP_ERROR_STREAM(node_->get_logger(), "yumi_manager failed to initialize.");
+    std::cout << "[ERROR] yumi_manager failed to initialize." << std::endl;
     return false;
   }
   if(!left_gripper_->init())
   {
-    RCLCPP_ERROR_STREAM(node_->get_logger(), "left_gripper failed to initialize.");
+    std::cout << "[ERROR] left_gripper failed to initialize." << std::endl;
     return false;
   }
   if(!right_gripper_->init())
   {
-    RCLCPP_ERROR_STREAM(node_->get_logger(), "right_gripper failed to initialize.");
+    std::cout << "[ERROR] right_gripper failed to initialize." << std::endl;
     return false;
   }
   if(!moveit2_wrapper_->init())
   {
-    RCLCPP_ERROR(node_->get_logger(), "moveit2_wrapper failed to initialize.");
+    std::cout << "[ERROR] moveit2_wrapper failed to initialize." << std::endl;
     return false;
   }
 
   table_monitor_ = std::make_shared<moveit2_wrapper::TableMonitor>(moveit2_wrapper_->get_moveit_cpp());
   if(!table_monitor_->init())
   {
-    RCLCPP_ERROR(node_->get_logger(), "table_monitor failed to initialize.");
+    std::cout << "[ERROR] table_monitor failed to initialize." << std::endl;
     return false;
   }
 
@@ -89,7 +89,7 @@ bool MotionCoordinator::activate()
   
   if(!table_monitor_->activate())
   {
-    RCLCPP_ERROR(node_->get_logger(), "table_monitor failed to activate. ");
+    std::cout << "[ERROR] table_monitor failed to activate." << std::endl;
     return false;
   }
   return true;
@@ -142,11 +142,11 @@ void MotionCoordinator::allow_motion(std::string planning_component)
 void MotionCoordinator::move_to_pose(std::string planning_component, std::vector<double> pose, bool eulerzyx, 
                                      int num_retries, bool visualize, bool blocking, bool replan)
 {
-  std::cout << "move_to_pose() called for planning component '" << planning_component << "'" <<  std::endl;
+  std::cout << "move_to_pose() called for planning component '" << planning_component << "'." << std::endl;
 
   if(replan && !blocking) 
   { 
-    RCLCPP_WARN_STREAM(node_->get_logger(), "Replanning is only available for blocking motion."); 
+    std::cout << "[ERROR] Replanning is only available for blocking motion." << std::endl;
     return;
   }
   auto planning_component_hash = moveit2_wrapper_->get_planning_components_hash();
@@ -171,8 +171,7 @@ void MotionCoordinator::move_to_pose(std::string planning_component, std::vector
                                               replan, false, speed_scale_);
       }
     }
-    RCLCPP_INFO_STREAM(node_->get_logger(), "Goal pose of planning component '" << planning_component 
-      << "' considered reached.");
+    std::cout <<  "Goal pose of planning component '" << planning_component << "' considered reached." << std::endl;
     planning_component_hash->at(planning_component).in_motion = false;
   }
   else
@@ -186,21 +185,21 @@ void MotionCoordinator::move_to_pose(std::string planning_component, std::vector
 void MotionCoordinator::move_to_object(std::string planning_component, std::string object_id, double hover_height,  
                                        int num_retries, bool visualize, bool blocking, bool replan)
 {
-  std::cout << "move_to_object() called for planning component '" << planning_component << "'" <<  std::endl;
+  std::cout << "move_to_object() called for planning component '"<< planning_component << "'." << std::endl;
 
   if(replan && !blocking) 
   { 
-    RCLCPP_WARN_STREAM(node_->get_logger(), "Replanning is only available for blocking motion."); 
+    std::cout <<  "[ERROR] Replanning is only available for blocking motion." << std::endl;
     return;
   }
-  auto planning_component_hash = moveit2_wrapper_->get_planning_components_hash();
-  std::string ee_link = planning_component_hash->at(planning_component).ee_link;
+  auto planning_components_hash = moveit2_wrapper_->get_planning_components_hash();
+  std::string ee_link = planning_components_hash->at(planning_component).ee_link;
 
   std::vector<double> pose = table_monitor_->find_object(object_id); 
   if(pose.empty())
   { 
     stop(planning_component);
-    RCLCPP_WARN_STREAM(node_->get_logger(), "Can't find object, moving to home.");
+    std::cout <<  "Can't find object, moving to home." << std::endl;
     move_to_home(planning_component, num_retries, true, blocking, false);
     return; 
   }
@@ -215,30 +214,29 @@ void MotionCoordinator::move_to_object(std::string planning_component, std::stri
 
     while(!moveit2_wrapper_->pose_reached(planning_component, ee_link, pose, false))
     {
-      if(planning_component_hash->at(planning_component).should_replan)
+      if(planning_components_hash->at(planning_component).should_replan)
       {
         stop(planning_component);
         pose = table_monitor_->find_object(object_id); 
 
         if(pose.empty())
         { 
-          RCLCPP_WARN_STREAM(node_->get_logger(), "Can't find object, moving to home.");
+          std::cout <<  "Can't find object, moving to home." << std::endl;
           move_to_home(planning_component, num_retries, true, blocking, false);
           return; 
         }
         else apply_gripper_transform(pose, object_id, hover_height);
 
         should_replan_mutex_.lock();
-        planning_component_hash->at(planning_component).should_replan = false; 
+        planning_components_hash->at(planning_component).should_replan = false; 
         should_replan_mutex_.unlock();
         moveit2_wrapper_->pose_to_pose_motion(planning_component, ee_link, pose, false, num_retries, visualize, replan, 
                                               false, speed_scale_);
         
       }
     }
-    RCLCPP_INFO_STREAM(node_->get_logger(), "Goal pose of planning component '" << planning_component 
-      << "' considered reached.");
-    planning_component_hash->at(planning_component).in_motion = false;
+    std::cout <<  "Goal pose of planning component '" << planning_component << "' considered reached." << std::endl;
+    planning_components_hash->at(planning_component).in_motion = false;
   }
   else
   {
@@ -249,14 +247,37 @@ void MotionCoordinator::move_to_object(std::string planning_component, std::stri
 
 
 void MotionCoordinator::linear_move_to_pose(std::string planning_component, std::vector<double> pose, bool eulerzyx, 
-                                            bool visualization, bool blocking, double speed_scaling, double percentage)
+                                            bool visualize, bool blocking, double speed_scaling, double percentage)                                            
 {
-  std::cout << "linear_move_to_pose() called for planning component '" << planning_component << "'" <<  std::endl;
+  std::cout <<  "linear_move_to_pose() called for planning component '" << planning_component  << "'." << std::endl;
 
   auto planning_components_hash = moveit2_wrapper_->get_planning_components_hash();
-  std::string link = planning_components_hash->at(planning_component).ee_link;
+  std::string ee_link = planning_components_hash->at(planning_component).ee_link;
  
-  moveit2_wrapper_->cartesian_pose_to_pose_motion(planning_component, link, pose, eulerzyx, visualization, false, 
+  moveit2_wrapper_->cartesian_pose_to_pose_motion(planning_component, ee_link, pose, eulerzyx, visualize, false, 
+                                                  blocking, percentage, speed_scaling, 1 );
+}
+
+
+void MotionCoordinator::linear_move_to_object(std::string planning_component, std::string object_id,double hover_height, 
+                                              bool visualize, bool blocking, double speed_scaling, double percentage)
+{
+  std::cout <<  "linear_move_to_object() called for planning component '" << planning_component << "'." << std::endl;
+
+  auto planning_components_hash = moveit2_wrapper_->get_planning_components_hash();
+  std::string ee_link = planning_components_hash->at(planning_component).ee_link;
+
+  std::vector<double> pose = table_monitor_->find_object(object_id); 
+  if(pose.empty())
+  { 
+    stop(planning_component);
+    std::cout <<  "Can't find object, moving to home." << std::endl;
+    move_to_home(planning_component, 2, true, blocking, false);
+    return; 
+  }
+  else apply_gripper_transform(pose, object_id, hover_height); 
+
+  moveit2_wrapper_->cartesian_pose_to_pose_motion(planning_component, ee_link, pose, false, visualize, false, 
                                                   blocking, percentage, speed_scaling, 1 );
 }
 
@@ -264,11 +285,11 @@ void MotionCoordinator::linear_move_to_pose(std::string planning_component, std:
 void MotionCoordinator::move_to_home(std::string planning_component, int num_retries, bool visualize, bool blocking, 
                                      bool replan)
 {
-  std::cout << "move_to_home() called for planning component '" << planning_component << "'" <<  std::endl;
+  std::cout << "move_to_home() called for planning component '" << planning_component << "'." << std::endl;
 
   if(replan && !blocking) 
   { 
-    RCLCPP_WARN_STREAM(node_->get_logger(), "Replanning is only available for blocking motion."); 
+    std::cout << "[ERROR] Replanning is only available for blocking motion." << std::endl;
     return;
   }
   auto planning_component_hash = moveit2_wrapper_->get_planning_components_hash();
@@ -293,8 +314,7 @@ void MotionCoordinator::move_to_home(std::string planning_component, int num_ret
         should_replan_mutex_.unlock();
       }
     }
-    RCLCPP_INFO_STREAM(node_->get_logger(), "Goal state of planning component '" << planning_component 
-      << "' considered reached.");
+    std::cout <<  "Goal state of planning component '" << planning_component << "' considered reached." << std::endl;
     planning_component_hash->at(planning_component).in_motion = false;
   }
   else
@@ -305,7 +325,8 @@ void MotionCoordinator::move_to_home(std::string planning_component, int num_ret
 }
 
 
-std::vector<double> MotionCoordinator::random_move_object(std::string object_id, std::vector<double> old_pos, double side_shift)
+std::vector<double> MotionCoordinator::random_move_object(std::string object_id, std::vector<double> old_position, 
+                                                          double side_shift)
 { 
   std::mt19937 rng((unsigned)time(NULL));
   std::uniform_int_distribution<int> gen(0, 1000);
@@ -313,9 +334,11 @@ std::vector<double> MotionCoordinator::random_move_object(std::string object_id,
   double shift = 0;
   if(r%2) shift = side_shift;
   else shift = -side_shift;
-  std::vector<double> new_pose{old_pos[0], old_pos[1]+shift, old_pos[2], 0, 0, 0, 1};
   
-  table_monitor_->move_object(object_id, new_pose);
+  std::vector<double> pose = table_monitor_->find_object(object_id);
+  pose[1] += shift; 
+  
+  table_monitor_->move_object(object_id, pose);
 
   auto planning_components_hash = moveit2_wrapper_->get_planning_components_hash();
   should_replan_mutex_.lock();
@@ -323,7 +346,7 @@ std::vector<double> MotionCoordinator::random_move_object(std::string object_id,
   planning_components_hash->at("right_arm").should_replan = true;
   planning_components_hash->at("both_arms").should_replan = true;
   should_replan_mutex_.unlock();
-  return {new_pose[0], new_pose[1], new_pose[2]};
+  return {pose[0], pose[1], pose[2]};
 }
 
 
@@ -379,8 +402,16 @@ void MotionCoordinator::stop(std::string planning_component)
 }
 
 
-void MotionCoordinator::add_object(std::string object_id, std::vector<double> pose)
+void MotionCoordinator::add_object(std::string object_id, std::vector<double> pose, bool eulerzyx)
 {
+  if(eulerzyx)
+  {
+    geometry_msgs::msg::PoseStamped msg = moveit2_wrapper_->pose_vec_to_msg(pose, eulerzyx);
+    pose[3] = msg.pose.orientation.x;
+    pose[4] = msg.pose.orientation.y;
+    pose[5] = msg.pose.orientation.z;
+    pose.push_back(msg.pose.orientation.w);
+  }
   table_monitor_->add_object_to_scene(object_id, pose);  
 }
 

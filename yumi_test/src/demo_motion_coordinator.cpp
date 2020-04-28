@@ -39,20 +39,30 @@ int main(int argc, char** argv)
 
 
   std::thread run_demo([yumi_motion_coordinator]() {
-    yumi_motion_coordinator->add_object("screwdriver", {0.40, 0.0, -0.11});
-    std::vector<double> position;
-    sleep(6);
-    //position = yumi_motion_coordinator->random_move_object("screwdriver", {0.40, 0.0, -0.11}, 0.04);
-    // sleep(3);
-    // bin_pos = yumi_motion_coordinator->random_move_bin(bin_pos);
-    
-    // while(1)
-    // {
-    //   position = yumi_motion_coordinator->random_move_object("screwdriver", position, 0.04);
-    //   sleep(1);
-    // }
+    std::vector<double> pose = {0.4, 0.1, 0.0, 30, 0, 0}; std::vector<double> position;
+    yumi_motion_coordinator->add_object("screwdriver", pose, true);
+    sleep(2);
+    position = yumi_motion_coordinator->random_move_object("screwdriver", {pose[0],pose[1],pose[2]}, 0.02);
+    sleep(1);
+    position = yumi_motion_coordinator->random_move_object("screwdriver", position, 0.02);
+    sleep(1);
+    position = yumi_motion_coordinator->random_move_object("screwdriver", position, 0.02);
+    sleep(1);
+    position = yumi_motion_coordinator->random_move_object("screwdriver", position, 0.02);
+    sleep(1);
+    position = yumi_motion_coordinator->random_move_object("screwdriver", position, 0.02);
   });
 
+  sleep(2);
+  yumi_motion_coordinator->move_to_object("left_arm", "screwdriver", 0.10, 3, false, true, true);
+  yumi_motion_coordinator->grip_out("left");
+  sleep(1);
+  yumi_motion_coordinator->linear_move_to_object("left_arm", "screwdriver", 0.02, false, true);
+  sleep(1);
+  yumi_motion_coordinator->grip_in("left");
+  sleep(1);
+  yumi_motion_coordinator->linear_move_to_object("left_arm", "screwdriver", 0.10, false, true);
+  yumi_motion_coordinator->move_to_home("left_arm", 3);
 
   std::cout << "Motion completed, please ctrl+c" << std::endl;
   while(1)
