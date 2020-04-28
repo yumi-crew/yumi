@@ -19,7 +19,6 @@ std::vector<double> home_r = {0.0, -2.26, -2.35, 0.52, 0.0, 0.52, 0.0};
 
 std::shared_ptr<PoseEstimationManager> pose_estimation_manager; // declaration for signal handling (ctrl+c)
 
-
 // Ctr+C handler
 void signal_callback_handler(int signum)
 {
@@ -118,6 +117,7 @@ int main(int argc, char **argv)
   rclcpp::executors::MultiThreadedExecutor exe;
   exe.add_node(pose_estimation_manager);
 
+
   auto state1 = pose_estimation_manager->get_state("zivid_camera", 3s);
   auto state2 = pose_estimation_manager->get_state("pose_estimation", 3s);
 
@@ -134,17 +134,18 @@ int main(int argc, char **argv)
   auto state3 = pose_estimation_manager->get_state("zivid_camera", 3s);
   auto state4 = pose_estimation_manager->get_state("pose_estimation", 3s);
 
-  auto transition_success3 = pose_estimation_manager->change_state(
-      "zivid_camera", lifecycle_msgs::msg::Transition::TRANSITION_ACTIVATE, 10s);
   auto transition_success4 = pose_estimation_manager->change_state(
       "pose_estimation", lifecycle_msgs::msg::Transition::TRANSITION_ACTIVATE, 5s);
   auto state5 = pose_estimation_manager->get_state("zivid_camera", 3s);
   auto state6 = pose_estimation_manager->get_state("pose_estimation", 3s);
-  pose_estimation_manager->call_init_surface_match_srv("/home/markus/Documents/models_ply/", 50s);
-  sleep(4); // wait to ensure joint_state_controller is publishing the joint states
+
+  pose_estimation_manager->call_init_halcon_surface_match_srv("/home/markus/Documents/models_ply/", 500s);
+  auto transition_success3 = pose_estimation_manager->change_state(
+      "zivid_camera", lifecycle_msgs::msg::Transition::TRANSITION_ACTIVATE, 10s);
+  // sleep(4); // wait to ensure joint_state_controller is publishing the joint states
   std::cout << "before moveit2.launch_planning_scene()" << std::endl;
   moveit2.launch_planning_scene();
-  sleep(3); // wait to ensure the that moveit2 updates its representation of the robots position before the plannign scene is launched
+  // sleep(3); // wait to ensure the that moveit2 updates its representation of the robots position before the plannign scene is launched
 
   // Movements
   //--------------------------------------------------------------------------------------------------------------------
@@ -164,33 +165,54 @@ int main(int argc, char **argv)
   }
   bool cap_success{false};
   bool est_success{false};
-  std::vector<float> grasp_pose; grasp_pose.resize(7);
+  std::vector<float> grasp_pose;
+  std::vector<float> hover_pose;
+  grasp_pose.resize(7);
   while (1)
   {
     std::cout << "before call_capture_srv" << std::endl;
     cap_success = pose_estimation_manager->call_capture_srv(5s);
+    sleep(1);
     std::cout << "before call_estimate_pose_srv" << std::endl;
-    est_success = pose_estimation_manager->call_estimate_pose_srv("chessboard", 10s);
+    est_success = pose_estimation_manager->call_estimate_pose_srv("screwdriver", 50s);
     if (est_success)
     {
       std::cout << "before get_graspable_chessboard_pose" << std::endl;
-      grasp_pose = pose_estimation_manager->pose_transformer->chessboard_pose_to_base_frame(0.05, false);
-
-      std::vector<double> pose; pose.resize(7);
+      // grasp_pose = pose_estimation_manager->pose_transformer->chessboard_pose_to_base_frame(0.05, false);
+      hover_pose = pose_estimation_manager->pose_transformer->hover_pose();
+      grasp_pose = pose_estimation_manager->pose_transformer->obj_in_base_frame();
+      for (auto p : hover_pose)
+        std::cout << p << " ";
+      std::vector<double> h_pose;
+      h_pose.resize(7);
+      std::cout << "before copy_n" << std::endl;
+      std::copy_n(hover_pose.begin(), 7, h_pose.begin());
+      for (auto p : grasp_pose)
+        std::cout << p << " ";
+      std::vector<double> pose;
+      pose.resize(7);
       std::cout << "before copy_n" << std::endl;
       std::copy_n(grasp_pose.begin(), 7, pose.begin());
       // blocking_cart_p2p_motion_right(pose);
       std::cout << "before pose_to_pose_motion" << std::endl;
-      if(!moveit2.pose_to_pose_motion("right_arm", pose, 2, true, true))
+      if (!moveit2.pose_to_pose_motion("right_arm", h_pose, 2, false, true))
+      {
+        std::cout << "pose_to_pose motion failed" << std::endl;
+      }
+      if (!moveit2.pose_to_pose_motion("right_arm", pose, 2, false, true))
       {
         std::cout << "pose_to_pose motion failed" << std::endl;
       }
       sleep(2);
-      if (!moveit2.state_to_state_motion("right_arm", home_r, 2, true))
+      if (!moveit2.pose_to_pose_motion("right_arm", h_pose, 2, false, true))
+      {
+        std::cout << "pose_to_pose motion failed" << std::endl;
+      }
+
+      if (!moveit2.state_to_state_motion("right_arm", home_r, 2, false))
       {
         std::cout << "RIGHT --- state_to_state_motion returned false" << std::endl;
       }
-
     }
   }
   return 0;
