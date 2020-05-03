@@ -1,8 +1,8 @@
 #include "external_force/external_force.hpp"
 
+
 namespace yumi_dynamics
 {
-
 ExternalForce::ExternalForce(urdf::Model robot) : kdl_wrapper_(robot)
 {
   kdl_wrapper_.init();
@@ -89,7 +89,7 @@ void ExternalForce::estimate_TCP_wrench()
       ((jacobian_r_.data * jacobian_r_.data.transpose()).inverse() * jacobian_r_.data);
 
   //for testing without actual torque values
-  std::vector<double> test_torques = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0};
+  std::vector<double> test_torques = {1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
   for (int i = 0; i < std::min(joints_r_, joints_l_); ++i)
   {
@@ -98,12 +98,12 @@ void ExternalForce::estimate_TCP_wrench()
   }
   // end test
 
-  // gravity compansation
-  ext_torques_l_ -= kdl_wrapper_.dynamics_gravity("left_arm", q_l_).data;
-  ext_torques_r_ -= kdl_wrapper_.dynamics_gravity("right_arm", q_r_).data;
+  // gravity compansation (might not be needed)
+  // ext_torques_l_ -= kdl_wrapper_.dynamics_gravity("left_arm", q_l_).data;
+  // ext_torques_r_ -= kdl_wrapper_.dynamics_gravity("right_arm", q_r_).data;
 
-  std::cout << ext_torques_l_ << std::endl;
-  std::cout << ext_torques_r_ << std::endl;
+  // std::cout << ext_torques_l_ << std::endl;
+  // std::cout << ext_torques_r_ << std::endl;
 
   // calculate the TCP wrenches
   Eigen::Matrix<double, 6, 1> W_l = jac_t_pinv_l * ext_torques_l_;

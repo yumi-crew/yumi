@@ -6,11 +6,6 @@
 
 #include <unistd.h>
 
-void spin(std::shared_ptr<rclcpp::executors::MultiThreadedExecutor> exe)
-{
-  exe->spin();
-}
-
 int main(int argc, char *argv[])
 {
   rclcpp::init(argc, argv);
@@ -31,9 +26,8 @@ int main(int argc, char *argv[])
     printf("unable to load urdf\n");
     return -1;
   }
-
-  std::shared_ptr<yumi_dynamics::ExternalForce> ext_F = std::make_shared<yumi_dynamics::ExternalForce>(robot_model);
-
+  
+  auto ext_F = std::make_shared<yumi_dynamics::ExternalForce>(robot_model);
   rclcpp::WallRate loop_rate(250);
   while (1)
   {
