@@ -13,13 +13,15 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(moveit2_wrapper REQUIRED)
 find_package(rws_clients REQUIRED)
+find_package(kdl_wrapper REQUIRED)
 
 # motion_coordinator
 add_library(motion_coordinator src/motion_coordinator.cpp)
 target_include_directories(motion_coordinator PRIVATE include)
 ament_target_dependencies(motion_coordinator
                           moveit2_wrapper
-                          rws_clients                                               
+                          rws_clients
+                          kdl_wrapper                                               
 )
 
 install(DIRECTORY include/ DESTINATION include)

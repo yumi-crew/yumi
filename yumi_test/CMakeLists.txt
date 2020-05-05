@@ -152,7 +152,8 @@ target_link_libraries (socket_test ${CMAKE_THREAD_LIBS_INIT})
 add_executable(demo_motion_coordinator src/demo_motion_coordinator.cpp)
 ament_target_dependencies(demo_motion_coordinator 
                           motion_coordinator
-                          Boost                                    
+                          Boost
+                          kdl_wrapper                                    
 )
 
 
