@@ -52,16 +52,17 @@ def generate_launch_description():
     ompl_planning_yaml = load_yaml('yumi_description', 'moveit2_config/ompl_planning.yaml')
     ompl_planning_pipeline_config['ompl'].update(ompl_planning_yaml)
 
-    #demo_moveit2
-    demo_moveit2 = Node(package='yumi_test',
-                        node_executable='demo_moveit2',
-                        output='screen',
-                        parameters=[moveit_cpp_yaml_file_name,
-                                    robot_description,
-                                    robot_description_path,
-                                    robot_description_semantic,
-                                    kinematics_yaml,
-                                    ompl_planning_pipeline_config,
-                                    moveit_controllers])
+    # demo_motion_coordinator
+    demo_motion_coordinator = Node(package='yumi_test',
+                                  node_executable='demo_motion_coordinator',
+                                  output='screen',
+                                  #emulate_tty=False, # Remove moveit-spam
+                                  parameters=[moveit_cpp_yaml_file_name,
+                                              robot_description,
+                                              robot_description_path,
+                                              robot_description_semantic,
+                                              kinematics_yaml,
+                                              ompl_planning_pipeline_config,
+                                              moveit_controllers])
 
-    return LaunchDescription([ demo_moveit2 ])
+    return LaunchDescription([ demo_motion_coordinator ])

@@ -11,13 +11,11 @@ endif()
 
 
 find_package(ament_cmake REQUIRED)
-
 find_package(rclcpp REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(yumi_robot_manager_interfaces REQUIRED)
 find_package(sg_control_interfaces REQUIRED)
-
 
 
 # robot_manager_client
@@ -85,8 +83,6 @@ install(TARGETS
         grip_client_node
         DESTINATION lib/${PROJECT_NAME}
 )
-
-
 
 ament_export_include_directories(include)
 ament_export_dependencies(yumi_robot_manager_interfaces sg_control_interfaces)

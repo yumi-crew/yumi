@@ -5,4 +5,4 @@ float32 grip_percentage_closed
 float32 res_grip
 ---
 # Feedback
-float32 curr_grip_percentage_closed
+float32 position

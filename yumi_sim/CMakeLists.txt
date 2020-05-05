@@ -15,14 +15,15 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(angles REQUIRED)
+find_package(sg_control_interfaces REQUIRED)
 
 add_executable(global_joint_state_node src/global_joint_state_node.cpp)
 ament_target_dependencies(global_joint_state_node 
                           rclcpp                            
                           sensor_msgs
-                          angles                               
+                          angles
+                          sg_control_interfaces                               
 )
-
 
 install(TARGETS 
   global_joint_state_node

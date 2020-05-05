@@ -15,7 +15,6 @@
   <depend>abb_librws</depend>
   <depend>sg_control_interfaces</depend>
 
-
   <export>
     <build_type>ament_cmake</build_type>
   </export>

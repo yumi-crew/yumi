@@ -15,6 +15,7 @@
   <depend>rclcpp</depend>
   <depend>angles</depend>
   <depend>sensor_msgs</depend>
+  <depend>sg_control_interfaces</depend>
 
   <export>
     <build_type>ament_cmake</build_type>
