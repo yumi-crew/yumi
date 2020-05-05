@@ -87,12 +87,12 @@ void callback_r(sensor_msgs::msg::JointState::UniquePtr msg)
 
 void callback_g_r(sg_control_interfaces::action::Grip_FeedbackMessage::UniquePtr msg)
 {
-  recieved_joint_state_r[7] = msg->feedback.position;
+  recieved_joint_pos_r[7] = msg->feedback.position;
 }
 
 void callback_g_l(sg_control_interfaces::action::Grip_FeedbackMessage::UniquePtr msg)
 {
-  recieved_joint_state_l[7] = msg->feedback.position;
+  recieved_joint_pos_l[7] = msg->feedback.position;
 }
 
 void spin(std::shared_ptr<rclcpp::executors::MultiThreadedExecutor> exe)
