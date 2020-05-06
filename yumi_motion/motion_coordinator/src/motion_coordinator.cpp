@@ -196,10 +196,12 @@ void MotionCoordinator::move_to_pose(std::string planning_component, std::vector
 }
 
 
-void MotionCoordinator::move_to_object(std::string planning_component, std::string object_id, double hover_height,  
-                                       int num_retries, bool visualize, bool blocking, bool replan)
+void MotionCoordinator::move_to_object(std::string planning_component, std::string object_id, int num_retries, double hover_height,  
+                                        bool visualize, bool blocking, bool replan)
 {
   std::cout << "move_to_object() called for planning component '"<< planning_component << "'." << std::endl;
+
+  std::vector<double> dim = table_monitor_->get_object_dimensions(object_id);
 
   if(replan && !blocking) 
   { 
@@ -209,7 +211,8 @@ void MotionCoordinator::move_to_object(std::string planning_component, std::stri
   auto planning_components_hash = moveit2_wrapper_->get_planning_components_hash();
   std::string ee_link = planning_components_hash->at(planning_component).ee_link;
 
-  std::vector<double> pose = table_monitor_->find_object(object_id); 
+  std::vector<double> pose = table_monitor_->find_object(object_id);
+
   if(pose.empty())
   { 
     stop(planning_component);
@@ -217,7 +220,8 @@ void MotionCoordinator::move_to_object(std::string planning_component, std::stri
     move_to_home(planning_component, num_retries, true, blocking, false);
     return; 
   }
-  else apply_gripper_transform(pose, true, object_id, hover_height); 
+  else apply_gripper_transform(pose, hover_height+dim[2]/2.0);
+
   
   // If it should replan upon changed planning_scene
   if(replan)
@@ -239,7 +243,7 @@ void MotionCoordinator::move_to_object(std::string planning_component, std::stri
           move_to_home(planning_component, num_retries, true, blocking, false);
           return; 
         }
-        else apply_gripper_transform(pose, true, object_id, hover_height);
+        else apply_gripper_transform(pose, hover_height+dim[2]/2.0);
 
         should_replan_mutex_.lock();
         planning_components_hash->at(planning_component).should_replan = false; 
@@ -291,7 +295,6 @@ bool MotionCoordinator::linear_move_to_pose(std::string planning_component, std:
                                                                                   false, true) )
     {
       std::cout << " ---- Trying with equivalent_state" << std::endl;
-      sleep(2);
       success = moveit2_wrapper_->cartesian_pose_to_pose_motion(planning_component, ee_link, pose, eulerzyx, visualize,
                                                                 false, blocking, collision_checking, percentage, 
                                                                 speed_scaling, acc_scaling);
@@ -299,7 +302,6 @@ bool MotionCoordinator::linear_move_to_pose(std::string planning_component, std:
     else
     {
       std::cout << " --- fallback" << std::endl;
-      sleep(2);
 
       // Find a random pose nearby.
       new_pose = get_random_nearby_pose(org_pose, 0.1, 20, 40);
@@ -343,8 +345,8 @@ bool MotionCoordinator::linear_move_to_pose(std::string planning_component, std:
 }
 
 
-bool MotionCoordinator::linear_move_to_object(std::string planning_component, std::string object_id,double hover_height, 
-                                              int num_retries, bool visualize, bool blocking, bool collision_checking, 
+bool MotionCoordinator::linear_move_to_object(std::string planning_component, std::string object_id,int num_retries,
+                                              double hover_height,  bool visualize, bool blocking, bool collision_checking, 
                                               double percentage, double speed_scaling, double acc_scaling)
 {
   std::cout <<  "linear_move_to_object() called for planning component '" << planning_component << "'." << std::endl;
@@ -360,7 +362,7 @@ bool MotionCoordinator::linear_move_to_object(std::string planning_component, st
     move_to_home(planning_component, 2, true, blocking, false);
     return false; 
   }
-  else apply_gripper_transform(pose, true, object_id, hover_height); 
+  else apply_gripper_transform(pose, hover_height); 
 
   bool success = linear_move_to_pose(planning_component, pose, false, num_retries, visualize, blocking, 
                                      collision_checking, percentage, speed_scaling, acc_scaling);
@@ -370,87 +372,57 @@ bool MotionCoordinator::linear_move_to_object(std::string planning_component, st
 }
 
 
-bool MotionCoordinator::pick_object(std::string planning_component, std::string object_id,int num_retries,bool blocking, 
+bool MotionCoordinator::pick_object(std::string planning_component, std::string object_id,int num_retries, double hover_height, bool blocking, 
                                     bool visualize, double percentage)
 {
   std::cout << "pick_object() called for planning component '" << planning_component << "'." << std::endl;
 
-  // Find end-effector link
-  auto planning_components_hash = moveit2_wrapper_->get_planning_components_hash();
-  std::string ee_link = planning_components_hash->at(planning_component).ee_link;
+  // Find hover pose directly above grip and the grip pose
+  std::vector<double> grip_pose = table_monitor_->find_object(object_id);
+  std::vector<double> hover_pose = grip_pose; hover_pose[2] += hover_height;
 
-  // Find starting pose
-  std::vector<double> start_pose = moveit2_wrapper_->find_pose(ee_link); // Given using quaternions.
-
-  // Find global transform of object
-  Eigen::Matrix4d obj_trans = table_monitor_->get_object_global_transform(object_id); 
-
-  // Find local transform of gripping point
-  auto grips = table_monitor_->get_grip_transforms(object_id); 
-  Eigen::Matrix4d grip_point_trans = grips[0];
-
-  // Find global transform of gripping point
-  Eigen::Matrix4d global_grip_point_trans = obj_trans * grip_point_trans;
-
-  // Find pose of gripping point
-  std::vector<double> grip_pose(7);
-  grip_pose[0] = global_grip_point_trans(0,3);
-  grip_pose[1] = global_grip_point_trans(1,3);
-  grip_pose[2] = global_grip_point_trans(2,3);
-
-  Eigen::Isometry3d iso; iso.matrix() = global_grip_point_trans; 
-  geometry_msgs::msg::Pose pose_msg;
-  tf2::convert(iso, pose_msg);
-  grip_pose[3] = pose_msg.orientation.x;
-  grip_pose[4] = pose_msg.orientation.y;
-  grip_pose[5] = pose_msg.orientation.z;
-  grip_pose[6] = pose_msg.orientation.w;
-
-  // Find hover pose directly above grip, the disabling pose and the grip pose
-  std::vector<double> object_pose = table_monitor_->find_object(object_id);
-  std::vector<double> hover_pose = grip_pose; hover_pose[2] = object_pose[2]; 
-  std::vector<double> disable_pose = grip_pose; disable_pose[2] = object_pose[2];
-
-  // Apply the predfined gripper transform
-  apply_gripper_transform(hover_pose, true, object_id, 0.20);
-  apply_gripper_transform(disable_pose, true, object_id, 0.05);
-  apply_gripper_transform(grip_pose, true, object_id, 0.0);
-
-  // Move to hover pose and open gripper.
-  move_to_pose(planning_component, hover_pose, false, 3, false, true, false); 
+  move_to_pose(planning_component, hover_pose, false, num_retries, visualize, true, false);
+  
+  sleep(1); 
   grip_out(planning_component, true); 
- 
-  if(!linear_move_to_pose(planning_component, grip_pose, false, 3, false, true, false)) return false;
-  grip_in(planning_component, true); sleep(3);
+  sleep(1);
+  
+  if(!linear_move_to_pose(planning_component, grip_pose, false, 3, visualize, true, false, percentage)) return false;
 
-  if(!linear_move_to_pose(planning_component, hover_pose, false, 0, false, true, false, 0.7)) return false;
+  sleep(1);
+  grip_in(planning_component, true); 
+  sleep(1);
+  
+  if(!linear_move_to_pose(planning_component, hover_pose, false, 0, visualize, true, false, percentage)) return false;
   
   if(gripper_contain_object(planning_component)) return true;
   else false;
 }
 
 
-bool MotionCoordinator::place_at_object(std::string planning_component, std::string object_id, int num_retries,  
+bool MotionCoordinator::place_at_object(std::string planning_component, std::string object_id, int num_retries, double hover_height,  
                                         bool blocking, bool visualize, double percentage)
 {
   std::cout << "place_object() called for planning component '" << planning_component << "'." << std::endl;
+  
+  std::vector<double> dim = table_monitor_->get_object_dimensions(object_id);
 
   // linear move to hover point
   double counter = 0;
-  while(counter < 10) 
+  while(counter < num_retries) 
   {
-    if(linear_move_to_object(planning_component, object_id, 0.2, 0, false, true, true, 0.7)) break;
+    if(linear_move_to_object(planning_component, object_id, 0, hover_height+dim[2]/2.0, visualize, true, true, percentage)) break;
     counter++;
-    if(counter == 10) return false;
+    if(counter == num_retries) move_to_object(planning_component, object_id, num_retries, hover_height+dim[2]/2.0, visualize, blocking, false);
   }
 
   // linear move down
   counter = 0;
-  while(counter < 10) 
+  while(counter < num_retries) 
   {
-    if(linear_move_to_object(planning_component, object_id, 0.01, 0, false, true, false, 0.7)) break;
+    if(linear_move_to_object(planning_component, object_id, 0, 0.01+dim[2]/2.0, visualize, true, false, percentage)) break;
     counter++;
-    if(counter == 10) return false;
+    if(counter == num_retries) return false;
   }
 
   // let go
@@ -458,11 +430,11 @@ bool MotionCoordinator::place_at_object(std::string planning_component, std::str
 
   // linear move up
   counter = 0;
-  while(counter < 10) 
+  while(counter < num_retries) 
   {
-    if(linear_move_to_object(planning_component, object_id, 0.2, 0, false, true, false, 0.7)) break;
+    if(linear_move_to_object(planning_component, object_id, 0, hover_height+dim[2]/2.0, visualize, true, false, percentage)) break;
     counter++;
-    if(counter == 10) return false;
+    if(counter == num_retries) return false;
   }
 
   grip_in(planning_component, true);
@@ -488,16 +460,16 @@ void MotionCoordinator::move_to_home(std::string planning_component, int num_ret
   if(replan)
   {
     // Run initial motion non-blocking.
-    moveit2_wrapper_->state_to_state_motion(planning_component, home, num_retries, visualize, replan, false, 
-                                            speed_scale_);
+    moveit2_wrapper_->state_to_state_motion(planning_component, home, num_retries, visualize, replan, false); 
+                                            
 
     while(!moveit2_wrapper_->state_reached(planning_component, home))
     {
       if(planning_component_hash->at(planning_component).should_replan)
       {
         stop(planning_component);
-        moveit2_wrapper_->state_to_state_motion(planning_component, home, num_retries, visualize, replan, false, 
-                                                speed_scale_);
+        moveit2_wrapper_->state_to_state_motion(planning_component, home, num_retries, visualize, replan, false); 
+                                                
         should_replan_mutex_.lock();
         planning_component_hash->at(planning_component).should_replan = false; 
         should_replan_mutex_.unlock();
@@ -508,8 +480,8 @@ void MotionCoordinator::move_to_home(std::string planning_component, int num_ret
   }
   else
   {
-    moveit2_wrapper_->state_to_state_motion(planning_component, home, num_retries, visualize, replan, blocking, 
-                                            speed_scale_);
+    moveit2_wrapper_->state_to_state_motion(planning_component, home, num_retries, visualize, false, blocking); 
+                                            
   }
 }
 
@@ -630,19 +602,9 @@ bool MotionCoordinator::planning_component_in_motion(std::string planning_compon
 }
 
 
-void MotionCoordinator::apply_gripper_transform(std::vector<double>& pose, bool rotate, std::string object_id, double hover_height)
+void MotionCoordinator::apply_gripper_transform(std::vector<double>& pose, double hover_height)
 {
-  if(rotate)
-  {
-    KDL::Rotation rot = KDL::Rotation().Quaternion(pose[3], pose[4], pose[5], pose[6]);
-    rot.DoRotX(3.14);
-    rot.GetQuaternion(pose[3], pose[4], pose[5], pose[6]);
-  }
-
-  std::vector<double> dim = table_monitor_->get_object_dimensions(object_id);
-  
-  // half the height of the object + length of gripper + hover height 
-  pose[2] += (dim[2]/2.0) + (0.135) + hover_height;
+  pose[2] +=  hover_height; //(0.13)
 }
 
 
@@ -796,6 +758,27 @@ void MotionCoordinator::print_matrix(Eigen::Matrix4d mat)
 bool MotionCoordinator::gripper_contain_object(std::string planning_component)
 {
   return moveit2_wrapper_->gripper_closed(planning_component);
+}
+
+
+void MotionCoordinator::move_object(std::string object_id, std::vector<double> pose)
+{ 
+  double error = 1;
+  table_monitor_->move_object(object_id, pose); 
+  std::vector<double> actual_pose(7);
+  
+  while(error > 0.05)
+  {
+    error = 0;
+    actual_pose = table_monitor_->find_object(object_id);
+    for(int i = 0; i < actual_pose.size(); i++)
+    {
+      error += abs(actual_pose[i]-pose[i]);
+    }
+
+    if(error < 0.05) break;
+    else table_monitor_->move_object(object_id, pose); 
+  }
 }
 
 } // namespace motion_coordinator

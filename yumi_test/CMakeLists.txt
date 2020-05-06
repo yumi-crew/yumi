@@ -70,13 +70,15 @@ ament_target_dependencies(step
 add_executable(demo src/demo.cpp)
 target_include_directories(demo PRIVATE include)
 ament_target_dependencies(demo 
-                          rclcpp                            
-                          sensor_msgs
-                          angles                             
-                          ros2_control_interfaces 
-                          sg_control_interfaces
-                          yumi_robot_manager_interfaces
-                          rws_clients 
+                          motion_coordinator
+                          Boost
+                          kdl_wrapper
+                          rclcpp     
+                          angles
+                          pose_estimation_interface
+                          zivid_interfaces
+                          pose_estimation_manager
+                          pose_estimation   
 )
 # demo_kdl_ik                         
 add_executable(demo_kdl_ik src/demo_kdl_ik.cpp)
@@ -148,6 +150,7 @@ ament_target_dependencies(graph_bringup
 # socket_test
 add_executable(socket_test src/socket_test.cpp)
 target_link_libraries (socket_test ${CMAKE_THREAD_LIBS_INIT})
+
 # demo_motion_coordinator                         
 add_executable(demo_motion_coordinator src/demo_motion_coordinator.cpp)
 ament_target_dependencies(demo_motion_coordinator 

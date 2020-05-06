@@ -101,27 +101,27 @@ int main(int argc, char** argv)
 
 
   // ** TEST 3 **
-  while(!yumi_motion_coordinator->should_stop())
-  {
-    yumi_motion_coordinator->add_object("screwdriver", pose, true);
-    yumi_motion_coordinator->add_object("bin", bin_pose, true);
-    //yumi_motion_coordinator->random_move_object("screwdriver", 0.1);
+  // while(!yumi_motion_coordinator->should_stop())
+  // {
+  //   yumi_motion_coordinator->add_object("screwdriver", pose, true);
+  //   yumi_motion_coordinator->add_object("bin", bin_pose, true);
+  //   //yumi_motion_coordinator->random_move_object("screwdriver", 0.1);
   
-    yumi_motion_coordinator->move_to_object("left_arm", "screwdriver", 0.2, 3, false, true, false);
+  //   yumi_motion_coordinator->move_to_object("left_arm", "screwdriver", 0.2, 3, false, true, false);
     
-    sleep(1);
-    if(!yumi_motion_coordinator->pick_object("left_arm", "screwdriver", 3, true, false, percentage)){ std::cout << "pick failed" << std::endl; }
-    sleep(1);
+  //   sleep(1);
+  //   if(!yumi_motion_coordinator->pick_object("left_arm", "screwdriver", 3, true, false, percentage)){ std::cout << "pick failed" << std::endl; }
+  //   sleep(1);
 
-    sleep(1);
-    if(!yumi_motion_coordinator->place_at_object("left_arm", "bin", 0, true, false, percentage)){ std::cout << "place failed" << std::endl; }
-    sleep(1);
+  //   sleep(1);
+  //   //if(!yumi_motion_coordinator->place_at_object("left_arm", "bin", 0, true, false, percentage)){ std::cout << "place failed" << std::endl; }
+  //   sleep(1);
 
-    yumi_motion_coordinator->move_to_home("left_arm", 3);
-    ++counter;
-    std::cout << "++++++ " << counter << " rounds completed" <<std::endl;
-    yumi_motion_coordinator->remove_object("screwdriver");
-  }
+  //   yumi_motion_coordinator->move_to_home("left_arm", 3);
+  //   ++counter;
+  //   std::cout << "++++++ " << counter << " rounds completed" <<std::endl;
+  //   yumi_motion_coordinator->remove_object("screwdriver");
+  // }
 
   //std::cout << ">>>>> managed - " << counter << " - rounds with " << retries << " allowed retries and required percentage " << percentage << std::endl;
   std::cout << "Motion completed, please ctrl+c" << std::endl;

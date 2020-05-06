@@ -85,7 +85,7 @@
     <child link="yumi_link_1_r"/>
     <origin rpy="-0.9795   -0.5682   -2.3155" xyz="0.05355 -0.0725 0.41492"/>
     <axis xyz="0 0 1"/>
-    <limit effort="300" lower="-2.94087978961" upper="2.94087978961" velocity="3.14159265359"/>
+    <limit effort="300" lower="-2.9" upper="2.9" velocity="3.14159265359"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="yumi_link_1_r">
@@ -115,7 +115,7 @@
     <child link="yumi_link_2_r"/>
     <origin rpy="1.57079632679 0.0 0.0" xyz="0.03 0.0 0.1"/>
     <axis xyz="0 0 1"/>
-    <limit effort="300" lower="-2.50454747661" upper="0.759218224618" velocity="3.14159265359"/>
+    <limit effort="300" lower="-2.4" upper="0.7" velocity="3.14159265359"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="yumi_link_2_r">
@@ -145,7 +145,7 @@
     <child link="yumi_link_3_r"/>
     <origin rpy="-1.57079632679 0.0 0.0" xyz="-0.03 0.17283 0.0"/>
     <axis xyz="0 0 1"/>
-    <limit effort="300" lower="-2.94087978961" upper="2.94087978961" velocity="3.14159265359"/>
+    <limit effort="300" lower="-2.9" upper="2.9" velocity="3.14159265359"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="yumi_link_3_r">
@@ -175,7 +175,7 @@
     <child link="yumi_link_4_r"/>
     <origin rpy="1.57079632679 -1.57079632679 0.0" xyz="-0.04188 0.0 0.07873"/>
     <axis xyz="0 0 1"/>
-    <limit effort="300" lower="-2.15548162621" upper="1.3962634016" velocity="3.14159265359"/>
+    <limit effort="300" lower="-2.1" upper="1.3" velocity="3.14159265359"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="yumi_link_4_r">
@@ -205,7 +205,7 @@
     <child link="yumi_link_5_r"/>
     <origin rpy="-1.57079632679 0.0 0.0" xyz="0.0405 0.16461 0.0"/>
     <axis xyz="0 0 1"/>
-    <limit effort="300" lower="-5.06145483078" upper="5.06145483078" velocity="6.98131700798"/>
+    <limit effort="300" lower="-5.0" upper="5.0" velocity="6.98131700798"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="yumi_link_5_r">
@@ -235,7 +235,7 @@
     <child link="yumi_link_6_r"/>
     <origin rpy="1.57079632679 0.0 0.0" xyz="-0.027 0 0.10039"/>
     <axis xyz="0 0 1"/>
-    <limit effort="300" lower="-1.53588974176" upper="2.40855436775" velocity="6.98131700798"/>
+    <limit effort="300" lower="-1.5" upper="2.4" velocity="6.98131700798"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="yumi_link_6_r">
@@ -265,7 +265,7 @@
     <child link="yumi_link_7_r"/>
     <origin rpy="-1.57079632679 0.0 0.0" xyz="0.027 0.029 0.0"/>
     <axis xyz="0 0 1"/>
-    <limit effort="300" lower="-3.99680398707" upper="3.99680398707" velocity="6.98131700798"/>
+    <limit effort="300" lower="-3.9" upper="3.9" velocity="6.98131700798"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="yumi_link_7_r">
@@ -296,7 +296,7 @@
     <child link="yumi_link_1_l"/>
     <origin rpy="0.9781 -0.5716 2.3180" xyz="0.05355 0.07250 0.41492"/>
     <axis xyz="0 0 1"/>
-    <limit effort="300" lower="-2.94087978961" upper="2.94087978961" velocity="3.14159265359"/>
+    <limit effort="300" lower="-2.9" upper="2.9" velocity="3.14159265359"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="yumi_link_1_l">
@@ -326,7 +326,7 @@
     <child link="yumi_link_2_l"/>
     <origin rpy="1.57079632679 0.0 0.0" xyz="0.03 0.0 0.1"/>
     <axis xyz="0 0 1"/>
-    <limit effort="300" lower="-2.50454747661" upper="0.759218224618" velocity="3.14159265359"/>
+    <limit effort="300" lower="-2.3" upper="0.70" velocity="3.14159265359"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="yumi_link_2_l">
@@ -356,7 +356,7 @@
     <child link="yumi_link_3_l"/>
     <origin rpy="-1.57079632679 0.0 0.0" xyz="-0.03 0.17283 0.0"/>
     <axis xyz="0 0 1"/>
-    <limit effort="300" lower="-2.94087978961" upper="2.94087978961" velocity="3.14159265359"/>
+    <limit effort="300" lower="-2.89" upper="2.89" velocity="3.14159265359"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="yumi_link_3_l">
@@ -386,7 +386,7 @@
     <child link="yumi_link_4_l"/>
     <origin rpy="1.57079632679 -1.57079632679 0.0" xyz="-0.04188 0.0 0.07873"/>
     <axis xyz="0 0 1"/>
-    <limit effort="300" lower="-2.15548162621" upper="1.3962634016" velocity="3.14159265359"/>
+    <limit effort="300" lower="-2.1" upper="1.3" velocity="3.14159265359"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="yumi_link_4_l">
@@ -416,7 +416,7 @@
     <child link="yumi_link_5_l"/>
     <origin rpy="-1.57079632679 0.0 0.0" xyz="0.0405 0.16461 0.0"/>
     <axis xyz="0 0 1"/>
-    <limit effort="300" lower="-5.06145483078" upper="5.06145483078" velocity="6.98131700798"/>
+    <limit effort="300" lower="-5.0" upper="5.0" velocity="6.98131700798"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="yumi_link_5_l">
@@ -446,7 +446,7 @@
     <child link="yumi_link_6_l"/>
     <origin rpy="1.57079632679 0.0 0.0" xyz="-0.027 0 0.10039"/>
     <axis xyz="0 0 1"/>
-    <limit effort="300" lower="-1.53588974176" upper="2.40855436775" velocity="6.98131700798"/>
+    <limit effort="300" lower="-1.5" upper="2.4" velocity="6.98131700798"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="yumi_link_6_l">
@@ -476,7 +476,7 @@
     <child link="yumi_link_7_l"/>
     <origin rpy="-1.57079632679 0.0 0.0" xyz="0.027 0.029 0.0"/>
     <axis xyz="0 0 1"/>
-    <limit effort="300" lower="-3.99680398707" upper="3.99680398707" velocity="6.98131700798"/>
+    <limit effort="300" lower="-3.9" upper="3.9" velocity="6.98131700798"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="yumi_link_7_l">
@@ -851,14 +851,14 @@
   <joint name="gripper_r_center_joint" type="fixed">
     <parent link="gripper_r_base"/>
     <child link="gripper_r_center"/>
-    <origin rpy="0 0 3.14159265359" xyz="0.0 0.0 0.13"/>
+    <origin rpy="0 0 3.14159265359" xyz="0.0 0.0 0.122"/>
   </joint>
   <link name="gripper_r_center"> </link>
   <!-- Joint between base and grip center, left hand -->
   <joint name="gripper_l_center_joint" type="fixed">
     <parent link="gripper_l_base"/>
     <child link="gripper_l_center"/>
-    <origin rpy="0 0 3.14159265359" xyz="0.0 0.0 0.13"/>
+    <origin rpy="0 0 3.14159265359" xyz="0.0 0.0 0.122"/>
   </joint>
   <link name="gripper_l_center"> </link>
   <!-- Plugin for the mimic o/c joint - AFAIK, that shouldn't be necessary any more starting with Gazebo 3.0 -->

@@ -91,7 +91,7 @@ def generate_launch_description():
                               arguments=[configDir_R])                              
     
     sg_control_right = Node(package='sg_control', 
-                              node_executable='sg_control_sim_node',
+                              node_executable='sg_control_node',
                               node_namespace='/r') 
 
 

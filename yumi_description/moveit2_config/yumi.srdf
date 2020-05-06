@@ -16,10 +16,10 @@
         <chain base_link="yumi_body" tip_link="yumi_link_7_r" />
     </group>
     <group name="left_arm_with_gripper">
-        <chain base_link="yumi_body" tip_link="gripper_l_base" />
+        <chain base_link="yumi_body" tip_link="gripper_l_center" />
     </group>
     <group name="right_arm_with_gripper">
-        <chain base_link="yumi_body" tip_link="gripper_r_base" />
+        <chain base_link="yumi_body" tip_link="gripper_r_center" />
     </group>
     <group name="both_arms">
         <group name="left_arm" />

@@ -69,7 +69,7 @@ public:
   * @param replan flag indicating whether the motion should replan upon changes in the planning scene during motion.
   *               Replanning is only available for blocking motion.
   */
-  void move_to_object(std::string planning_component, std::string object_id, double hover_height, int num_retries=0, 
+  void move_to_object(std::string planning_component, std::string object_id, int num_retries, double hover_height,
                       bool visualize=false, bool blocking=true, bool replan=false);
   
   /** 
@@ -104,7 +104,7 @@ public:
    * @param percentage desired 'linearity' of the computed cartesian straight-line path, 1 indicate a perfectly
    *                   straight line.
    */
-  bool linear_move_to_object(std::string planning_component, std::string object_id, double hover_height,int num_retries,
+  bool linear_move_to_object(std::string planning_component, std::string object_id, int num_retries,double hover_height,
                              bool visualize=false, bool blocking=true, bool collision_checking=true, 
                              double percentage=1, double speed_scaling=1, double acc_scaling=1);
 
@@ -127,7 +127,7 @@ public:
    * 
    * \return true if the object is estimated to be successfully picked.
    */
-  bool pick_object(std::string planning_component, std::string object_id, int num_retries, bool blocking, 
+  bool pick_object(std::string planning_component, std::string object_id, int num_retries, double hover_height, bool blocking, 
                    bool visualize, double percentage);
   
   /**
@@ -136,7 +136,7 @@ public:
    * 
    * \return true if the object is estimated to be successfully placed.
    */
-  bool place_at_object(std::string planning_component, std::string object_id, int num_retries, bool blocking, 
+  bool place_at_object(std::string planning_component, std::string object_id, int num_retries, double hover_height, bool blocking, 
                        bool visualize, double percentage);
 
   /* Return whether a planning_component is moving. */
@@ -163,6 +163,8 @@ public:
   void grip_out(std::string gripper, bool blocking);
 
   std::shared_ptr<rclcpp::Node> get_node() { return node_; };
+
+  void move_object(std::string object_id, std::vector<double> pose);
 
 private:
   std::string node_name_;
@@ -191,7 +193,7 @@ private:
   void joint_state_callback(sensor_msgs::msg::JointState::UniquePtr msg);
 
   /* Pose must be given using quaternions. */
-  void apply_gripper_transform(std::vector<double>& pose, bool rotate,std::string object_id, double hover_height);
+  void apply_gripper_transform(std::vector<double>& pose, double hover_height);
 
   /* Returns a position randomly shifted side_shift in the X or Y direction. */
   std::vector<double> random_nearby_position(std::vector<double> old_position, double side_shift);
