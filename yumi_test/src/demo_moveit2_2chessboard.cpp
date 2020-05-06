@@ -117,7 +117,6 @@ int main(int argc, char **argv)
   rclcpp::executors::MultiThreadedExecutor exe;
   exe.add_node(pose_estimation_manager);
 
-
   auto state1 = pose_estimation_manager->get_state("zivid_camera", 3s);
   auto state2 = pose_estimation_manager->get_state("pose_estimation", 3s);
 
@@ -139,7 +138,10 @@ int main(int argc, char **argv)
   auto state5 = pose_estimation_manager->get_state("zivid_camera", 3s);
   auto state6 = pose_estimation_manager->get_state("pose_estimation", 3s);
 
-  pose_estimation_manager->call_init_halcon_surface_match_srv("/home/markus/Documents/models_ply/", 500s);
+  char *buf = getlogin();
+  std::string u_name = buf;
+
+  pose_estimation_manager->call_init_halcon_surface_match_srv("/home/" + u_name + "/markus/Documents/models_ply/", 2, 500s);
   auto transition_success3 = pose_estimation_manager->change_state(
       "zivid_camera", lifecycle_msgs::msg::Transition::TRANSITION_ACTIVATE, 10s);
   // sleep(4); // wait to ensure joint_state_controller is publishing the joint states
@@ -151,18 +153,18 @@ int main(int argc, char **argv)
   //--------------------------------------------------------------------------------------------------------------------
 
   // Go to home position (start pose)
-  std::cout << "RIGHT --- moveit2.state_to_state_motion" << std::endl;
-  if (!moveit2.state_to_state_motion("right_arm", home_r, 2, false))
-  {
-    std::cout << "RIGHT --- state_to_state_motion returned false" << std::endl;
-    return -1;
-  }
-  std::cout << "LEFT --- moveit2.state_to_state_motion" << std::endl;
-  if (!moveit2.state_to_state_motion("left_arm", home_l, 2, false))
-  {
-    std::cout << "LEFT --- state_to_state_motion returned false" << std::endl;
-    return -1;
-  }
+  // std::cout << "RIGHT --- moveit2.state_to_state_motion" << std::endl;
+  // if (!moveit2.state_to_state_motion("right_arm", home_r, 2, false))
+  // {
+  //   std::cout << "RIGHT --- state_to_state_motion returned false" << std::endl;
+  //   return -1;
+  // }
+  // std::cout << "LEFT --- moveit2.state_to_state_motion" << std::endl;
+  // if (!moveit2.state_to_state_motion("left_arm", home_l, 2, false))
+  // {
+  //   std::cout << "LEFT --- state_to_state_motion returned false" << std::endl;
+  //   return -1;
+  // }
   bool cap_success{false};
   bool est_success{false};
   std::vector<float> grasp_pose;
@@ -171,11 +173,11 @@ int main(int argc, char **argv)
   std::vector<std::string> objects = {"screwdriver"};
   while (1)
   {
-    
+
     std::cout << "before call_capture_srv" << std::endl;
     cap_success = pose_estimation_manager->call_capture_srv(5s);
 
-    for(auto object : objects)
+    for (auto object : objects)
     {
       std::cout << "before call_estimate_pose_srv" << std::endl;
       est_success = pose_estimation_manager->call_estimate_pose_srv(object, 50s);
