@@ -111,7 +111,10 @@
     <disable_collisions link1="yumi_link_4_r" link2="yumi_link_6_r" reason="Never" />
     <disable_collisions link1="yumi_link_4_r" link2="yumi_link_7_r" reason="Never" />
     <disable_collisions link1="yumi_link_5_l" link2="yumi_link_6_l" reason="Adjacent" />
+    <disable_collisions link1="yumi_link_5_l" link2="yumi_link_7_l" reason="Never" />   
+    <disable_collisions link1="yumi_link_5_r" link2="yumi_link_7_r" reason="Never" />      
     <disable_collisions link1="yumi_link_5_r" link2="yumi_link_6_r" reason="Adjacent" />
+    <disable_collisions link1="yumi_link_5_r" link2="gripper_r_base" reason="Never" />
     <disable_collisions link1="yumi_link_6_l" link2="yumi_link_7_l" reason="Adjacent" />
     <disable_collisions link1="yumi_link_6_r" link2="yumi_link_7_r" reason="Adjacent" />
 </robot>

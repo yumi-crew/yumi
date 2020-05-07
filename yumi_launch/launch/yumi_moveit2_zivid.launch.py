@@ -99,9 +99,10 @@ def generate_launch_description():
     rviz_node = Node(package='rviz2',
                      node_executable='rviz2',
                      node_name='rviz2',
+                     emulate_tty=False, # Remove spam
                      arguments=['-d', rviz_config_dir],
-                     parameters=[robot_description],
-                     output='screen')
+                     parameters=[robot_description])
+                     
 
     # Publish base link TF
     static_tf = Node(package='tf2_ros',

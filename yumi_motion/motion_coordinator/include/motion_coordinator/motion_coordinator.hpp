@@ -166,6 +166,8 @@ public:
 
   void move_object(std::string object_id, std::vector<double> pose);
 
+  bool object_present(std::string object_id){ return !table_monitor_->find_object(object_id).empty(); }
+
 private:
   std::string node_name_;
   std::shared_ptr<rclcpp::Node> node_;
@@ -180,8 +182,8 @@ private:
   bool should_stop_ = false;
   bool robot_ready_ = false;
   double replan_delay_ = 1.0;
-  double speed_scale_ = 0.1;
-  double acc_scale_ = 0.1;
+  double speed_scale_ = 1;
+  double acc_scale_ = 1;
   std::mutex should_replan_mutex_;
 
   /* Stops the trajectory controller of a registered planning_component. */

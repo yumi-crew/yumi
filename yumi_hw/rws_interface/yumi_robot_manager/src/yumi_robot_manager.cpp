@@ -233,6 +233,12 @@ bool YumiRobotManager::configure()
 {  
   if(calibrate_grippers())
   {
+    abb::rws::RWSStateMachineInterface::SGSettings p_left_settings;
+    abb::rws::RWSStateMachineInterface::SGSettings p_right_settings;
+    this->services().sg().dualGetSettings(&p_left_settings, &p_right_settings);
+    p_left_settings.hold_force = 20;
+    p_right_settings.hold_force = 20;
+    this->services().sg().dualSetSettings(p_left_settings, p_right_settings);
     is_ready_ = true;
     return true;
   }

@@ -10,6 +10,8 @@ using namespace std::chrono_literals;
 void signal_callback_handler(int signum)
 {
   std::cout << "Caught signal " << signum << std::endl;
+  // Terminate EGM session
+  yumi_motion_coordinator->terminate_egm_session();
   // shutdown lifecycle nodes
   pose_estimation_manager->change_state(
       "zivid_camera", lifecycle_msgs::msg::Transition::TRANSITION_DEACTIVATE, 30s);
@@ -19,11 +21,10 @@ void signal_callback_handler(int signum)
       "zivid_camera", lifecycle_msgs::msg::Transition::TRANSITION_CLEANUP, 30s);
   pose_estimation_manager->change_state(
       "pose_estimation", lifecycle_msgs::msg::Transition::TRANSITION_CLEANUP, 30s);
-  // Terminate EGM session
-  yumi_motion_coordinator->terminate_egm_session();
   // Terminate ros node
-  rclcpp::shutdown();
+  //rclcpp::shutdown();
   // Terminate program
+  sleep(1);
   exit(signum);
 }
 
@@ -34,8 +35,12 @@ void spin(std::shared_ptr<rclcpp::executors::MultiThreadedExecutor> exe)
 
 int main(int argc, char **argv)
 {
+  // Ctrl+C handler
+  signal(SIGINT, signal_callback_handler);
+
   rclcpp::init(argc, argv);
 
+  // Initialize yumi motion coordinator
   yumi_motion_coordinator = std::make_shared<motion_coordinator::MotionCoordinator>("onsket_nodenavn");
   if (!yumi_motion_coordinator->init())
     return -1;
@@ -44,6 +49,13 @@ int main(int argc, char **argv)
   auto executor = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
   executor->add_node(yumi_motion_coordinator->get_node());
   auto future_handle = std::async(std::launch::async, spin, executor);
+
+  // Activate yumi, EGM, Moveit2
+  if (!yumi_motion_coordinator->activate())
+  {
+    std::cout << "ERROR: MotionCoordinator failed to activate." << std::endl;
+    return -1;
+  }
 
   // zivid + pose_estimation
   pose_estimation_manager = std::make_shared<PoseEstimationManager>("pose_estimation_manager");
@@ -75,28 +87,26 @@ int main(int argc, char **argv)
   char *buf = getlogin();
   std::string u_name = buf;
 
-  pose_estimation_manager->call_init_halcon_surface_match_srv("/home/" + u_name + "/abb_ws/src/object_files/ply/", 2, 500s);
+  pose_estimation_manager->call_init_halcon_surface_match_srv("/home/" + u_name + "/abb_ws/src/object_files/ply/", 4, 500s);
   auto transition_success3 = pose_estimation_manager->change_state(
       "zivid_camera", lifecycle_msgs::msg::Transition::TRANSITION_ACTIVATE, 30s);
 
-  // Activate yumi, EGM, Moveit2
-  if (!yumi_motion_coordinator->activate())
-  {
-    std::cout << "ERROR: MotionCoordinator failed to activate." << std::endl;
-    return -1;
-  }
 
   bool first = true;
   bool cap_success{false};
   bool est_success{false};
-  std::vector<double> bin_pose = {0.4, -0.1, -0.1, -0.1, 0, 180};
+  std::vector<double> bin_pose = {0.4, 0, -0.04, 0, 180, 0};
+  std::string arm = "right_arm";
+  std::string object = "screwdriver";
+  double percentage = 0;
+  int lin_retries = 5;
 
   yumi_motion_coordinator->add_object("bin", bin_pose, true);
 
   while (!yumi_motion_coordinator->should_stop())
   {
     // Go to home
-    yumi_motion_coordinator->move_to_home("left_arm", 3, false, true, false);
+    yumi_motion_coordinator->move_to_home(arm, 5, false, true, false);
 
     // Tar bilde
     std::cout << "before call_capture_srv" << std::endl;
@@ -104,25 +114,29 @@ int main(int argc, char **argv)
 
     // Finn pose i camera frame
     std::cout << "before call_estimate_pose_srv" << std::endl;
-    est_success = pose_estimation_manager->call_estimate_pose_srv("screwdriver", 50s);
+    if(!pose_estimation_manager->call_estimate_pose_srv(object, 50s))
+    {
+      std::cout << "[ERROR] object cannot be found." << std::endl;
+      if(!first) yumi_motion_coordinator->remove_object(object);
+      continue;
+    }
 
     // Finn pose i base frame
     auto grasp_pose = pose_estimation_manager->pose_transformer->obj_in_base_frame();
 
     // Legg mesh på object
-    if (first)
-      yumi_motion_coordinator->add_object("screwdriver", grasp_pose, false);
-    else
-      yumi_motion_coordinator->move_object("screwdriver", grasp_pose);
+    if(!yumi_motion_coordinator->object_present(object)) yumi_motion_coordinator->remove_object(object);
+    yumi_motion_coordinator->add_object(object, grasp_pose, false);
 
     // Plukk
-    if (!yumi_motion_coordinator->pick_object("left_arm", "screwdriver", 3, 0.15, true, false, 0.8))
+    if (!yumi_motion_coordinator->pick_object(arm, object, lin_retries, 0.15, true, false, percentage))
     {
       std::cout << "pick failed" << std::endl;
+      continue;
     }
 
     // Place
-    if (!yumi_motion_coordinator->place_at_object("left_arm", "bin", 3, 0.15, true, false, 0.8))
+    if (!yumi_motion_coordinator->place_at_object(arm, "bin", lin_retries, 0.23, true, false, percentage))
     {
       std::cout << "place failed" << std::endl;
     }

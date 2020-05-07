@@ -165,13 +165,20 @@ void MotionCoordinator::move_to_pose(std::string planning_component, std::vector
   }
   auto planning_component_hash = moveit2_wrapper_->get_planning_components_hash();
   std::string ee_link = planning_component_hash->at(planning_component).ee_link;
-  
+
+  // If allready at pose, don't do anything.
+  if(moveit2_wrapper_->pose_reached(planning_component, ee_link, pose, eulerzyx))
+  {
+    std::cout << "planning component '" << planning_component << "' is already at goal pose." << std::endl;
+    return;
+  }
+   
   // If it should replan upon changed planning_scene
   if(replan)
   {
     // Run initial motion non-blocking.
     moveit2_wrapper_->pose_to_pose_motion(planning_component, ee_link, pose,eulerzyx, num_retries, visualize, replan, 
-                                          false, speed_scale_);
+                                          false, speed_scale_, acc_scale_);
 
     while(!moveit2_wrapper_->pose_reached(planning_component, ee_link, pose, eulerzyx))
     {
@@ -182,7 +189,7 @@ void MotionCoordinator::move_to_pose(std::string planning_component, std::vector
         planning_component_hash->at(planning_component).should_replan = false; 
         should_replan_mutex_.unlock();
         moveit2_wrapper_->pose_to_pose_motion(planning_component, ee_link, pose, eulerzyx, num_retries, visualize, 
-                                              replan, false, speed_scale_);
+                                              replan, false, speed_scale_, acc_scale_);
       }
     }
     std::cout <<  "Goal pose of planning component '" << planning_component << "' considered reached." << std::endl;
@@ -191,7 +198,7 @@ void MotionCoordinator::move_to_pose(std::string planning_component, std::vector
   else
   {
     moveit2_wrapper_->pose_to_pose_motion(planning_component, ee_link, pose, eulerzyx, num_retries, visualize, replan, 
-                                          blocking, speed_scale_);
+                                          blocking, speed_scale_, acc_scale_);
   }
 }
 
@@ -201,34 +208,39 @@ void MotionCoordinator::move_to_object(std::string planning_component, std::stri
 {
   std::cout << "move_to_object() called for planning component '"<< planning_component << "'." << std::endl;
 
-  std::vector<double> dim = table_monitor_->get_object_dimensions(object_id);
-
   if(replan && !blocking) 
   { 
     std::cout <<  "[ERROR] Replanning is only available for blocking motion." << std::endl;
     return;
   }
+
   auto planning_components_hash = moveit2_wrapper_->get_planning_components_hash();
   std::string ee_link = planning_components_hash->at(planning_component).ee_link;
 
   std::vector<double> pose = table_monitor_->find_object(object_id);
 
+  // If object cant be found.
   if(pose.empty())
   { 
     stop(planning_component);
-    std::cout <<  "Can't find object, moving to home." << std::endl;
-    move_to_home(planning_component, num_retries, true, blocking, false);
+    std::cout <<  "[ERROR] Can't find object." << std::endl;
     return; 
   }
-  else apply_gripper_transform(pose, hover_height+dim[2]/2.0);
+  else pose[2] += hover_height;
 
-  
-  // If it should replan upon changed planning_scene
+  // If already at object, don't do anything.
+  if(moveit2_wrapper_->pose_reached(planning_component, ee_link, pose, false))
+  {
+    std::cout << "planning component '" << planning_component << "' is already at goal pose." << std::endl;
+    return;
+  }
+
+  // If it should replan upon changed planning_scene.
   if(replan)
   {
     // Run initial motion non-blocking.
     moveit2_wrapper_->pose_to_pose_motion(planning_component, ee_link, pose, false, num_retries, visualize, replan, 
-                                          false, speed_scale_);
+                                          false, speed_scale_, acc_scale_);
 
     while(!moveit2_wrapper_->pose_reached(planning_component, ee_link, pose, false))
     {
@@ -239,17 +251,16 @@ void MotionCoordinator::move_to_object(std::string planning_component, std::stri
 
         if(pose.empty())
         { 
-          std::cout <<  "Can't find object, moving to home." << std::endl;
-          move_to_home(planning_component, num_retries, true, blocking, false);
-          return; 
+          std::cout <<  "[ERROR] Can't find object." << std::endl;
+          continue; 
         }
-        else apply_gripper_transform(pose, hover_height+dim[2]/2.0);
+        else pose[2] += hover_height;
 
         should_replan_mutex_.lock();
         planning_components_hash->at(planning_component).should_replan = false; 
         should_replan_mutex_.unlock();
         moveit2_wrapper_->pose_to_pose_motion(planning_component, ee_link, pose, false, num_retries, visualize, replan, 
-                                              false, speed_scale_);
+                                              false, speed_scale_, acc_scale_);
         
       }
     }
@@ -259,7 +270,7 @@ void MotionCoordinator::move_to_object(std::string planning_component, std::stri
   else
   {
     moveit2_wrapper_->pose_to_pose_motion(planning_component, ee_link, pose, false, num_retries, visualize, replan, 
-                                          blocking, speed_scale_);
+                                          blocking, speed_scale_, acc_scale_);
   }
 }
 
@@ -274,6 +285,13 @@ bool MotionCoordinator::linear_move_to_pose(std::string planning_component, std:
   auto planning_components_hash = moveit2_wrapper_->get_planning_components_hash();
   std::string ee_link = planning_components_hash->at(planning_component).ee_link;
 
+  // If already at pose, don't do anything
+  if(moveit2_wrapper_->pose_reached(planning_component, ee_link, pose, eulerzyx))
+  {
+    std::cout << "planning component '" << planning_component << "' is already at goal pose." << std::endl;
+    return true;
+  }
+
   bool retry = false;
   std::vector<double> new_pose(6);
   std::vector<double> org_pose = moveit2_wrapper_->find_pose(ee_link); // Given using quaternions.
@@ -285,7 +303,6 @@ bool MotionCoordinator::linear_move_to_pose(std::string planning_component, std:
   {
     std::cout << " ---- new attempt" << std::endl;
     --retries_left;
-    sleep(3);
     
     auto state = equivalent_state(planning_component, org_pose, false);
     auto cur_state = moveit2_wrapper_->get_current_state(planning_component);
@@ -330,7 +347,6 @@ bool MotionCoordinator::linear_move_to_pose(std::string planning_component, std:
     {
       std::cout << " ***  linear_move_to_pose() was not able to find a valid solution within " 
                 << num_retries << " attempts.\n";
-      should_stop_ = true;
       return false;
     } 
   }
@@ -355,14 +371,22 @@ bool MotionCoordinator::linear_move_to_object(std::string planning_component, st
   std::string ee_link = planning_components_hash->at(planning_component).ee_link;
 
   std::vector<double> pose = table_monitor_->find_object(object_id); 
+  
+  // If object cant be found.
   if(pose.empty())
   { 
     stop(planning_component);
-    std::cout <<  "Can't find object, moving to home." << std::endl;
-    move_to_home(planning_component, 2, true, blocking, false);
+    std::cout <<  "[ERROR] Can't find object." << std::endl;
     return false; 
   }
-  else apply_gripper_transform(pose, hover_height); 
+  else pose[2] += hover_height;
+
+  // If already at goal pose, don't do anything
+  if(moveit2_wrapper_->pose_reached(planning_component, ee_link, pose, false))
+  {
+    std::cout << "planning component '" << planning_component << "' is already at goal pose." << std::endl;
+    return true;
+  }
 
   bool success = linear_move_to_pose(planning_component, pose, false, num_retries, visualize, blocking, 
                                      collision_checking, percentage, speed_scaling, acc_scaling);
@@ -372,26 +396,35 @@ bool MotionCoordinator::linear_move_to_object(std::string planning_component, st
 }
 
 
-bool MotionCoordinator::pick_object(std::string planning_component, std::string object_id,int num_retries, double hover_height, bool blocking, 
-                                    bool visualize, double percentage)
+bool MotionCoordinator::pick_object(std::string planning_component, std::string object_id,int num_retries,  
+                                    double hover_height, bool blocking, bool visualize, double percentage)
 {
   std::cout << "pick_object() called for planning component '" << planning_component << "'." << std::endl;
 
   // Find hover pose directly above grip and the grip pose
-  std::vector<double> grip_pose = table_monitor_->find_object(object_id);
-  std::vector<double> hover_pose = grip_pose; hover_pose[2] += hover_height;
+  std::vector<double> grip_pose = table_monitor_->find_object(object_id); // quaternions
+
+  // If object cant be found.
+  if(grip_pose.empty())
+  { 
+    stop(planning_component);
+    std::cout <<  "[ERROR] Can't find object." << std::endl;
+    return false; 
+  }
+
+  // disable collision between everything and object
+  moveit2_wrapper_->disable_collision("sau", object_id);
+
+  std::vector<double> hover_pose = grip_pose; 
+  hover_pose[2] += hover_height;
 
   move_to_pose(planning_component, hover_pose, false, num_retries, visualize, true, false);
   
-  sleep(1); 
   grip_out(planning_component, true); 
-  sleep(1);
   
-  if(!linear_move_to_pose(planning_component, grip_pose, false, 3, visualize, true, false, percentage)) return false;
+  if(!linear_move_to_pose(planning_component, grip_pose, false, num_retries, visualize, true, false, percentage)) return false;
 
-  sleep(1);
   grip_in(planning_component, true); 
-  sleep(1);
   
   if(!linear_move_to_pose(planning_component, hover_pose, false, 0, visualize, true, false, percentage)) return false;
   
@@ -400,41 +433,53 @@ bool MotionCoordinator::pick_object(std::string planning_component, std::string 
 }
 
 
-bool MotionCoordinator::place_at_object(std::string planning_component, std::string object_id, int num_retries, double hover_height,  
-                                        bool blocking, bool visualize, double percentage)
+bool MotionCoordinator::place_at_object(std::string planning_component, std::string object_id, int num_retries,  
+                                         double hover_height,bool blocking, bool visualize, double percentage)
 {
   std::cout << "place_object() called for planning component '" << planning_component << "'." << std::endl;
-  
-  std::vector<double> dim = table_monitor_->get_object_dimensions(object_id);
 
   // linear move to hover point
-  double counter = 0;
-  while(counter < num_retries) 
+  if(!linear_move_to_object(planning_component, object_id, 0, hover_height, visualize, true, true, percentage))
   {
-    if(linear_move_to_object(planning_component, object_id, 0, hover_height+dim[2]/2.0, visualize, true, true, percentage)) break;
-    counter++;
-    if(counter == num_retries) move_to_object(planning_component, object_id, num_retries, hover_height+dim[2]/2.0, visualize, blocking, false);
-  }
+    if(!linear_move_to_object(planning_component, object_id, 0, hover_height, visualize, true, false, percentage-0.2))
+    {
+      if(!linear_move_to_object(planning_component, object_id, 0, hover_height, visualize, true, false, percentage-0.4))
+      { 
+        // If linear motion is not possible, try ordinary motion.
+        move_to_object(planning_component, object_id, 3, hover_height, visualize, true, false);
+      }
+    }
+  } 
 
-  // linear move down
-  counter = 0;
-  while(counter < num_retries) 
+  // linear move down to drop point
+  if(!linear_move_to_object(planning_component, object_id, 0, hover_height-0.05, visualize, true, false, percentage))
   {
-    if(linear_move_to_object(planning_component, object_id, 0, 0.01+dim[2]/2.0, visualize, true, false, percentage)) break;
-    counter++;
-    if(counter == num_retries) return false;
+    if(!linear_move_to_object(planning_component, object_id, 0, hover_height-0.05, visualize, true, false , percentage-0.2))
+    {
+      if(!linear_move_to_object(planning_component, object_id, 0, hover_height-0.05, visualize, true, false, percentage-0.4))
+      { 
+        // If drop point cant be reached, drop object at current pose.
+        grip_out(planning_component, true);
+        return false;
+      }
+    }
   }
-
+ 
   // let go
-  grip_out(planning_component, true); sleep(3);
+  grip_out(planning_component, true);
 
-  // linear move up
-  counter = 0;
-  while(counter < num_retries) 
+  // linear move up to hover point
+  if(!linear_move_to_object(planning_component, object_id, 0, hover_height, visualize, true, false, percentage))
   {
-    if(linear_move_to_object(planning_component, object_id, 0, hover_height+dim[2]/2.0, visualize, true, false, percentage)) break;
-    counter++;
-    if(counter == num_retries) return false;
+    if(!linear_move_to_object(planning_component, object_id, 0, hover_height, visualize, true, false, percentage-0.2))
+    {
+      if(!linear_move_to_object(planning_component, object_id, 0, hover_height, visualize, true, false, percentage-0.4))
+      { 
+        // If linear motion is not possible, try ordinary motion.
+        move_to_object(planning_component, object_id, 3, hover_height, visualize, true, false);
+        return false;
+      }
+    }
   }
 
   grip_in(planning_component, true);
@@ -454,8 +499,17 @@ void MotionCoordinator::move_to_home(std::string planning_component, int num_ret
     return;
   }
   auto planning_component_hash = moveit2_wrapper_->get_planning_components_hash();
+
+  // Find home configuration
   std::vector<double> home =  planning_component_hash->at(planning_component).home_configuration;
-  
+
+  // If allready at home, don't do anything.
+  if(moveit2_wrapper_->state_reached(planning_component, home))
+  {
+    std::cout << "planning component '" << planning_component << "' is already at goal pose." << std::endl;
+    return;
+  }
+
   // If it should replan upon changed planning_scene
   if(replan)
   {
@@ -671,7 +725,7 @@ std::vector<double> MotionCoordinator::equivalent_state(std::string planning_com
 
   std::vector<float> q_seed_left_l = {-2.83, -1.18, 2.64, -0.47, 1.89, 0.96, 1.56};
   std::vector<float> q_seed_right_l = {-1.95, -1.95, 0.94, 0.87, -3.55, 2.87, 2.41}; 
-  //std::vector<float> q_seed_right_2l = {-1.86, -2.32, 0.80, 0.86, -3.20, 2.03, 2.91};
+  std::vector<float> q_seed_left_r = {-0.68, -0.067, 0.0054, 0.17, -0.63, 0.53, 0.23};
   std::vector<float> q_seed_right_3l = {-1.61, -1.68, 0.97, 0.91, 2.35, 2.07, 2.21};
   std::vector<float> q_seed_middle_l = {-2.40, -0.3177, 2.62, 0.46, 1.86, 0.69, 1.39};
   std::vector<float> q_seed_middle_2l = {-1.68, -0.88, 1.57, 0.60, 2.10, 1.34, 1.66};
@@ -703,6 +757,7 @@ std::vector<double> MotionCoordinator::equivalent_state(std::string planning_com
   std::vector<KDL::JntArray> seeds = 
   { kdl_wrapper_->stdvec_to_jntarray(q_seed_left_l),
     kdl_wrapper_->stdvec_to_jntarray(q_seed_right_l),
+    kdl_wrapper_->stdvec_to_jntarray(q_seed_left_r),
     kdl_wrapper_->stdvec_to_jntarray(q_seed_right_3l),
     kdl_wrapper_->stdvec_to_jntarray(q_seed_middle_l),
     kdl_wrapper_->stdvec_to_jntarray(q_seed_middle_2l),
@@ -766,8 +821,9 @@ void MotionCoordinator::move_object(std::string object_id, std::vector<double> p
   double error = 1;
   table_monitor_->move_object(object_id, pose); 
   std::vector<double> actual_pose(7);
+  double allowed_deviation = 0.00005;
   
-  while(error > 0.05)
+  while(error > allowed_deviation)
   {
     error = 0;
     actual_pose = table_monitor_->find_object(object_id);
@@ -776,7 +832,7 @@ void MotionCoordinator::move_object(std::string object_id, std::vector<double> p
       error += abs(actual_pose[i]-pose[i]);
     }
 
-    if(error < 0.05) break;
+    if(error <= allowed_deviation) break;
     else table_monitor_->move_object(object_id, pose); 
   }
 }
