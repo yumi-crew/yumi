@@ -145,28 +145,25 @@ public:
   /* Stops the execution a planning component's trajectory. */
   void stop(std::string planning_component);
 
-  /* [Testing] Randomly side-shifts an registered object. Returns the new position. */
-  std::vector<double> random_move_object(std::string object_id, double side_shift);
+  /* Add a registered object to the planning scene. */
+  void add_object(std::string object_id, std::vector<double> pose, bool eulerzyx, std::vector<float> rgba = {});
 
-  /* [Testing] Removes a registered object. */
+  /* Removes a registered object. */
   void remove_object(std::string object_id);
 
-  /* [Testing] Add a registered object to the planning scene. */
-  void add_object(std::string object_id, std::vector<double> pose, bool eulerzyx);
-
-  /* [Testing] */
-  bool should_stop(){ return should_stop_; }
-
-  void disable_col(std::string object_id){ moveit2_wrapper_->disable_collision("s", object_id); }
-
-  void grip_in(std::string gripper, bool blocking);
-  void grip_out(std::string gripper, bool blocking);
-
-  std::shared_ptr<rclcpp::Node> get_node() { return node_; };
-
+  /* Moves a registered object. Pose must be given using quaternions. */
   void move_object(std::string object_id, std::vector<double> pose);
 
+  /* Checks if a registered object is present in the planning scene. */
   bool object_present(std::string object_id){ return !table_monitor_->find_object(object_id).empty(); }
+
+   /* Randomly side-shifts an registered object. Returns the new position. */
+  std::vector<double> random_move_object(std::string object_id, double side_shift);
+ 
+  bool should_stop(){ return should_stop_; }
+  void grip_in(std::string gripper, bool blocking);
+  void grip_out(std::string gripper, bool blocking);
+  std::shared_ptr<rclcpp::Node> get_node() { return node_; };
 
 private:
   std::string node_name_;
@@ -182,8 +179,8 @@ private:
   bool should_stop_ = false;
   bool robot_ready_ = false;
   double replan_delay_ = 1.0;
-  double speed_scale_ = 1;
-  double acc_scale_ = 1;
+  double speed_scale_ = 1.0;
+  double acc_scale_ = 1.0;
   std::mutex should_replan_mutex_;
 
   /* Stops the trajectory controller of a registered planning_component. */
@@ -191,11 +188,6 @@ private:
 
   /* Start the trajectory controller of a registered planning_component. */
   void allow_motion(std::string planning_component);
-
-  void joint_state_callback(sensor_msgs::msg::JointState::UniquePtr msg);
-
-  /* Pose must be given using quaternions. */
-  void apply_gripper_transform(std::vector<double>& pose, double hover_height);
 
   /* Returns a position randomly shifted side_shift in the X or Y direction. */
   std::vector<double> random_nearby_position(std::vector<double> old_position, double side_shift);
@@ -213,6 +205,7 @@ private:
 
   void print_matrix(Eigen::Matrix4d mat);
   bool gripper_contain_object(std::string planning_component);
+  void joint_state_callback(sensor_msgs::msg::JointState::UniquePtr msg);
 };
 
 } // namespace motion_coordinator

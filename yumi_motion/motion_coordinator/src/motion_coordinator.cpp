@@ -401,6 +401,10 @@ bool MotionCoordinator::pick_object(std::string planning_component, std::string 
 {
   std::cout << "pick_object() called for planning component '" << planning_component << "'." << std::endl;
 
+  // Get end effector link
+  auto planning_components_hash = moveit2_wrapper_->get_planning_components_hash();
+  std::string ee_link = planning_components_hash->at(planning_component).ee_link;
+
   // Find hover pose directly above grip and the grip pose
   std::vector<double> grip_pose = table_monitor_->find_object(object_id); // quaternions
 
@@ -412,22 +416,35 @@ bool MotionCoordinator::pick_object(std::string planning_component, std::string 
     return false; 
   }
 
-  // disable collision between everything and object
-  moveit2_wrapper_->disable_collision("sau", object_id);
+  std::vector<double> hover_pose = grip_pose; hover_pose[2] += hover_height;
 
-  std::vector<double> hover_pose = grip_pose; 
-  hover_pose[2] += hover_height;
-
+  // Move to hover pose and open gripper
   move_to_pose(planning_component, hover_pose, false, num_retries, visualize, true, false);
-  
   grip_out(planning_component, true); 
   
-  if(!linear_move_to_pose(planning_component, grip_pose, false, num_retries, visualize, true, false, percentage)) return false;
+  // Linear move to gripping pose, give up if unable.
+  if(!linear_move_to_pose(planning_component, grip_pose, false, num_retries, visualize, true, true, percentage))
+  {
+    table_monitor_->remove_object_from_scene(object_id, false);
+    return false;
+  }
 
-  grip_in(planning_component, true); 
-  
-  if(!linear_move_to_pose(planning_component, hover_pose, false, 0, visualize, true, false, percentage)) return false;
-  
+  // disable collision between everything and object
+  moveit2_wrapper_->disable_collision(object_id);
+
+  // Grip object
+  grip_in(planning_component, true);
+  table_monitor_->attach_object(object_id, ee_link); 
+
+  // disable collision between everything and object
+  moveit2_wrapper_->disable_collision(object_id);
+
+  // Linear move back to hover point. If linear motion is not possible, try ordinary motion.
+  if(!linear_move_to_pose(planning_component, hover_pose, false, 0, visualize, true, true, percentage))
+  {
+    move_to_pose(planning_component, hover_pose, false, num_retries, visualize, blocking, false);
+  }
+
   if(gripper_contain_object(planning_component)) return true;
   else false;
 }
@@ -438,48 +455,40 @@ bool MotionCoordinator::place_at_object(std::string planning_component, std::str
 {
   std::cout << "place_object() called for planning component '" << planning_component << "'." << std::endl;
 
+  // Get end effector link
+  auto planning_components_hash = moveit2_wrapper_->get_planning_components_hash();
+  std::string ee_link = planning_components_hash->at(planning_component).ee_link;
+
+  // Object to be placed
+  std::string object = table_monitor_->object_held(ee_link);
+
+  // Find location object's pose
+  std::vector<double> location = table_monitor_->find_object(object_id);
+
   // linear move to hover point
   if(!linear_move_to_object(planning_component, object_id, 0, hover_height, visualize, true, true, percentage))
   {
-    if(!linear_move_to_object(planning_component, object_id, 0, hover_height, visualize, true, false, percentage-0.2))
-    {
-      if(!linear_move_to_object(planning_component, object_id, 0, hover_height, visualize, true, false, percentage-0.4))
-      { 
-        // If linear motion is not possible, try ordinary motion.
-        move_to_object(planning_component, object_id, 3, hover_height, visualize, true, false);
-      }
-    }
+    // If linear motion is not possible, try ordinary motion.
+    move_to_object(planning_component, object_id, num_retries, hover_height, visualize, true, false);
   } 
 
-  // linear move down to drop point
-  if(!linear_move_to_object(planning_component, object_id, 0, hover_height-0.05, visualize, true, false, percentage))
+  // linear move down to drop point. If drop point cant be reached, drop object at current pose.
+  if(!linear_move_to_object(planning_component, object_id, 0, hover_height-0.05, visualize, true, true, percentage))
   {
-    if(!linear_move_to_object(planning_component, object_id, 0, hover_height-0.05, visualize, true, false , percentage-0.2))
-    {
-      if(!linear_move_to_object(planning_component, object_id, 0, hover_height-0.05, visualize, true, false, percentage-0.4))
-      { 
-        // If drop point cant be reached, drop object at current pose.
-        grip_out(planning_component, true);
-        return false;
-      }
-    }
+    grip_out(planning_component, true);
+    table_monitor_->detatch_object(object);
+    return false;
   }
  
-  // let go
+  // Let go object
   grip_out(planning_component, true);
+  table_monitor_->detatch_object(object);
 
-  // linear move up to hover point
-  if(!linear_move_to_object(planning_component, object_id, 0, hover_height, visualize, true, false, percentage))
+  // Linear move back to hover point. If linear motion is not possible, try ordinary motion.
+  if(!linear_move_to_object(planning_component, object_id, 0, hover_height, visualize, true, true, percentage))
   {
-    if(!linear_move_to_object(planning_component, object_id, 0, hover_height, visualize, true, false, percentage-0.2))
-    {
-      if(!linear_move_to_object(planning_component, object_id, 0, hover_height, visualize, true, false, percentage-0.4))
-      { 
-        // If linear motion is not possible, try ordinary motion.
-        move_to_object(planning_component, object_id, 3, hover_height, visualize, true, false);
-        return false;
-      }
-    }
+    move_to_object(planning_component, object_id, num_retries, hover_height, visualize, true, false);
+    return false;
   }
 
   grip_in(planning_component, true);
@@ -498,6 +507,7 @@ void MotionCoordinator::move_to_home(std::string planning_component, int num_ret
     std::cout << "[ERROR] Replanning is only available for blocking motion." << std::endl;
     return;
   }
+
   auto planning_component_hash = moveit2_wrapper_->get_planning_components_hash();
 
   // Find home configuration
@@ -514,7 +524,8 @@ void MotionCoordinator::move_to_home(std::string planning_component, int num_ret
   if(replan)
   {
     // Run initial motion non-blocking.
-    moveit2_wrapper_->state_to_state_motion(planning_component, home, num_retries, visualize, replan, false); 
+    moveit2_wrapper_->state_to_state_motion(planning_component, home, num_retries, visualize, replan, false,
+                                            speed_scale_, acc_scale_); 
                                             
 
     while(!moveit2_wrapper_->state_reached(planning_component, home))
@@ -522,7 +533,8 @@ void MotionCoordinator::move_to_home(std::string planning_component, int num_ret
       if(planning_component_hash->at(planning_component).should_replan)
       {
         stop(planning_component);
-        moveit2_wrapper_->state_to_state_motion(planning_component, home, num_retries, visualize, replan, false); 
+        moveit2_wrapper_->state_to_state_motion(planning_component, home, num_retries, visualize, replan, false, 
+                                                speed_scale_, acc_scale_); 
                                                 
         should_replan_mutex_.lock();
         planning_component_hash->at(planning_component).should_replan = false; 
@@ -534,8 +546,8 @@ void MotionCoordinator::move_to_home(std::string planning_component, int num_ret
   }
   else
   {
-    moveit2_wrapper_->state_to_state_motion(planning_component, home, num_retries, visualize, false, blocking); 
-                                            
+    moveit2_wrapper_->state_to_state_motion(planning_component, home, num_retries, visualize, false, blocking, 
+                                            speed_scale_, acc_scale_);                                    
   }
 }
 
@@ -656,12 +668,6 @@ bool MotionCoordinator::planning_component_in_motion(std::string planning_compon
 }
 
 
-void MotionCoordinator::apply_gripper_transform(std::vector<double>& pose, double hover_height)
-{
-  pose[2] +=  hover_height; //(0.13)
-}
-
-
 void MotionCoordinator::stop(std::string planning_component)
 {
   stop_motion(planning_component);
@@ -670,7 +676,7 @@ void MotionCoordinator::stop(std::string planning_component)
 }
 
 
-void MotionCoordinator::add_object(std::string object_id, std::vector<double> pose, bool eulerzyx)
+void MotionCoordinator::add_object(std::string object_id, std::vector<double> pose, bool eulerzyx, std::vector<float> rgba)
 {
   if(eulerzyx)
   {
@@ -680,7 +686,12 @@ void MotionCoordinator::add_object(std::string object_id, std::vector<double> po
     pose[5] = msg.pose.orientation.z;
     pose.push_back(msg.pose.orientation.w);
   }
-  table_monitor_->add_object_to_scene(object_id, pose);  
+  if(!rgba.empty())
+  {
+    table_monitor_->add_object_to_scene(object_id, pose, false); 
+    table_monitor_->set_object_color(object_id, rgba);
+  }
+  else table_monitor_->add_object_to_scene(object_id, pose, true); 
 }
 
 
@@ -785,14 +796,12 @@ std::vector<double> MotionCoordinator::equivalent_state(std::string planning_com
     { 
       if(jntarr(i) != 0) state.push_back(jntarr(i)); 
     }
-    
     // Find diff
     double dif = 0; 
     for(int i = 0; i < state.size(); i++) 
     { 
       dif += abs(q_seed_4[i]-state[i]);
     }
-   
     // If sufficiently different and not empty.
     if( (dif > 0.5) &&  (jntarr.data.sum() > 0)) return state;
   }
@@ -812,6 +821,7 @@ void MotionCoordinator::print_matrix(Eigen::Matrix4d mat)
 
 bool MotionCoordinator::gripper_contain_object(std::string planning_component)
 {
+  /* Unfinished */ 
   return moveit2_wrapper_->gripper_closed(planning_component);
 }
 

@@ -81,13 +81,14 @@ int main(int argc, char **argv)
 
   auto transition_success4 = pose_estimation_manager->change_state(
       "pose_estimation", lifecycle_msgs::msg::Transition::TRANSITION_ACTIVATE, 30s);
+  sleep(5);
   auto state5 = pose_estimation_manager->get_state("zivid_camera", 30s);
   auto state6 = pose_estimation_manager->get_state("pose_estimation", 30s);
 
   char *buf = getlogin();
   std::string u_name = buf;
 
-  pose_estimation_manager->call_init_halcon_surface_match_srv("/home/" + u_name + "/abb_ws/src/object_files/ply/", 4, 500s);
+  pose_estimation_manager->call_init_halcon_surface_match_srv("/home/" + u_name + "/abb_ws/src/object_files/ply/", 5, 500s);
   auto transition_success3 = pose_estimation_manager->change_state(
       "zivid_camera", lifecycle_msgs::msg::Transition::TRANSITION_ACTIVATE, 30s);
 
@@ -95,53 +96,56 @@ int main(int argc, char **argv)
   bool first = true;
   bool cap_success{false};
   bool est_success{false};
-  std::vector<double> bin_pose = {0.4, 0, -0.04, 0, 180, 0};
   std::string arm = "right_arm";
-  std::string object = "screwdriver";
+  std::vector<std::string> objects = {"screwdriver", "small_marker", "small_marker"};
   double percentage = 0;
-  int lin_retries = 5;
+  int lin_retries = 3;
 
+  // Add bin
+  std::vector<double> bin_pose = {0.4, 0, -0.04, 0, 180, 0};
   yumi_motion_coordinator->add_object("bin", bin_pose, true);
 
   while (!yumi_motion_coordinator->should_stop())
   {
-    // Go to home
-    yumi_motion_coordinator->move_to_home(arm, 5, false, true, false);
-
-    // Tar bilde
-    std::cout << "before call_capture_srv" << std::endl;
-    cap_success = pose_estimation_manager->call_capture_srv(30s);
-
-    // Finn pose i camera frame
-    std::cout << "before call_estimate_pose_srv" << std::endl;
-    if(!pose_estimation_manager->call_estimate_pose_srv(object, 50s))
+    for(auto object : objects)
     {
-      std::cout << "[ERROR] object cannot be found." << std::endl;
-      if(!first) yumi_motion_coordinator->remove_object(object);
-      continue;
+      // Go to home
+      yumi_motion_coordinator->move_to_home(arm, 5, false, true, false);
+
+      // Take image
+      std::cout << "before call_capture_srv" << std::endl;
+      cap_success = pose_estimation_manager->call_capture_srv(30s);
+
+      // Find the boject's pose in the the camera frame
+      std::cout << "before call_estimate_pose_srv" << std::endl;
+      if(!pose_estimation_manager->call_estimate_pose_srv(object, 50s))
+      {
+        std::cout << "[ERROR] object cannot be found." << std::endl;
+        if(yumi_motion_coordinator->object_present(object)) yumi_motion_coordinator->remove_object(object);
+        continue;
+      }
+
+      // Find the object's pose in the base frame of the robot
+      auto grasp_pose = pose_estimation_manager->pose_transformer->obj_in_base_frame();
+
+      // Add red mesh to detected object
+      if(!yumi_motion_coordinator->object_present(object)) yumi_motion_coordinator->add_object(object, grasp_pose, false, {1, 0, 0, 1});
+      else yumi_motion_coordinator->move_object(object, grasp_pose);
+
+      // Pick object
+      if (!yumi_motion_coordinator->pick_object(arm, object, lin_retries, 0.15, true, false, percentage))
+      {
+        std::cout << "pick failed" << std::endl;
+        continue;
+      }
+
+      // Place at a object
+      if (!yumi_motion_coordinator->place_at_object(arm, "bin", lin_retries, 0.23, true, false, percentage))
+      {
+        std::cout << "place failed" << std::endl;
+      }
+
     }
-
-    // Finn pose i base frame
-    auto grasp_pose = pose_estimation_manager->pose_transformer->obj_in_base_frame();
-
-    // Legg mesh på object
-    if(!yumi_motion_coordinator->object_present(object)) yumi_motion_coordinator->remove_object(object);
-    yumi_motion_coordinator->add_object(object, grasp_pose, false);
-
-    // Plukk
-    if (!yumi_motion_coordinator->pick_object(arm, object, lin_retries, 0.15, true, false, percentage))
-    {
-      std::cout << "pick failed" << std::endl;
-      continue;
-    }
-
-    // Place
-    if (!yumi_motion_coordinator->place_at_object(arm, "bin", lin_retries, 0.23, true, false, percentage))
-    {
-      std::cout << "place failed" << std::endl;
-    }
-
-    first = false;
   }
 
   std::cout << "Motion completed, please ctrl+c" << std::endl;

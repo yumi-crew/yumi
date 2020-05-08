@@ -851,14 +851,14 @@
   <joint name="gripper_r_center_joint" type="fixed">
     <parent link="gripper_r_base"/>
     <child link="gripper_r_center"/>
-    <origin rpy="0 0 3.14159265359" xyz="0.0 0.0 0.122"/>
+    <origin rpy="0 0 3.14159265359" xyz="0.0 0.0 0.129"/>
   </joint>
   <link name="gripper_r_center"> </link>
   <!-- Joint between base and grip center, left hand -->
   <joint name="gripper_l_center_joint" type="fixed">
     <parent link="gripper_l_base"/>
     <child link="gripper_l_center"/>
-    <origin rpy="0 0 3.14159265359" xyz="0.0 0.0 0.122"/>
+    <origin rpy="0 0 3.14159265359" xyz="0.0 0.0 0.129"/>
   </joint>
   <link name="gripper_l_center"> </link>
   <!-- Plugin for the mimic o/c joint - AFAIK, that shouldn't be necessary any more starting with Gazebo 3.0 -->
