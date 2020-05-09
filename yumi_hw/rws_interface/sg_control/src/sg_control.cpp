@@ -26,9 +26,12 @@ ip_(ip)
 
 bool SgControl::init()
 {
-  // Construction
+  // Using nodegroup namespace to determine which of the grippers this instance is representing
+  namespace_ = this->get_namespace();
+
   sg_settings_ = std::make_shared<abb::rws::RWSStateMachineInterface::SGSettings>();
   rws_state_machine_interface_ = std::make_shared<abb::rws::RWSStateMachineInterface>(ip_);
+  gripper_position_publisher_ = this->create_publisher<std_msgs::msg::Float32>(namespace_+"/gripper_pos", 1);
 
   // Connection check. Confirm robot controller is connected. Loops until connection is made.
   auto runtime_info = rws_state_machine_interface_->collectRuntimeInfo();
@@ -40,9 +43,6 @@ bool SgControl::init()
   }
   
   using std::placeholders::_1; using std::placeholders::_2;
-  
-  // Using nodegroup namespace to determine which of the grippers this instance is representing
-  namespace_ = this->get_namespace();
    
   // Start action server
   action_server_ = rclcpp_action::create_server<Grip>(       
@@ -113,7 +113,7 @@ void SgControl::execute(const std::shared_ptr<GoalHandleGrip> goal_handle)
   auto &position = feedback->position;
   auto result = std::make_shared<Grip::Result>();
   
-  // Estimated to take a second to close gripper. Publish feedback at 250 hz.
+  // Estimated to take a second to close gripper. Publish feedback at 250 hz for a second.
   auto start_time = this->now();
   auto elapsed_time = this->now()-start_time;
   double percentage = 0;
@@ -129,19 +129,16 @@ void SgControl::execute(const std::shared_ptr<GoalHandleGrip> goal_handle)
       should_execute_ = false;
       return;
     }
-    // Estimate gripper position.
-    elapsed_time = this->now()-start_time;
-    if(should_grip_in_) position = 0.02 - (0.02/1.0)*elapsed_time.seconds();
-    else position = (0.02/1.0)*elapsed_time.seconds();
-    
-    // Publish feedback
+    // Find gripper pos and publish feedback
+    std::string s_pos = get_gripper_pos();
+    position = std::stof(s_pos)/2.0; // gripper modelled as joint+mimic_joint in URDF
     goal_handle->publish_feedback(feedback);
     loop.sleep();
     elapsed_time = this->now()-start_time;
   }
 
-  if(should_grip_in_) percentage = ceil((position/0.02)*100);
-  else percentage = floor((position/0.02)*100); 
+  if(should_grip_in_) percentage = ceil((position/goal)*100);
+  else percentage = floor((position/goal)*100); 
     
   if(percentage < 3) percentage = 0;
   if(percentage > 97) percentage = 100;
@@ -154,13 +151,6 @@ void SgControl::execute(const std::shared_ptr<GoalHandleGrip> goal_handle)
     RCLCPP_INFO(this->get_logger(), "Goal Succeeded");
     should_execute_ = false;
   }
-}
-
-
-bool SgControl::is_gripper_open()
-{
-  RCLCPP_WARN(this->get_logger(), "Oops, not yet implemented.");
-  return false;
 }
 
 
@@ -243,6 +233,35 @@ bool SgControl::grip_out()
     RCLCPP_ERROR(this->get_logger(), "Invalid namespace occured.");
     return false;
   }
+}
+
+std::string SGControl::get_gripper_pos()
+{
+  if(namespace_.compare("/l") == 0 )
+  {
+    return rws_state_machine_interface_->getIOSignal("HAND_ACTUAL_POSITION_L");
+  }
+  else if(namespace_.compare("/r") == 0 )
+  {
+    return rws_state_machine_interface_->getIOSignal("HAND_ACTUAL_POSITION_R");
+  }
+  else 
+  {
+    RCLCPP_ERROR(this->get_logger(), "Invalid namespace occured.");
+    return {};
+  }
+}
+
+
+void SgControl::publish_gripper_position()
+{
+  std::string s_pos = get_gripper_pos();
+  if(!s_pos.empty())
+  {
+    std_msgs::msg::Float32 msg;
+    msg.data = std::stof(s_pos);
+    gripper_position_publisher_.publish(msg);
+  } 
 }
 
 } //end namespace sg_control

@@ -3,14 +3,20 @@
 <package format="3">
   <name>ros2_control_utils</name>
   <version>1.0.0</version>
-  <description>Contains commonly needed utilities for ros2 controllers</description>
-  
+  <description>Utilities for ros2_control</description>
   <maintainer email="mariunil@stud.ntnu.no">Marius Nilsen</maintainer>
+  <maintainer email="markubjo@stud.ntnu.no">Markus Bjønnes</maintainer>
+  
   <license>Apache License 2.0</license>
+  <author email="mariunil@stud.ntnu.no">Marius Nilsen</author>
+  <author email="markubjo@stud.ntnu.no">Markus Bjønnes</author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>rclcpp</depend>
+  <depend>angles</depend>
+  <depend>sensor_msgs</depend>
+  <depend>sg_control_interfaces</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

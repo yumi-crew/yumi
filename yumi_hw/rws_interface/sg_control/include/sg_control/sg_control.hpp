@@ -20,6 +20,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rcutils/logging_macros.h>
 #include <rclcpp_action/rclcpp_action.hpp>
+#include <std_msgs/msg/float_32.h>
 #include <abb_librws/rws_rapid.h>
 #include <abb_librws/rws_client.h>
 #include <abb_librws/rws_interface.h>
@@ -42,17 +43,19 @@ public:
   bool init();
 
   SG_CONTROL_PUBLIC
-  bool is_gripper_open();
+  void publish_gripper_position();
 
 private:
   std::string namespace_;
   std::string ip_;
   std::shared_ptr<abb::rws::RWSStateMachineInterface> rws_state_machine_interface_;
   std::shared_ptr<abb::rws::RWSStateMachineInterface::SGSettings> sg_settings_;
-
+  rclcpp::Publisher<std_msgs::msg::Float32> gripper_position_publisher_;
   rclcpp_action::Server<Grip>::SharedPtr action_server_; 
+
   bool should_grip_in_;
   bool should_execute_ = false;
+  double allowed_deviation_ = 0.001;
   
   rclcpp_action::GoalResponse 
   handle_goal(const rclcpp_action::GoalUUID &uuid, std::shared_ptr<const Grip::Goal> goal);
@@ -61,7 +64,6 @@ private:
   handle_cancel(const std::shared_ptr<GoalHandleGrip> goal_handle);
 
   void handle_accepted(const std::shared_ptr<GoalHandleGrip> goal_handle);
-
   void execute(const std::shared_ptr<GoalHandleGrip> goal_handle);
 
   // Action triggered gripper operations
@@ -69,7 +71,7 @@ private:
   bool perform_grip_out();
  
   // Helper functions
-  void busy_wait_for_gripper_to_finish_motion();
+  std::string get_gripper_pos();
   bool grip_in();
   bool grip_out();
 };

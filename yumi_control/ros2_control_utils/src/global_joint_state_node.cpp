@@ -1,19 +1,10 @@
-#include <chrono>
-#include <cmath>
-#include <iostream>
-#include <memory>
-#include <vector>
-#include <unistd.h>
-#include <fstream>
-#include <math.h>
-
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
-#include <sg_control_interfaces/action/grip.hpp>
+#include <std_msgs/msg/float_32.hpp>
 #include <angles/angles.h>
 
-std::array<double, 8> recieved_joint_pos_l{0, 0, 0, 0, 0, 0, 0, 0.02};
-std::array<double, 8> recieved_joint_pos_r{0, 0, 0, 0, 0, 0, 0, 0.02};
+std::array<double, 8> recieved_joint_pos_l{0, 0, 0, 0, 0, 0, 0, 0};
+std::array<double, 8> recieved_joint_pos_r{0, 0, 0, 0, 0, 0, 0, 0};
 std::array<double, 8> recieved_joint_vel_l{0, 0, 0, 0, 0, 0, 0, 0};
 std::array<double, 8> recieved_joint_vel_r{0, 0, 0, 0, 0, 0, 0, 0};
 
@@ -85,14 +76,14 @@ void callback_r(sensor_msgs::msg::JointState::UniquePtr msg)
   }
 }
 
-void callback_g_r(sg_control_interfaces::action::Grip_FeedbackMessage::UniquePtr msg)
+void callback_g_r(std_msgs::msg::Float32::UniquePtr msg)
 {
-  recieved_joint_pos_r[7] = msg->feedback.position;
+  recieved_joint_pos_r[7] = msg->data;
 }
 
-void callback_g_l(sg_control_interfaces::action::Grip_FeedbackMessage::UniquePtr msg)
+void callback_g_l(std_msgs::msg::Float32::UniquePtr msg)
 {
-  recieved_joint_pos_l[7] = msg->feedback.position;
+  recieved_joint_pos_l[7] = msg->data;
 }
 
 void spin(std::shared_ptr<rclcpp::executors::MultiThreadedExecutor> exe)
@@ -110,12 +101,18 @@ int main(int argc, char *argv[])
 
   // publisher for global namespaced joint_space
   auto joint_command_publisher = node->create_publisher<sensor_msgs::msg::JointState>("/joint_states", 10);
+ 
   // subscriptions to namespaced joint_states
-  auto joint_state_subscription_r = node->create_subscription<sensor_msgs::msg::JointState>("/r/joint_states", 10, callback_r);
-  auto joint_state_subscription_l = node->create_subscription<sensor_msgs::msg::JointState>("/l/joint_states", 10, callback_l);
+  auto joint_state_subscription_r = node->create_subscription<sensor_msgs::msg::JointState>("/r/joint_states", 
+    10, callback_r);
+  auto joint_state_subscription_l = node->create_subscription<sensor_msgs::msg::JointState>("/l/joint_states", 
+    10, callback_l);
+  
   // gripper states
-  auto gripper_state_subscription_r = node->create_subscription<sg_control_interfaces::action::Grip_FeedbackMessage>("/r/Grip/_action/feedback",10, callback_g_r);
-  auto gripper_state_subscription_l = node->create_subscription<sg_control_interfaces::action::Grip_FeedbackMessage>("/l/Grip/_action/feedback",10, callback_g_l);
+  auto gripper_state_subscription_r = node->create_subscription<std_msgs::msg::Float32>("/r/gripper_pos", 
+    10, callback_g_r);
+  auto gripper_state_subscription_l = node->create_subscription<std_msgs::msg::Float32>("/l/gripper_pos", 
+    10, callback_g_l);
 
   auto executor = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
   executor->add_node(node);

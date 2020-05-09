@@ -52,7 +52,7 @@ def generate_launch_description():
     yumi_robot_manager = Node(package= 'yumi_robot_manager',
                               node_executable='yumi_robot_manager_node')
     
-    global_joint_state = Node(package='yumi_sim',
+    global_joint_state = Node(package='ros2_control_utils',
                               node_executable='global_joint_state_node',
                               output='screen')
 
