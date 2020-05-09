@@ -1,6 +1,6 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
-#include <std_msgs/msg/float_32.hpp>
+#include <std_msgs/msg/float32.hpp>
 #include <angles/angles.h>
 
 std::array<double, 8> recieved_joint_pos_l{0, 0, 0, 0, 0, 0, 0, 0};

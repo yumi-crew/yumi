@@ -20,7 +20,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rcutils/logging_macros.h>
 #include <rclcpp_action/rclcpp_action.hpp>
-#include <std_msgs/msg/float_32.h>
+#include <std_msgs/msg/float32.hpp>
 #include <abb_librws/rws_rapid.h>
 #include <abb_librws/rws_client.h>
 #include <abb_librws/rws_interface.h>
@@ -50,7 +50,7 @@ private:
   std::string ip_;
   std::shared_ptr<abb::rws::RWSStateMachineInterface> rws_state_machine_interface_;
   std::shared_ptr<abb::rws::RWSStateMachineInterface::SGSettings> sg_settings_;
-  rclcpp::Publisher<std_msgs::msg::Float32> gripper_position_publisher_;
+  std::shared_ptr<rclcpp::Publisher<std_msgs::msg::Float32>> gripper_position_publisher_;
   rclcpp_action::Server<Grip>::SharedPtr action_server_; 
 
   bool should_grip_in_;
