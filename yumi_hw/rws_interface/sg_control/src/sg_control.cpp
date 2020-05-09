@@ -132,24 +132,15 @@ void SgControl::execute(const std::shared_ptr<GoalHandleGrip> goal_handle)
     elapsed_time = this->now() - start_time;
   }
 
-  if (should_grip_in_)
-    percentage = ceil((position / goal) * 100);
-  else
-    percentage = floor((position / goal) * 100);
+  // Will not evaluate if gripper is closed/opened. Even though the desired
+  // action was to grip in, the gripper may grasp an object. 
+  if (should_grip_in_) percentage = 0;
+  else percentage = 100;
 
-  if (percentage < 3)
-    percentage = 0;
-  if (percentage > 97)
-    percentage = 100;
-
-  // Check if goal is done
-  if ((should_grip_in_ && percentage == 100) || (!should_grip_in_ && percentage == 0))
-  {
-    result->res_grip = percentage; //percentage closed
-    goal_handle->succeed(result);
-    RCLCPP_INFO(this->get_logger(), "Goal Succeeded");
-    should_execute_ = false;
-  }
+  result->res_grip = percentage; //percentage closed
+  goal_handle->succeed(result);
+  RCLCPP_INFO(this->get_logger(), "Goal Succeeded");
+  should_execute_ = false;
 }
 
 bool SgControl::perform_grip_in()
