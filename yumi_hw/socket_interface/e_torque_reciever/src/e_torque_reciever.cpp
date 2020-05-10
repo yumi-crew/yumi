@@ -1,30 +1,47 @@
-#include <e_torque_reciever/e_torque_reciever.hpp>
+// Copyright 2020 Norwegian University of Science and Technology.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
+#include <e_torque_reciever/e_torque_reciever.hpp>
 
 namespace socket_interface
 {
   
-ETorqueReciever::ETorqueReciever(std::string node_name, uint port_left, uint port_right)
+ETorqueReciever::ETorqueReciever(std::string node_name, std::string robot_ip, uint port_left, uint port_right)
 :
 connected_{false}, stop_sign_{false}
 {
+  node_ = std::make_shared<rclcpp::Node>(node_name);
+
+  // Left arm UDP socket
   socket_left_.comm_socket = socket(AF_INET, SOCK_STREAM, 0);
   socket_left_.servaddr.sin_family = AF_INET;
   socket_left_.servaddr.sin_port = htons(port_left);
-  inet_pton(AF_INET, "192.168.125.1", &(socket_left_.servaddr.sin_addr));
-  socket_left_.connected = false,
+  inet_pton(AF_INET, robot_ip.c_str(), &(socket_left_.servaddr.sin_addr));
+  socket_left_.consecutive_read_fails_counter = 0;
+  socket_left_.connected = false;
 
+  // Right arm UDP socket
   socket_right_.comm_socket = socket(AF_INET, SOCK_STREAM, 0);
   socket_right_.servaddr.sin_family = AF_INET;
   socket_right_.servaddr.sin_port = htons(port_right);
-  inet_pton(AF_INET, "192.168.125.1", &(socket_right_.servaddr.sin_addr));
+  inet_pton(AF_INET, robot_ip.c_str(), &(socket_right_.servaddr.sin_addr));
+  socket_right_.consecutive_read_fails_counter = 0;
   socket_right_.connected = true;
-
-  node_ = std::make_shared<rclcpp::Node>(node_name);
 }
 
 
-bool ETorqueReciever::establish_connection(int retries)
+bool ETorqueReciever::connect(int num_retries)
 {
   if((connect(socket_right_.comm_socket,(struct sockaddr*)&(socket_right_.servaddr),sizeof(socket_right_.servaddr))==0) 
       && 
@@ -35,7 +52,7 @@ bool ETorqueReciever::establish_connection(int retries)
     connected_ = true;
   }
 
-  int retries_left = retries;
+  int retries_left = num_retries;
   while(!connected_) 
   {
     if(retries_left)
@@ -56,43 +73,46 @@ bool ETorqueReciever::establish_connection(int retries)
       << "  right_socket connected: " << std::boolalpha << socket_left_.connected);
       return false;
     }
-    
+    --retries_left; 
   }
   return true;
 }
 
-void ETorqueReciever::recieve_stream(bool debug)
-{
-  std::cout << " ** entering recieve_stream()" << std::endl;
-  char buffer_l[100];
-  char buffer_r[100];
 
+void ETorqueReciever::start_streams(bool debug)
+{
+  std::cout << " ** entering start_streams()" << std::endl;
    
   std::cout << " ** before spinning out right thread" << std::endl;
   // Right socket thread
-  std::thread right_thread([this, &buffer_r]()
+  std::thread right_thread([this]()
   {
+    char buf[100]; 
     int ret_r;
     while (!stop_sign_ && connected_)
     {
-      thread_right_mutex_.lock();
-      bzero(buffer_r, sizeof(buffer_r));
-      ret_r = recv(socket_right_.comm_socket, buffer_r, sizeof(buffer_r), 0);
-      thread_right_mutex_.unlock();
+      bzero(buf, sizeof(buf));
+      ret_r = recv(socket_right_.comm_socket, buf, sizeof(buf), 0);
+
       if(ret_r >= 0) 
       {
-        socket_right_.subsequent_read_fails_counter = 0;
+        thread_right_mutex_.lock();
+        bzero(buffer_r_, sizeof(buffer_r_));
+        buffer_r_ = buf;
+        thread_right_mutex_.unlock();
+        socket_right_.consecutive_read_fails_counter = 0;
       }
       else
       {
-        if(socket_right_.subsequent_read_fails_counter < 5)
+        if(socket_right_.consecutive_read_fails_counter < allowed_consecutive_read_fails_)
         {
-          socket_right_.subsequent_read_fails_counter++;
+          socket_right_.consecutive_read_fails_counter++;
           continue;
         }
         else 
         {
-          RCLCPP_ERROR_STREAM(node_->get_logger(), "read (right) failed");
+          RCLCPP_ERROR_STREAM(node_->get_logger(), "Right socket failed to read " << allowed_consecutive_read_fails_ 
+            << " consecutive attempts. Stopping right stream.");
           break;
         }
       }
@@ -102,29 +122,34 @@ void ETorqueReciever::recieve_stream(bool debug)
 
   std::cout << " ** before spinning out left thread" << std::endl;
   // Left socket thread
-  std::thread left_thread([this, &buffer_l]()
+  std::thread left_thread([this]()
   {
+    char buf[100];
     int ret_l;
     while (!stop_sign_ && connected_)
     {
-      thread_left_mutex_.lock();
-      bzero(buffer_l, sizeof(buffer_l));
-      ret_l = recv(socket_left_.comm_socket, buffer_l, sizeof(buffer_l), 0);
-      thread_left_mutex_.unlock();
+      bzero(buf, sizeof(buf));
+      ret_l = recv(socket_left_.comm_socket, buf, sizeof(buf), 0);
+      
       if(ret_l >= 0) 
       {
-        socket_left_.subsequent_read_fails_counter = 0;
+        thread_left_mutex_.lock();
+        bzero(buffer_l_, sizeof(buffer_l_));
+        buffer_l_ = buf;
+        thread_left_mutex_.unlock();
+        socket_left_.consecutive_read_fails_counter = 0;
       }
       else
       {
-        if(socket_left_.subsequent_read_fails_counter < 5)
+        if(socket_left_.consecutive_read_fails_counter < 5)
         {
-          socket_left_.subsequent_read_fails_counter++;
+          socket_left_.consecutive_read_fails_counter++;
           continue;
         }
         else 
         {
-          RCLCPP_ERROR_STREAM(node_->get_logger(), "read (left) failed");
+          RCLCPP_ERROR_STREAM(node_->get_logger(), "Left socket failed to read " << allowed_consecutive_read_fails_ 
+            << " consecutive attempts. Stopping left stream.");
           break;
         }
       }
@@ -132,12 +157,12 @@ void ETorqueReciever::recieve_stream(bool debug)
   });
 
   std::cout << " ** before while (parsing)" << std::endl;
-  // Parse and print
+  // Parse
   while(!stop_sign_ && connected_)
   {
     thread_left_mutex_.lock();
     thread_right_mutex_.lock();
-    //parse(buffer_l, buffer_r, debug);    
+    parse(debug);    
     thread_left_mutex_.unlock();
     thread_right_mutex_.unlock();
     if(stop_sign_) break;
@@ -145,15 +170,17 @@ void ETorqueReciever::recieve_stream(bool debug)
 
   left_thread.join();
   right_thread.join();
-  RCLCPP_INFO_STREAM(node_->get_logger(), "Threads stopped successfully");
+  RCLCPP_INFO_STREAM(node_->get_logger(), "Threads stopped successfully.");
 }
 
 
-void ETorqueReciever::parse(std::string data_left, std::string data_right, bool debug)
+void ETorqueReciever::parse(bool debug)
 {
   size_t pos = 0;
   int i = 0;
   std::string token;
+  std::string data_left = buffer_l_;
+  std::string data_right = buffer_r_;
 
   // Parsing the first part of data_left, containing the e_torques of the left arm
   while ((pos = data_left.find(";")) != std::string::npos)
@@ -177,6 +204,7 @@ void ETorqueReciever::parse(std::string data_left, std::string data_right, bool 
   if(debug) debug_print();
 }
 
+
 void ETorqueReciever::debug_print()
 {
   std::cout << "{" << std::endl;
@@ -199,7 +227,20 @@ void ETorqueReciever::debug_print()
 }
 
 
-
-
+void ETorqueReciever::disconnect()
+{
+  bool success_left, success_right = true;
+  if(close(socket_left_.comm_socket != 0)
+  {
+    success_left = false;
+    std::cout << "[ERROR] An error occured while disconnecting left socket." << std::endl; 
+  }
+  if(close(socket_right_.comm_socket != 0)
+  {
+    success_right = false;
+    std::cout << "[ERROR] An error occured while disconnecting right socket." << std::endl;
+  }
+  return (success_left && success_right);
+}
 
 } // end namespace socket_interface
