@@ -16,28 +16,27 @@ void signal_callback_handler(int signum)
   exit(signum);
 }
 
-
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
   // Ctrl+C handler
   signal(SIGINT, signal_callback_handler);
-  
+
   rclcpp::init(argc, argv);
-  etorque_reciever = std::make_shared<socket_interface::ETorqueReciever>("e_torque_reciever","192.168.125.1",2021,2020);
+  etorque_reciever = std::make_shared<socket_interface::ETorqueReciever>("e_torque_reciever", "192.168.125.1", 2021, 2020);
 
   std::cout << "before connect()" << std::endl;
   int num_retries = 10;
-  if(!etorque_recieve->connect(num_retries))
+  if (!etorque_reciever->establish_connection(num_retries))
   {
-    std::cout << "[ERROR] connect() failed after " << num_retries << " retries." std::endl;
+    std::cout << "[ERROR] connect() failed after " << num_retries << " retries." << std::endl;
     return -1;
   }
 
   std::cout << "before start_streams()" << std::endl;
-  etorque_recieve->start_streams(true);
+  etorque_reciever->start_streams(true);
 
   std::cout << "script completed, please ctrl+c" << std::endl;
-  while(1)
+  while (1)
   {
     sleep(1);
   }

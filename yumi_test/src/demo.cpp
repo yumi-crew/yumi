@@ -88,10 +88,9 @@ int main(int argc, char **argv)
   char *buf = getlogin();
   std::string u_name = buf;
 
-  pose_estimation_manager->call_init_halcon_surface_match_srv("/home/" + u_name + "/abb_ws/src/object_files/ply/", 5, 500s);
+  pose_estimation_manager->call_init_halcon_surface_match_srv("/home/" + u_name + "/abb_ws/src/object_files/ply/", 500s);
   auto transition_success3 = pose_estimation_manager->change_state(
       "zivid_camera", lifecycle_msgs::msg::Transition::TRANSITION_ACTIVATE, 30s);
-
 
   bool first = true;
   bool cap_success{false};
@@ -107,7 +106,7 @@ int main(int argc, char **argv)
 
   while (!yumi_motion_coordinator->should_stop())
   {
-    for(auto object : objects)
+    for (auto object : objects)
     {
       // Go to home
       yumi_motion_coordinator->move_to_home(arm, 5, false, true, false);
@@ -118,10 +117,11 @@ int main(int argc, char **argv)
 
       // Find the boject's pose in the the camera frame
       std::cout << "before call_estimate_pose_srv" << std::endl;
-      if(!pose_estimation_manager->call_estimate_pose_srv(object, 50s))
+      if (!pose_estimation_manager->call_estimate_pose_srv(object, 5, 50s))
       {
         std::cout << "[ERROR] object cannot be found." << std::endl;
-        if(yumi_motion_coordinator->object_present(object)) yumi_motion_coordinator->remove_object(object);
+        if (yumi_motion_coordinator->object_present(object))
+          yumi_motion_coordinator->remove_object(object);
         continue;
       }
 
@@ -129,8 +129,10 @@ int main(int argc, char **argv)
       auto grasp_pose = pose_estimation_manager->pose_transformer->obj_in_base_frame();
 
       // Add red mesh to detected object
-      if(!yumi_motion_coordinator->object_present(object)) yumi_motion_coordinator->add_object(object, grasp_pose, false, {1, 0, 0, 1});
-      else yumi_motion_coordinator->move_object(object, grasp_pose);
+      if (!yumi_motion_coordinator->object_present(object))
+        yumi_motion_coordinator->add_object(object, grasp_pose, false, {1, 0, 0, 1});
+      else
+        yumi_motion_coordinator->move_object(object, grasp_pose);
 
       // Pick object
       if (!yumi_motion_coordinator->pick_object(arm, object, lin_retries, 0.15, true, false, percentage))
@@ -144,7 +146,6 @@ int main(int argc, char **argv)
       {
         std::cout << "place failed" << std::endl;
       }
-
     }
   }
 

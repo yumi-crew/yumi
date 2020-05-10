@@ -1,6 +1,5 @@
 #include "external_force/external_force.hpp"
 
-
 namespace yumi_dynamics
 {
 ExternalForce::ExternalForce(urdf::Model robot) : kdl_wrapper_(robot)
@@ -50,6 +49,8 @@ void ExternalForce::joint_state_callback(sensor_msgs::msg::JointState::UniquePtr
     q_dot_l_[i] = jnt_msg->velocity[i];
     q_dot_r_[i] = jnt_msg->velocity[joints_l_ + i];
   }
+  if (!jnt_state_callback_ok_)
+    jnt_state_callback_ok_ = true;
 }
 
 void ExternalForce::external_torques_callback(sensor_msgs::msg::JointState::UniquePtr jnt_msg)
@@ -59,6 +60,8 @@ void ExternalForce::external_torques_callback(sensor_msgs::msg::JointState::Uniq
     ext_torques_l_(i) = jnt_msg->effort[i];
     ext_torques_r_(i) = jnt_msg->effort[joints_l_ + i];
   }
+  if (!ext_trq_callback_ok_)
+    ext_trq_callback_ok_ = true;
 }
 
 void ExternalForce::torques_callback(sensor_msgs::msg::JointState::UniquePtr jnt_msg)
@@ -68,10 +71,17 @@ void ExternalForce::torques_callback(sensor_msgs::msg::JointState::UniquePtr jnt
     torques_l_(i) = jnt_msg->effort[i];
     torques_r_(i) = jnt_msg->effort[joints_l_ + i];
   }
+  if (!trq_callback_ok_)
+    trq_callback_ok_ = true;
 }
 
 void ExternalForce::estimate_TCP_wrench()
 {
+  if(!jnt_state_callback_ok_ && !ext_trq_callback_ok_)
+  {
+    std::cout << "Joint state or external torques not recieved" << std::endl;
+    return;
+  }
   try
   {
     jacobian_l_ = kdl_wrapper_.calculate_jacobian("right_arm", q_l_);

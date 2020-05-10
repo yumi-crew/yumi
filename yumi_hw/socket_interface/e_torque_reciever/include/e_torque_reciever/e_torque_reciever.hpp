@@ -35,7 +35,7 @@ public:
    * \param retries number of allowed attempts at forming the connections.
    * \return true upon succesfull connection. 
    */
-  bool connect(int num_retries = 0);
+  bool establish_connection(int num_retries = 0);
 
   /** 
    * Terminates the connection to the UDP servers. 

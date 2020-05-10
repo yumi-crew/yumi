@@ -41,7 +41,7 @@ connected_{false}, stop_sign_{false}
 }
 
 
-bool ETorqueReciever::connect(int num_retries)
+bool ETorqueReciever::establish_connection(int num_retries)
 {
   if((connect(socket_right_.comm_socket,(struct sockaddr*)&(socket_right_.servaddr),sizeof(socket_right_.servaddr))==0) 
       && 
@@ -98,7 +98,8 @@ void ETorqueReciever::start_streams(bool debug)
       {
         thread_right_mutex_.lock();
         bzero(buffer_r_, sizeof(buffer_r_));
-        buffer_r_ = buf;
+        // buffer_r_ = buf; // arrays cannot be assigned, only initialized. Use strcpy!
+        strcpy(buffer_r_, buf);
         thread_right_mutex_.unlock();
         socket_right_.consecutive_read_fails_counter = 0;
       }
@@ -135,7 +136,8 @@ void ETorqueReciever::start_streams(bool debug)
       {
         thread_left_mutex_.lock();
         bzero(buffer_l_, sizeof(buffer_l_));
-        buffer_l_ = buf;
+        // buffer_l_ = buf; // arrays cannot be assigned, only initialized. Use strcpy!
+        strcpy(buffer_l_, buf);
         thread_left_mutex_.unlock();
         socket_left_.consecutive_read_fails_counter = 0;
       }
@@ -227,15 +229,15 @@ void ETorqueReciever::debug_print()
 }
 
 
-void ETorqueReciever::disconnect()
+bool ETorqueReciever::disconnect()
 {
   bool success_left, success_right = true;
-  if(close(socket_left_.comm_socket != 0)
+  if(close(socket_left_.comm_socket != 0))
   {
     success_left = false;
     std::cout << "[ERROR] An error occured while disconnecting left socket." << std::endl; 
   }
-  if(close(socket_right_.comm_socket != 0)
+  if(close(socket_right_.comm_socket != 0))
   {
     success_right = false;
     std::cout << "[ERROR] An error occured while disconnecting right socket." << std::endl;

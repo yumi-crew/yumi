@@ -70,6 +70,10 @@ private:
   std::shared_ptr<rclcpp::executors::MultiThreadedExecutor> exec_;
   std::shared_ptr<AsyncSpinner> async_spinner_;
 
+  bool jnt_state_callback_ok_{false};
+  bool trq_callback_ok_{false};
+  bool ext_trq_callback_ok_{false};
+
   void joint_state_callback(sensor_msgs::msg::JointState::UniquePtr jnt_msg);
   void external_torques_callback(sensor_msgs::msg::JointState::UniquePtr jnt_msg);
   void torques_callback(sensor_msgs::msg::JointState::UniquePtr jnt_msg);
