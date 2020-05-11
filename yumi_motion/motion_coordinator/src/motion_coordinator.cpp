@@ -421,6 +421,7 @@ bool MotionCoordinator::pick_object(std::string planning_component, std::string 
   // Move to hover pose and open gripper
   move_to_pose(planning_component, hover_pose, false, num_retries, visualize, true, false);
   grip_out(planning_component, true); 
+  std::cout << "after grip_out" << std::endl;
   
   // Linear move to gripping pose, give up if unable.
   if(!linear_move_to_pose(planning_component, grip_pose, false, num_retries, visualize, true, true, percentage))
@@ -436,17 +437,20 @@ bool MotionCoordinator::pick_object(std::string planning_component, std::string 
   grip_in(planning_component, true);
   table_monitor_->attach_object(object_id, ee_link); 
 
-  // disable collision between everything and object
-  moveit2_wrapper_->disable_collision(object_id);
-
   // Linear move back to hover point. If linear motion is not possible, try ordinary motion.
   if(!linear_move_to_pose(planning_component, hover_pose, false, 0, visualize, true, true, percentage))
   {
     move_to_pose(planning_component, hover_pose, false, num_retries, visualize, blocking, false);
   }
 
-  if(gripper_contain_object(planning_component)) return true;
-  else false;
+  // Check if yumi's gripper contain the object, return if not.
+  if(moveit2_wrapper_->gripper_closed(planning_component))
+  {
+    std::cout << "[ERROR] Pick failed. Aborting." << std::endl;
+    table_monitor_->detatch_object(object_id);
+    return false;
+  }
+  return true;
 }
 
 
@@ -462,6 +466,14 @@ bool MotionCoordinator::place_at_object(std::string planning_component, std::str
   // Object to be placed
   std::string object = table_monitor_->object_held(ee_link);
 
+  // Check if yumi's gripper contain an object, return if not.
+  if(moveit2_wrapper_->gripper_closed(planning_component))
+  {
+    std::cout << "[ERROR] YuMi have lost the object to be placed. Aborting." << std::endl;
+    table_monitor_->detatch_object(object);
+    return false;
+  }
+
   // Find location object's pose
   std::vector<double> location = table_monitor_->find_object(object_id);
 
@@ -471,6 +483,14 @@ bool MotionCoordinator::place_at_object(std::string planning_component, std::str
     // If linear motion is not possible, try ordinary motion.
     move_to_object(planning_component, object_id, num_retries, hover_height, visualize, true, false);
   } 
+
+  // Check if yumi has dropped the object
+  if(moveit2_wrapper_->gripper_closed(planning_component))
+  {
+    std::cout << "[ERROR] YuMi has lost the object" << std::endl;
+    table_monitor_->detatch_object(object);
+    return false;
+  }
 
   // linear move down to drop point. If drop point cant be reached, drop object at current pose.
   if(!linear_move_to_object(planning_component, object_id, 0, hover_height-0.05, visualize, true, true, percentage))
@@ -482,7 +502,12 @@ bool MotionCoordinator::place_at_object(std::string planning_component, std::str
  
   // Let go object
   grip_out(planning_component, true);
-  table_monitor_->detatch_object(object);
+  if(!moveit2_wrapper_->gripper_open(planning_component))
+  {
+    std::cout << "[ERROR] Was unable to grip out" << std::endl;
+    return false;
+  }
+  else table_monitor_->detatch_object(object);
 
   // Linear move back to hover point. If linear motion is not possible, try ordinary motion.
   if(!linear_move_to_object(planning_component, object_id, 0, hover_height, visualize, true, true, percentage))
@@ -492,8 +517,7 @@ bool MotionCoordinator::place_at_object(std::string planning_component, std::str
   }
 
   grip_in(planning_component, true);
-  if(!gripper_contain_object(planning_component)) return true;
-  else return false;
+  return true;
 }
 
 
@@ -700,10 +724,7 @@ void MotionCoordinator::grip_in(std::string planning_component, bool blocking)
   if(planning_component == "left_arm") left_gripper_->perform_grip(100);
   if(planning_component == "right_arm") right_gripper_->perform_grip(100);
 
-  if(blocking)
-  {
-    while(!moveit2_wrapper_->gripper_closed(planning_component)){ sleep(0.1); }
-  }  
+  if(blocking){ sleep(1.5); } // Takes at most approx 1.2 seconds to close
 }
 
 
@@ -712,10 +733,7 @@ void MotionCoordinator::grip_out(std::string planning_component, bool blocking)
   if(planning_component == "left_arm") left_gripper_->perform_grip(0);
   if(planning_component == "right_arm") right_gripper_->perform_grip(0);
 
-  if(blocking)
-  {
-    while(!moveit2_wrapper_->gripper_open(planning_component)){ sleep(0.1); }
-  } 
+  if(blocking){ sleep(1.5); } // Takes at most approx 1.2 seconds to close
 }
 
 
@@ -821,8 +839,8 @@ void MotionCoordinator::print_matrix(Eigen::Matrix4d mat)
 
 bool MotionCoordinator::gripper_contain_object(std::string planning_component)
 {
-  /* Unfinished */ 
-  return moveit2_wrapper_->gripper_closed(planning_component);
+  // If gripper is open, it cannot contain a object. 
+  return !moveit2_wrapper_->gripper_open(planning_component);
 }
 
 

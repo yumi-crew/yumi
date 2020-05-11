@@ -1,6 +1,6 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
-#include <std_msgs/msg/float32.hpp>
+#include <std_msgs/msg/float64.hpp>
 #include <angles/angles.h>
 
 std::array<double, 8> recieved_joint_pos_l{0, 0, 0, 0, 0, 0, 0, 0};
@@ -76,12 +76,12 @@ void callback_r(sensor_msgs::msg::JointState::UniquePtr msg)
   }
 }
 
-void callback_g_r(std_msgs::msg::Float32::UniquePtr msg)
+void callback_g_r(std_msgs::msg::Float64::UniquePtr msg)
 {
   recieved_joint_pos_r[7] = msg->data;
 }
 
-void callback_g_l(std_msgs::msg::Float32::UniquePtr msg)
+void callback_g_l(std_msgs::msg::Float64::UniquePtr msg)
 {
   recieved_joint_pos_l[7] = msg->data;
 }
@@ -109,9 +109,9 @@ int main(int argc, char *argv[])
     10, callback_l);
   
   // gripper states
-  auto gripper_state_subscription_r = node->create_subscription<std_msgs::msg::Float32>("/r/gripper_pos", 
+  auto gripper_state_subscription_r = node->create_subscription<std_msgs::msg::Float64>("/r/gripper_pos", 
     10, callback_g_r);
-  auto gripper_state_subscription_l = node->create_subscription<std_msgs::msg::Float32>("/l/gripper_pos", 
+  auto gripper_state_subscription_l = node->create_subscription<std_msgs::msg::Float64>("/l/gripper_pos", 
     10, callback_g_l);
 
   auto executor = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();

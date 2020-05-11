@@ -204,6 +204,8 @@ private:
   std::vector<double> equivalent_state(std::string planning_component, std::vector<double> pose, bool eulerzyx); 
 
   void print_matrix(Eigen::Matrix4d mat);
+  
+  /* Returns true if the gripper is not fully open. */
   bool gripper_contain_object(std::string planning_component);
   void joint_state_callback(sensor_msgs::msg::JointState::UniquePtr msg);
 };

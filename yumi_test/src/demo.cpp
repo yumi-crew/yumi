@@ -96,7 +96,7 @@ int main(int argc, char **argv)
   bool cap_success{false};
   bool est_success{false};
   std::string arm = "right_arm";
-  std::vector<std::string> objects = {"screwdriver", "small_marker", "small_marker"};
+  std::vector<std::string> objects = {"small_marker", "screwdriver", "small_marker"};
   double percentage = 0;
   int lin_retries = 3;
 
@@ -117,7 +117,7 @@ int main(int argc, char **argv)
 
       // Find the boject's pose in the the camera frame
       std::cout << "before call_estimate_pose_srv" << std::endl;
-      if (!pose_estimation_manager->call_estimate_pose_srv(object, 5, 50s))
+      if (!pose_estimation_manager->call_estimate_pose_srv(object, 4, 50s))
       {
         std::cout << "[ERROR] object cannot be found." << std::endl;
         if (yumi_motion_coordinator->object_present(object))

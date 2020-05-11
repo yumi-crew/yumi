@@ -30,7 +30,7 @@ bool SgControl::init()
 
   sg_settings_ = std::make_shared<abb::rws::RWSStateMachineInterface::SGSettings>();
   rws_state_machine_interface_ = std::make_shared<abb::rws::RWSStateMachineInterface>(ip_);
-  gripper_position_publisher_ = this->create_publisher<std_msgs::msg::Float32>(namespace_ + "/gripper_pos", 1);
+  gripper_position_publisher_ = this->create_publisher<std_msgs::msg::Float64>(namespace_ + "/gripper_pos", 1);
 
   // Connection check. Confirm robot controller is connected. Loops until connection is made.
   auto runtime_info = rws_state_machine_interface_->collectRuntimeInfo();
@@ -126,7 +126,7 @@ void SgControl::execute(const std::shared_ptr<GoalHandleGrip> goal_handle)
     }
     // Find gripper pos and publish feedback
     std::string s_pos = get_gripper_pos();
-    position = std::stof(s_pos) / 2.0; // gripper modelled as joint+mimic_joint in URDF
+    position = std::stof(s_pos); 
     goal_handle->publish_feedback(feedback);
     loop.sleep();
     elapsed_time = this->now() - start_time;
@@ -229,11 +229,11 @@ std::string SgControl::get_gripper_pos()
 {
   if (namespace_.compare("/l") == 0)
   {
-    return rws_state_machine_interface_->getIOSignal("HAND_ACTUAL_POSITION_L");
+    return rws_state_machine_interface_->getIOSignal("hand_ActualPosition_L");
   }
   else if (namespace_.compare("/r") == 0)
   {
-    return rws_state_machine_interface_->getIOSignal("HAND_ACTUAL_POSITION_R");
+    return rws_state_machine_interface_->getIOSignal("hand_ActualPosition_R");
   }
   else
   {
@@ -247,8 +247,8 @@ void SgControl::publish_gripper_position()
   std::string s_pos = get_gripper_pos();
   if (!s_pos.empty())
   {
-    std_msgs::msg::Float32 msg;
-    msg.data = std::stof(s_pos);
+    std_msgs::msg::Float64 msg;
+    msg.data = std::stod(s_pos)/10000.0;
     gripper_position_publisher_->publish(msg);
   }
 }
