@@ -91,7 +91,7 @@
   <link name="yumi_link_1_r">
     <inertial>
       <origin rpy="0 0 0" xyz="0 -0.03 0.12"/>
-      <mass value="2"/>
+      <mass value="0.9629"/>
       <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.1" iyz="0" izz="0.1"/>
     </inertial>
     <visual>
@@ -121,7 +121,7 @@
   <link name="yumi_link_2_r">
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
-      <mass value="2"/>
+      <mass value="1.4106"/>
       <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.1" iyz="0" izz="0.1"/>
     </inertial>
     <visual>
@@ -151,7 +151,7 @@
   <link name="yumi_link_3_r">
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
-      <mass value="2"/>
+      <mass value="0.7187"/>
       <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.1" iyz="0" izz="0.1"/>
     </inertial>
     <visual>
@@ -181,7 +181,7 @@
   <link name="yumi_link_4_r">
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
-      <mass value="2"/>
+      <mass value="1.1808"/>
       <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.1" iyz="0" izz="0.1"/>
     </inertial>
     <visual>
@@ -211,7 +211,7 @@
   <link name="yumi_link_5_r">
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
-      <mass value="2"/>
+      <mass value="0.34346"/>
       <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.1" iyz="0" izz="0.1"/>
     </inertial>
     <visual>
@@ -241,7 +241,7 @@
   <link name="yumi_link_6_r">
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
-      <mass value="2"/>
+      <mass value="0.47035"/>
       <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.1" iyz="0" izz="0.1"/>
     </inertial>
     <visual>
@@ -271,7 +271,7 @@
   <link name="yumi_link_7_r">
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
-      <mass value="2"/>
+      <mass value="0.04168"/>
       <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.1" iyz="0" izz="0.1"/>
     </inertial>
     <visual>
@@ -302,7 +302,7 @@
   <link name="yumi_link_1_l">
     <inertial>
       <origin rpy="0 0 0" xyz="0 -0.03 0.12"/>
-      <mass value="2"/>
+      <mass value="0.9629"/>
       <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.1" iyz="0" izz="0.1"/>
     </inertial>
     <visual>
@@ -332,7 +332,7 @@
   <link name="yumi_link_2_l">
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
-      <mass value="2"/>
+      <mass value="1.4106"/>
       <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.1" iyz="0" izz="0.1"/>
     </inertial>
     <visual>
@@ -362,7 +362,7 @@
   <link name="yumi_link_3_l">
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
-      <mass value="2"/>
+      <mass value="0.7108"/>
       <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.1" iyz="0" izz="0.1"/>
     </inertial>
     <visual>
@@ -392,7 +392,7 @@
   <link name="yumi_link_4_l">
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
-      <mass value="2"/>
+      <mass value="1.1808"/>
       <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.1" iyz="0" izz="0.1"/>
     </inertial>
     <visual>
@@ -422,7 +422,7 @@
   <link name="yumi_link_5_l">
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
-      <mass value="2"/>
+      <mass value="0.34345"/>
       <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.1" iyz="0" izz="0.1"/>
     </inertial>
     <visual>
@@ -452,7 +452,7 @@
   <link name="yumi_link_6_l">
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
-      <mass value="2"/>
+      <mass value="0.46580"/>
       <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.1" iyz="0" izz="0.1"/>
     </inertial>
     <visual>
@@ -482,7 +482,7 @@
   <link name="yumi_link_7_l">
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
-      <mass value="2"/>
+      <mass value="0.03094"/>
       <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.1" iyz="0" izz="0.1"/>
     </inertial>
     <visual>

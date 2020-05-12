@@ -108,8 +108,8 @@ void ExternalForce::estimate_TCP_wrench()
   // end test
 
   // gravity compansation (might not be needed)
-  // ext_torques_l_ -= kdl_wrapper_.dynamics_gravity("left_arm", q_l_).data;
-  // ext_torques_r_ -= kdl_wrapper_.dynamics_gravity("right_arm", q_r_).data;
+  ext_torques_l_ -= kdl_wrapper_.dynamics_gravity("left_arm", q_l_).data;
+  ext_torques_r_ -= kdl_wrapper_.dynamics_gravity("right_arm", q_r_).data;
 
   // calculate the TCP wrenches
   //Eigen::Matrix<double, 6, 1> W_l = jac_t_pinv_l * ext_torques_l_;
