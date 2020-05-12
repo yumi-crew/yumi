@@ -437,6 +437,9 @@ bool MotionCoordinator::pick_object(std::string planning_component, std::string 
   grip_in(planning_component, true);
   table_monitor_->attach_object(object_id, ee_link); 
 
+  // disable collision between everything and object
+  moveit2_wrapper_->disable_collision(object_id);
+
   // Linear move back to hover point. If linear motion is not possible, try ordinary motion.
   if(!linear_move_to_pose(planning_component, hover_pose, false, 0, visualize, true, true, percentage))
   {

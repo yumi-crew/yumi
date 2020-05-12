@@ -22,9 +22,8 @@ void signal_callback_handler(int signum)
   pose_estimation_manager->change_state(
       "pose_estimation", lifecycle_msgs::msg::Transition::TRANSITION_CLEANUP, 30s);
   // Terminate ros node
-  //rclcpp::shutdown();
+  rclcpp::shutdown();
   // Terminate program
-  sleep(1);
   exit(signum);
 }
 
@@ -74,6 +73,10 @@ int main(int argc, char **argv)
   pose_estimation_manager->add_camera_parameter("zivid_camera.capture.frame_0.iris", rclcpp::ParameterValue(17));
   pose_estimation_manager->add_camera_parameter("zivid_camera.capture.frame_1.iris", rclcpp::ParameterValue(25));
   pose_estimation_manager->add_camera_parameter("zivid_camera.capture.frame_2.iris", rclcpp::ParameterValue(30));
+  pose_estimation_manager->add_camera_parameter("zivid_camera.capture.frame_2.gain", rclcpp::ParameterValue(1.6));
+  pose_estimation_manager->add_camera_parameter("zivid_camera.capture.frame_3.iris", rclcpp::ParameterValue(37));
+  pose_estimation_manager->add_camera_parameter("zivid_camera.capture.frame_3.gain", rclcpp::ParameterValue(3.1));
+  pose_estimation_manager->add_camera_parameter("zivid_camera.capture.general.filters.reflection.enabled", rclcpp::ParameterValue(true)); 
   pose_estimation_manager->call_set_param_srv(30s);
 
   auto state3 = pose_estimation_manager->get_state("zivid_camera", 30s);
@@ -81,7 +84,6 @@ int main(int argc, char **argv)
 
   auto transition_success4 = pose_estimation_manager->change_state(
       "pose_estimation", lifecycle_msgs::msg::Transition::TRANSITION_ACTIVATE, 30s);
-  sleep(5);
   auto state5 = pose_estimation_manager->get_state("zivid_camera", 30s);
   auto state6 = pose_estimation_manager->get_state("pose_estimation", 30s);
 
@@ -92,32 +94,36 @@ int main(int argc, char **argv)
   auto transition_success3 = pose_estimation_manager->change_state(
       "zivid_camera", lifecycle_msgs::msg::Transition::TRANSITION_ACTIVATE, 30s);
 
+
+  int counter = 0;
+  int num_picks = 5;
   bool first = true;
   bool cap_success{false};
   bool est_success{false};
   std::string arm = "right_arm";
-  std::vector<std::string> objects = {"small_marker", "screwdriver", "small_marker"};
+  std::vector<std::string> objects = {"small_marker", "battery"};
   double percentage = 0;
   int lin_retries = 3;
 
-  // Add bin
-  std::vector<double> bin_pose = {0.4, 0, -0.04, 0, 180, 0};
-  yumi_motion_coordinator->add_object("bin", bin_pose, true);
+  // Add bins to scene
+  yumi_motion_coordinator->add_object("bin", {0.4, 0, -0.10, 0, 180, 0}, true);
+  yumi_motion_coordinator->add_object("bin2", {0.4, -0.20, -0.10, 0, 180, 0}, true);
 
-  while (!yumi_motion_coordinator->should_stop())
+
+  while (counter < num_picks)
   {
     for (auto object : objects)
     {
-      // Go to home
-      yumi_motion_coordinator->move_to_home(arm, 5, false, true, false);
-
+      // Move away from the camera view
+      yumi_motion_coordinator->move_to_home(arm, 3);
+      
       // Take image
       std::cout << "before call_capture_srv" << std::endl;
       cap_success = pose_estimation_manager->call_capture_srv(30s);
 
       // Find the boject's pose in the the camera frame
       std::cout << "before call_estimate_pose_srv" << std::endl;
-      if (!pose_estimation_manager->call_estimate_pose_srv(object, 4, 50s))
+      if (!pose_estimation_manager->call_estimate_pose_srv(object, 1, 50s))
       {
         std::cout << "[ERROR] object cannot be found." << std::endl;
         if (yumi_motion_coordinator->object_present(object))
@@ -142,12 +148,18 @@ int main(int argc, char **argv)
       }
 
       // Place at a object
-      if (!yumi_motion_coordinator->place_at_object(arm, "bin", lin_retries, 0.23, true, false, percentage))
+      if (!yumi_motion_coordinator->place_at_object(arm, "bin2", lin_retries, 0.23, true, false, percentage))
       {
         std::cout << "place failed" << std::endl;
       }
+      else counter++; // If place return true the object must be dropped at the destination and can thus be considered successfully picked and placed.
+
+      if(counter >= num_picks) break;
     }
   }
+
+  // go to home
+  yumi_motion_coordinator->move_to_home(arm, 3);
 
   std::cout << "Motion completed, please ctrl+c" << std::endl;
   while (1)
