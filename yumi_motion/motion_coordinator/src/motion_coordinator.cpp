@@ -292,6 +292,13 @@ bool MotionCoordinator::linear_move_to_pose(std::string planning_component, std:
     return true;
   }
 
+  // Verify the pose is a valid pose.
+  if(!moveit2_wrapper_->pose_valid(planning_component, ee_link, pose, eulerzyx))
+  {
+    std::cout << "[ERROR] The given goal pose is not valid. Aborting." << std::endl;
+    return false;
+  }
+
   bool retry = false;
   std::vector<double> new_pose(6);
   std::vector<double> org_pose = moveit2_wrapper_->find_pose(ee_link); // Given using quaternions.
@@ -418,11 +425,21 @@ bool MotionCoordinator::pick_object(std::string planning_component, std::string 
 
   std::vector<double> hover_pose = grip_pose; hover_pose[2] += hover_height;
 
+  // Disable collision for the object to be picked.
+  moveit2_wrapper_->disable_collision(object_id);
+
   // Move to hover pose and open gripper
   move_to_pose(planning_component, hover_pose, false, num_retries, visualize, true, false);
   grip_out(planning_component, true); 
-  std::cout << "after grip_out" << std::endl;
   
+  // Verify the grip pose is valid, give up if not.
+  if(!moveit2_wrapper_->pose_valid(planning_component, ee_link, grip_pose, false))
+  {
+    std::cout << "[ERROR] The given goal pose is not valid. Aborting." << std::endl;
+    grip_in(planning_component, true);
+    return false;
+  }
+
   // Linear move to gripping pose, give up if unable.
   if(!linear_move_to_pose(planning_component, grip_pose, false, num_retries, visualize, true, true, percentage))
   {
@@ -430,14 +447,11 @@ bool MotionCoordinator::pick_object(std::string planning_component, std::string 
     return false;
   }
 
-  // disable collision between everything and object
-  moveit2_wrapper_->disable_collision(object_id);
-
   // Grip object
   grip_in(planning_component, true);
   table_monitor_->attach_object(object_id, ee_link); 
 
-  // disable collision between everything and object
+  // Re-disable collision for the object.
   moveit2_wrapper_->disable_collision(object_id);
 
   // Linear move back to hover point. If linear motion is not possible, try ordinary motion.
