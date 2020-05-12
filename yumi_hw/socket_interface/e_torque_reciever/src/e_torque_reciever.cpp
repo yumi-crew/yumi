@@ -22,14 +22,7 @@ ETorqueReciever::ETorqueReciever(std::string node_name, std::string robot_ip, ui
 connected_{false}, stop_sign_{false}
 {
   node_ = std::make_shared<rclcpp::Node>(node_name);
-
-  // Left arm UDP socket
-  socket_left_.comm_socket = socket(AF_INET, SOCK_STREAM, 0);
-  socket_left_.servaddr.sin_family = AF_INET;
-  socket_left_.servaddr.sin_port = htons(port_left);
-  inet_pton(AF_INET, robot_ip.c_str(), &(socket_left_.servaddr.sin_addr));
-  socket_left_.consecutive_read_fails_counter = 0;
-  socket_left_.connected = false;
+  publisher_ = node_->create_publisher<sensor_msgs::msg::JointState>("/r/external_joint_torques", 10);
 
   // Right arm UDP socket
   socket_right_.comm_socket = socket(AF_INET, SOCK_STREAM, 0);
@@ -43,11 +36,8 @@ connected_{false}, stop_sign_{false}
 
 bool ETorqueReciever::establish_connection(int num_retries)
 {
-  if((connect(socket_right_.comm_socket,(struct sockaddr*)&(socket_right_.servaddr),sizeof(socket_right_.servaddr))==0) 
-      && 
-    (connect(socket_left_.comm_socket,(struct sockaddr*)&(socket_left_.servaddr),sizeof(socket_left_.servaddr))==0))
+  if(connect(socket_right_.comm_socket,(struct sockaddr*)&(socket_right_.servaddr),sizeof(socket_right_.servaddr))==0) 
   {
-    socket_left_.connected = true;
     socket_right_.connected = true;
     connected_ = true;
   }
@@ -57,11 +47,8 @@ bool ETorqueReciever::establish_connection(int num_retries)
   {
     if(retries_left)
     {
-      if((connect(socket_left_.comm_socket,(struct sockaddr*)&(socket_left_.servaddr),sizeof(socket_left_.servaddr))==0) 
-          && 
-         (connect(socket_right_.comm_socket,(struct sockaddr*)&(socket_right_.servaddr),sizeof(socket_right_.servaddr))==0))
+      if(connect(socket_right_.comm_socket,(struct sockaddr*)&(socket_right_.servaddr),sizeof(socket_right_.servaddr))==0)
       {
-        socket_left_.connected = true;
         socket_right_.connected = true;
         connected_ = true;
       }
@@ -69,8 +56,7 @@ bool ETorqueReciever::establish_connection(int num_retries)
     else
     {
       RCLCPP_ERROR_STREAM(node_->get_logger(), "Unable to establish socket connection with YuMi." 
-      << "\nleft_socket connected: " << std::boolalpha << socket_left_.connected 
-      << "  right_socket connected: " << std::boolalpha << socket_left_.connected);
+      << "  right_socket connected: " << std::boolalpha << socket_right_.connected);
       return false;
     }
     --retries_left; 
@@ -82,148 +68,115 @@ bool ETorqueReciever::establish_connection(int num_retries)
 void ETorqueReciever::start_streams(bool debug)
 {
   std::cout << " ** entering start_streams()" << std::endl;
+  char buf_r[100]; 
    
-  std::cout << " ** before spinning out right thread" << std::endl;
-  // Right socket thread
-  std::thread right_thread([this]()
-  {
-    char buf[100]; 
-    int ret_r;
-    while (!stop_sign_ && connected_)
-    {
-      bzero(buf, sizeof(buf));
-      ret_r = recv(socket_right_.comm_socket, buf, sizeof(buf), 0);
-
-      if(ret_r >= 0) 
-      {
-        thread_right_mutex_.lock();
-        bzero(buffer_r_, sizeof(buffer_r_));
-        // buffer_r_ = buf; // arrays cannot be assigned, only initialized. Use strcpy!
-        strcpy(buffer_r_, buf);
-        thread_right_mutex_.unlock();
-        socket_right_.consecutive_read_fails_counter = 0;
-      }
-      else
-      {
-        if(socket_right_.consecutive_read_fails_counter < allowed_consecutive_read_fails_)
-        {
-          socket_right_.consecutive_read_fails_counter++;
-          continue;
-        }
-        else 
-        {
-          RCLCPP_ERROR_STREAM(node_->get_logger(), "Right socket failed to read " << allowed_consecutive_read_fails_ 
-            << " consecutive attempts. Stopping right stream.");
-          break;
-        }
-      }
-    }
-  });
+  // std::cout << " ** before spinning out right thread" << std::endl;
+  // // Right socket thread
+  // std::thread right_thread([this, &buf_r]()
+  // {
+  //   int ret_r;
+  //   rclcpp::WallRate loop(rate_);
+  //   while (!stop_sign_ && connected_)
+  //   {
+  //     ret_r = read(socket_right_.comm_socket, buf_r, sizeof(buf_r));
+  //     if(ret_r >= 0) 
+  //     {
+  //       socket_right_.consecutive_read_fails_counter = 0;
+  //     }
+  //     else
+  //     {
+  //       if(socket_right_.consecutive_read_fails_counter < allowed_consecutive_read_fails_)
+  //       {
+  //         socket_right_.consecutive_read_fails_counter++;
+  //         continue;
+  //       }
+  //       else 
+  //       {
+  //         RCLCPP_ERROR_STREAM(node_->get_logger(), "Right socket failed to read " << allowed_consecutive_read_fails_ 
+  //           << " consecutive attempts. Stopping right stream.");
+  //         break;
+  //       }
+  //     }
+  //     loop.sleep();
+  //   }
+  // });
 
 
-  std::cout << " ** before spinning out left thread" << std::endl;
-  // Left socket thread
-  std::thread left_thread([this]()
-  {
-    char buf[100];
-    int ret_l;
-    while (!stop_sign_ && connected_)
-    {
-      bzero(buf, sizeof(buf));
-      ret_l = recv(socket_left_.comm_socket, buf, sizeof(buf), 0);
-      
-      if(ret_l >= 0) 
-      {
-        thread_left_mutex_.lock();
-        bzero(buffer_l_, sizeof(buffer_l_));
-        // buffer_l_ = buf; // arrays cannot be assigned, only initialized. Use strcpy!
-        strcpy(buffer_l_, buf);
-        thread_left_mutex_.unlock();
-        socket_left_.consecutive_read_fails_counter = 0;
-      }
-      else
-      {
-        if(socket_left_.consecutive_read_fails_counter < 5)
-        {
-          socket_left_.consecutive_read_fails_counter++;
-          continue;
-        }
-        else 
-        {
-          RCLCPP_ERROR_STREAM(node_->get_logger(), "Left socket failed to read " << allowed_consecutive_read_fails_ 
-            << " consecutive attempts. Stopping left stream.");
-          break;
-        }
-      }
-    }
-  });
-
-  std::cout << " ** before while (parsing)" << std::endl;
   // Parse
+  rclcpp::WallRate loop(rate_);
   while(!stop_sign_ && connected_)
   {
-    thread_left_mutex_.lock();
-    thread_right_mutex_.lock();
-    parse(debug);    
-    thread_left_mutex_.unlock();
-    thread_right_mutex_.unlock();
-    if(stop_sign_) break;
+    read(socket_right_.comm_socket, buf_r, sizeof(buf_r));
+    parse(buf_r, debug);    
+    if(stop_sign_)
+    {
+      std::cout << "Aborting streams, stop_sign_:  "<< stop_sign_ << " , connected_: " << connected_ << std::endl; 
+      break;
+    }
+    loop.sleep();
   }
-
-  left_thread.join();
-  right_thread.join();
-  RCLCPP_INFO_STREAM(node_->get_logger(), "Threads stopped successfully.");
+  //right_thread.join();
+  //RCLCPP_INFO_STREAM(node_->get_logger(), "Threads stopped successfully.");
 }
 
 
-void ETorqueReciever::parse(bool debug)
+void ETorqueReciever::parse(std::string data, bool debug)
 {
   size_t pos = 0;
-  int i = 0;
   std::string token;
-  std::string data_left = buffer_l_;
-  std::string data_right = buffer_r_;
 
-  // Parsing the first part of data_left, containing the e_torques of the left arm
-  while ((pos = data_left.find(";")) != std::string::npos)
-  {
-    token = data_left.substr(0, pos);
-    e_torques_[i] = std::stod(token);
-    data_left.erase(0, pos + 1);
-    i++;
-  }
-  
-  // Parsing the first part of data_right, containing the e_torques of the right arm
-  i++; pos = 0;
-  while ((pos = data_right.find(";")) != std::string::npos)
-  {
-    token = data_right.substr(0, pos);
-    e_torques_[i] = std::stod(token);
-    data_right.erase(0, pos + 1);
-    i++;
-  }
+  size_t start = data.find("{");
+  data.erase(0, start);  // Filter out junk before vector
+  size_t end = data.find("}");
 
-  if(debug) debug_print();
+  // If recieved string contain both start symbol "{" and end symbol "}"
+  if( (start != std::string::npos) && (end != std::string::npos) && (start<end) )
+  {
+    // Find start of torque-vector and remove all content before start.
+    start = data.find("{");
+    data.erase(0, start+1); // "{" will also be removed
+
+    // parse contents {t1;t2;t7;t3;t4;t5;t6;}
+    for(int i = 0; i < 7; i++)
+    {
+      pos = data.find(";");
+
+      // If another ";" cannot be found
+      if(pos == std::string::npos) break;                              
+
+      // If next ";" is found after the end of the vector
+      if(pos > end) break;
+
+      token = data.substr(0, pos);
+      e_torques_[i] = std::stod(token);
+      data.erase(0, pos + 1);
+    }
+
+    sensor_msgs::msg::JointState msg;
+    for(int i = 0; i<7; i++)
+    {
+      msg.effort.push_back(e_torques_[i]);
+    }
+    msg.header.stamp = node_->now();
+    publisher_->publish(msg);
+
+    if(debug) debug_print();
+  }
+  else return; // If recieved string doesn't contain both the start-delimiter "{" and the end-delimiter "}", skip.
 }
 
 
 void ETorqueReciever::debug_print()
 {
   std::cout << "{" << std::endl;
-  std::cout << "  Left arm" << std::endl;
-  for(int j = 0; j<7; j++) 
-  {
-    if(j == 2) std::cout << "\tjoint 7: " << e_torques_[j] << std::endl;
-    else if(j > 2)  std::cout << "\tjoint " << j << ": " << e_torques_[j] << std::endl;
-    else std::cout << "\tjoint " << j+1 << ": " << e_torques_[j] << std::endl;
-  }
-
+  int j = 0;
   std::cout << "  Right arm" << std::endl;
-  for(int j = 7; j<14; j++) 
+  for(auto e : e_torques_) 
   {
-    if(j == 9) std::cout << "\tjoint 7: " << e_torques_[j] << std::endl;
-    else if(j > 9)  std::cout << "\tjoint " << j-7 << ": " << e_torques_[j] << std::endl;
-    else std::cout << "\tjoint " << j-7+1 << ": " << e_torques_[j] << std::endl;
+    if(j == 2) std::cout << "\tjoint 7: " << e << std::endl;
+    else if(j > 2)  std::cout << "\tjoint " << j << ": " << e << std::endl;
+    else std::cout << "\tjoint " << j+1 << ": " << e << std::endl;
+    j++;
   }
   std::cout << "}" << std::endl;
 }
@@ -231,18 +184,13 @@ void ETorqueReciever::debug_print()
 
 bool ETorqueReciever::disconnect()
 {
-  bool success_left, success_right = true;
-  if(close(socket_left_.comm_socket != 0))
-  {
-    success_left = false;
-    std::cout << "[ERROR] An error occured while disconnecting left socket." << std::endl; 
-  }
+  bool success_right = true;
   if(close(socket_right_.comm_socket != 0))
   {
     success_right = false;
     std::cout << "[ERROR] An error occured while disconnecting right socket." << std::endl;
   }
-  return (success_left && success_right);
+  return success_right;
 }
 
 } // end namespace socket_interface

@@ -6,8 +6,21 @@
 
 #include <unistd.h>
 
+// Ctr+C handler
+void signal_callback_handler(int signum)
+{
+  std::cout << "Caught signal " << signum << std::endl;
+  // Terminate ros node
+  rclcpp::shutdown();
+  // Terminate program
+  exit(signum);
+}
+
 int main(int argc, char *argv[])
 {
+  // Ctrl+C handler
+  signal(SIGINT, signal_callback_handler);
+
   rclcpp::init(argc, argv);
   // Finding path to urdf
   char buf[20];
@@ -29,12 +42,12 @@ int main(int argc, char *argv[])
   
   auto ext_F = std::make_shared<yumi_dynamics::ExternalForce>(robot_model);
   rclcpp::WallRate loop_rate(250);
-  while (1)
+  while (rclcpp::ok())
   {
     ext_F->estimate_TCP_wrench();
     loop_rate.sleep();
   }
 
-  rclcpp::shutdown();
+
   return 0;
 }

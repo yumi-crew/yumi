@@ -16,7 +16,7 @@
 using namespace std::chrono;
 char data_str_l[100];
 char data_str_r[100];
-std::array<double, 14> data; 
+std::array<double, 7> data; 
 bool connected = false;
 bool stop_sign = false;
 
@@ -26,22 +26,25 @@ void parse(std::string data_l, std::string data_r, bool debug_print = false)
   int i = 0;
   std::string token;
 
-  while ((pos = data_l.find(";")) != std::string::npos)
-  {
-    token = data_l.substr(0, pos);
-    data[i] = std::stof(token);
-    data_l.erase(0, pos + 1);
-    i++;
-  }
-  i++;
+  // while ((pos = data_l.find(";")) != std::string::npos)
+  // {
+  //   token = data_l.substr(0, pos);
+  //   data[i] = std::stof(token);
+  //   data_l.erase(0, pos + 1);
+  //   i++;
+  // }
+  // i++;
 
+  std::cout << data_r << std::endl;
   pos = 0;
-  while ((pos = data_r.find(";")) != std::string::npos)
+  for(int i = 0; i < 7; i++)
   {
+    pos = data_r.find(";"); 
+    if(pos == std::string::npos) break;
+
     token = data_r.substr(0, pos);
-    data[i] = std::stof(token);
+    data[i] = std::stod(token);
     data_r.erase(0, pos + 1);
-    i++;
   }
 
 
@@ -74,8 +77,7 @@ int main()
   inet_pton(AF_INET, "192.168.125.1", &(servaddr_l.sin_addr));
   inet_pton(AF_INET, "192.168.125.1", &(servaddr_r.sin_addr));
 
-  if( (connect(comm_socket_l, (struct sockaddr *)&servaddr_l, sizeof(servaddr_l)) == 0) && 
-      (connect(comm_socket_r, (struct sockaddr *)&servaddr_r, sizeof(servaddr_r)) == 0) )
+  if(connect(comm_socket_r, (struct sockaddr *)&servaddr_r, sizeof(servaddr_r)) == 0)
   {
     connected = true;
   }    
@@ -86,44 +88,46 @@ int main()
   auto start = high_resolution_clock::now();
 
   // Left socket thread
-  std::thread left_thread([&comm_socket_l, &counter_l]()
-  {
-    while (!stop_sign && connected)
-    {
-      if(read(comm_socket_l, data_str_l, 100) > 0) 
-      {
-        counter_l++;
-        //std::cout << "LEFT" << std::endl;
-      }
-    }
-  });
+  // std::thread left_thread([&comm_socket_l, &counter_l]()
+  // {
+  //   while (!stop_sign && connected)
+  //   {
+  //     if(read(comm_socket_l, data_str_l, 100) > 0) 
+  //     {
+  //       counter_l++;
+  //       //std::cout << "LEFT" << std::endl;
+  //     }
+  //   }
+  // });
 
   // Right socket thread
-  std::thread right_thread([&comm_socket_r, &counter_r]()
-  {
-    while (!stop_sign && connected)
-    {
+  // std::thread right_thread([&comm_socket_r, &counter_r]()
+  // {
+  //   while (!stop_sign && connected)
+  //   {
 
-      if(read(comm_socket_r, data_str_r, 100) > 0) 
-      {
-        counter_r++;
-        //std::cout << "RIGHT" << std::endl;
-      }
-    }
-  });
+  //     if(read(comm_socket_r, data_str_r, 100) > 0) 
+  //     {
+  //       counter_r++;
+  //       //std::cout << "RIGHT" << std::endl;
+  //     }
+  //   }
+  // });
 
   // Parse and print
   while(!stop_sign)
   {
-    parse(data_str_l, data_str_r, true);
+    read(comm_socket_r, data_str_r, 100);
+    std::string temp = data_str_r;
+    parse(data_str_l, temp, true);
     //std::cout << "left: " << counter_l << "right: " << counter_r << std::endl;
-    if(counter_l > 10000 && counter_r > 10000)
-    {
-      stop_sign = true;
-      left_thread.join();
-      right_thread.join();
-      break;
-    }
+    // if(counter_l > 10000 && counter_r > 10000)
+    // {
+      // stop_sign = true;
+      // //left_thread.join();
+      // right_thread.join();
+      // break;
+    //}
   }
 
   auto stop = high_resolution_clock::now();

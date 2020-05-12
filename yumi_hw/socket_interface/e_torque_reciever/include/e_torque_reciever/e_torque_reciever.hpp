@@ -21,6 +21,7 @@
 #include <netinet/ip.h>
 #include <arpa/inet.h>
 #include <semaphore.h>
+#include <sensor_msgs/msg/joint_state.hpp>
 
 namespace socket_interface
 {
@@ -58,12 +59,13 @@ public:
 
 private:
   std::shared_ptr<rclcpp::Node> node_;
-  std::array<double, 14> e_torques_;
+  std::array<double, 7> e_torques_;
+
   bool connected_ = false;
   bool stop_sign_ = false;
+  int rate_ = 500;
   int allowed_consecutive_read_fails_ = 5;
-  char buffer_l_[100];
-  char buffer_r_[100];
+  std::shared_ptr<rclcpp::Publisher<sensor_msgs::msg::JointState>> publisher_;
   
   struct SocketInfo
   {
@@ -78,7 +80,7 @@ private:
   std::mutex thread_left_mutex_;
   std::mutex thread_right_mutex_;
   
-  void parse(bool debug_print=false);
+  void parse(std::string data_, bool debug_print=false);
 };
 
 } // end namepsace socket_interface

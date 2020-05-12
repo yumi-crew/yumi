@@ -43,35 +43,35 @@ int main(int argc, char** argv)
   int counter = 0; int retries = 3; double percentage = 1; double speed_scale = 1; double acc_scale = 1;
   
   //  ** TEST 1 ** 
-  // while(!yumi_motion_coordinator->should_stop())
-  // {
-  //   yumi_motion_coordinator->add_object("screwdriver", pose, true);
-  //   yumi_motion_coordinator->move_to_pose("left_arm", {0.4, 0.1, 0.3, 0, 0, 180}, true, 3, false, true, false);
-  //   sleep(1);
-  //   yumi_motion_coordinator->linear_move_to_pose("left_arm", {0.4, 0.1, 0.1, 0, 0, 180}, true, retries, false, true, true, percentage, speed_scale, acc_scale);
-  //   sleep(1);
-  //   yumi_motion_coordinator->linear_move_to_pose("left_arm", {0.4, 0.1, 0.3, 0, 0, 180}, true, 0, false, true, true, percentage, speed_scale, acc_scale);
+  while(!yumi_motion_coordinator->should_stop())
+  {
+    yumi_motion_coordinator->add_object("screwdriver", pose, true);
+    yumi_motion_coordinator->move_to_pose("left_arm", {0.4, 0.1, 0.3, 0, 0, 180}, true, 3, false, true, false);
+    sleep(1);
+    yumi_motion_coordinator->linear_move_to_pose("left_arm", {0.4, 0.1, 0.1, 0, 0, 180}, true, retries, false, true, true, percentage, speed_scale, acc_scale);
+    sleep(1);
+    yumi_motion_coordinator->linear_move_to_pose("left_arm", {0.4, 0.1, 0.3, 0, 0, 180}, true, 0, false, true, true, percentage, speed_scale, acc_scale);
 
 
-  //   yumi_motion_coordinator->move_to_pose("left_arm", {0.4, -0.2, 0.3, 0, 0, 180}, true, 3, false, true, false);
-  //   sleep(1);
-  //   yumi_motion_coordinator->linear_move_to_pose("left_arm", {0.4, -0.2, 0.1, 0, 0, 180}, true, retries, false, true, true, percentage, speed_scale, acc_scale);
-  //   sleep(1);
-  //   yumi_motion_coordinator->linear_move_to_pose("left_arm", {0.4, -0.2, 0.3, 0, 0, 180}, true, 0, false, true, true, percentage, speed_scale, acc_scale);
+    yumi_motion_coordinator->move_to_pose("left_arm", {0.4, -0.2, 0.3, 0, 0, 180}, true, 3, false, true, false);
+    sleep(1);
+    yumi_motion_coordinator->linear_move_to_pose("left_arm", {0.4, -0.2, 0.1, 0, 0, 180}, true, retries, false, true, true, percentage, speed_scale, acc_scale);
+    sleep(1);
+    yumi_motion_coordinator->linear_move_to_pose("left_arm", {0.4, -0.2, 0.3, 0, 0, 180}, true, 0, false, true, true, percentage, speed_scale, acc_scale);
 
 
-  //   yumi_motion_coordinator->move_to_pose("left_arm", {0.4, 0, 0.3, 0, 0, 180}, true, 3, false, true, false);
-  //   sleep(1);
-  //   yumi_motion_coordinator->linear_move_to_pose("left_arm", {0.4, 0, 0.1, 0, 0, 180}, true, retries, false, true, true, percentage, speed_scale, acc_scale);
-  //   sleep(1);
-  //   yumi_motion_coordinator->linear_move_to_pose("left_arm", {0.4, 0, 0.3, 0, 0, 180}, true, 0, false, true, true, percentage, speed_scale, acc_scale);
+    yumi_motion_coordinator->move_to_pose("left_arm", {0.4, 0, 0.3, 0, 0, 180}, true, 3, false, true, false);
+    sleep(1);
+    yumi_motion_coordinator->linear_move_to_pose("left_arm", {0.4, 0, 0.1, 0, 0, 180}, true, retries, false, true, true, percentage, speed_scale, acc_scale);
+    sleep(1);
+    yumi_motion_coordinator->linear_move_to_pose("left_arm", {0.4, 0, 0.3, 0, 0, 180}, true, 0, false, true, true, percentage, speed_scale, acc_scale);
     
 
-  //   yumi_motion_coordinator->move_to_home("left_arm", 3);
-  //   ++counter;
-  //   std::cout << "++++++ " << counter << " rounds completed" <<std::endl;
-  //   yumi_motion_coordinator->remove_object("screwdriver");
-  // }
+    yumi_motion_coordinator->move_to_home("left_arm", 3);
+    ++counter;
+    std::cout << "++++++ " << counter << " rounds completed" <<std::endl;
+    yumi_motion_coordinator->remove_object("screwdriver");
+  }
 
 
   // ** TEST 2 **

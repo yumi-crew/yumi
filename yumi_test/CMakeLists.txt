@@ -158,7 +158,13 @@ ament_target_dependencies(demo_motion_coordinator
                           Boost
                           kdl_wrapper                                    
 )
-
+# demo_torque                         
+add_executable(demo_torque src/demo_torque.cpp)
+ament_target_dependencies(demo_torque 
+                          motion_coordinator
+                          Boost
+                          kdl_wrapper                                    
+)
 
 install(TARGETS 
   sine_wave
@@ -172,6 +178,7 @@ install(TARGETS
   #demo_moveit2_2chessboard
   demo_motion_coordinator
   socket_test
+  demo_torque
   DESTINATION lib/${PROJECT_NAME}
 )
 
