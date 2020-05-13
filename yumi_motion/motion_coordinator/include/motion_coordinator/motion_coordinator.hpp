@@ -128,8 +128,8 @@ public:
    * 
    * \return true if the object is estimated to be successfully picked.
    */
-  int pick_object(std::string planning_component, std::string object_id, int num_retries, double hover_height, bool blocking, 
-                   bool visualize, double percentage);
+  int pick_object(std::string planning_component, std::string object_id, std::vector<std::string> allowed_collisions, 
+                  int num_retries, double hover_height, bool blocking, bool visualize, double percentage);
   
   /**
    * Moves the planning component in a straight line to the given pose, opens the gripper and returns to the starting 

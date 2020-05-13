@@ -74,10 +74,10 @@ int main(int argc, char **argv)
 
   pose_estimation_manager->add_camera_parameter("zivid_camera.capture.frame_0.iris", rclcpp::ParameterValue(17));
   pose_estimation_manager->add_camera_parameter("zivid_camera.capture.frame_1.iris", rclcpp::ParameterValue(25));
-  pose_estimation_manager->add_camera_parameter("zivid_camera.capture.frame_2.iris", rclcpp::ParameterValue(30));
-  pose_estimation_manager->add_camera_parameter("zivid_camera.capture.frame_2.gain", rclcpp::ParameterValue(1.6));
-  pose_estimation_manager->add_camera_parameter("zivid_camera.capture.frame_3.iris", rclcpp::ParameterValue(37));
-  pose_estimation_manager->add_camera_parameter("zivid_camera.capture.frame_3.gain", rclcpp::ParameterValue(3.1));
+  pose_estimation_manager->add_camera_parameter("zivid_camera.capture.frame_2.iris", rclcpp::ParameterValue(38));
+  pose_estimation_manager->add_camera_parameter("zivid_camera.capture.frame_2.gain", rclcpp::ParameterValue(3.21));
+  pose_estimation_manager->add_camera_parameter("zivid_camera.capture.frame_3.iris", rclcpp::ParameterValue(42));
+  pose_estimation_manager->add_camera_parameter("zivid_camera.capture.frame_3.gain", rclcpp::ParameterValue(4.16));
   pose_estimation_manager->add_camera_parameter("zivid_camera.capture.general.filters.reflection.enabled", rclcpp::ParameterValue(true));
   pose_estimation_manager->call_set_param_srv(30s);
 
@@ -96,24 +96,36 @@ int main(int argc, char **argv)
   auto transition_success3 = pose_estimation_manager->change_state(
       "zivid_camera", lifecycle_msgs::msg::Transition::TRANSITION_ACTIVATE, 30s);
 
+
   int counter = 0;
   int tries = 0;
-  int num_picks = 5;
+  int num_picks = 10;
   bool first = true;
   bool cap_success{false};
   bool est_success{false};
   std::string arm = "right_arm";
-  std::vector<std::string> objects = {"nail_polish", "battery"};
+  std::vector<std::string> objects = {"small_marker", "nail_polish", "battery"};
   double percentage = 0;
   int lin_retries = 3;
 
-  // Add bins to scene
-  std::string place_bin = "bin3";
   yumi_motion_coordinator->move_to_home(arm, 3);
+
+  // Add bins to scene
+  std::vector<double> pick_bin_pose = {3,3,3, 0,0,0};
+  std::string pick_bin = "bin3";
+  // cap_success = pose_estimation_manager->call_capture_srv(30s);
+  // est_success = pose_estimation_manager->call_estimate_pose_srv(pick_bin, 0, 50s);
+  // auto pick_bin_pose = pose_estimation_manager->pose_transformer->obj_in_base_frame();
+  yumi_motion_coordinator->add_object(pick_bin, pick_bin_pose, false, {1, 1, 1, 1});
+
+  // yumi_motion_coordinator->move_to_pose(arm, {0.008, -0.331, 0.257, 141, -20, -161}, true, 3);
+  // yumi_motion_coordinator->move_to_home(arm, 3);
+
+  std::string place_bin = "bin4";
   cap_success = pose_estimation_manager->call_capture_srv(30s);
   est_success = pose_estimation_manager->call_estimate_pose_srv(place_bin, 0, 50s);
-  auto bin_pose = pose_estimation_manager->pose_transformer->obj_in_base_frame();
-  yumi_motion_coordinator->add_object(place_bin, bin_pose, false, {0, 0, 1, 1});
+  auto place_bin_pose = pose_estimation_manager->pose_transformer->obj_in_base_frame();
+  yumi_motion_coordinator->add_object(place_bin, place_bin_pose, false, {0.95, 0.67, 0.61, 1});
 
   std::map<int, std::string> errors;
   errors[0] = "SUCCESS";
@@ -127,6 +139,9 @@ int main(int argc, char **argv)
     exp_log[value] = 0;
   }
   exp_log["POSE_ESTIMATION_FAIL"] = 0;
+
+  yumi_motion_coordinator->move_to_pose(arm, {0.008, -0.331, 0.257, 141, -20, -161}, true, 3);
+
 
   int ret_val;
   while (counter < num_picks)
@@ -143,7 +158,7 @@ int main(int argc, char **argv)
 
       // Find the boject's pose in the the camera frame
       std::cout << "before call_estimate_pose_srv" << std::endl;
-      if (!pose_estimation_manager->call_estimate_pose_srv(object, 1, 50s))
+      if (!pose_estimation_manager->call_estimate_pose_srv(object,1, 50s))
       {
         exp_log["POSE_ESTIMATION_FAIL"]++;
         std::cout << "[ERROR] object cannot be found." << std::endl;
@@ -162,7 +177,7 @@ int main(int argc, char **argv)
         yumi_motion_coordinator->move_object(object, grasp_pose);
 
       // Pick object
-      ret_val = yumi_motion_coordinator->pick_object(arm, object, lin_retries, 0.15, true, false, percentage);
+      ret_val = yumi_motion_coordinator->pick_object(arm, object, {"table", pick_bin}, lin_retries, 0.15, true, false, percentage);
       if (ret_val < 0)
       {
         exp_log[errors[ret_val]]++;
@@ -171,7 +186,7 @@ int main(int argc, char **argv)
       }
 
       // Place at a object
-      ret_val = yumi_motion_coordinator->place_at_object(arm, place_bin, lin_retries, 0.23, true, false, percentage);
+      ret_val = yumi_motion_coordinator->place_at_object(arm, place_bin, lin_retries, 0.15, true, false, percentage);
       if (ret_val < 0)
       {
         exp_log[errors[ret_val]]++;

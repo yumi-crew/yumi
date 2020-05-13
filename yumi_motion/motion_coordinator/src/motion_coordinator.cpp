@@ -404,8 +404,9 @@ bool MotionCoordinator::linear_move_to_object(std::string planning_component, st
 }
 
 
-int MotionCoordinator::pick_object(std::string planning_component, std::string object_id,int num_retries,  
-                                    double hover_height, bool blocking, bool visualize, double percentage)
+int MotionCoordinator::pick_object(std::string planning_component, std::string object_id,   
+                                   std::vector<std::string> allowed_collisions, int num_retries, double hover_height, 
+                                   bool blocking, bool visualize, double percentage)
 {
   std::cout << "pick_object() called for planning component '" << planning_component << "'." << std::endl;
 
@@ -451,8 +452,11 @@ int MotionCoordinator::pick_object(std::string planning_component, std::string o
 
   // Grip object
   table_monitor_->attach_object(object_id, ee_link);
-  // Re-disable collision for the object. Additonally disable for bin. 
-  moveit2_wrapper_->disable_collision("table", true, object_id);
+  // Disable collision between pick object and elements in the enviroment 
+  for(auto object : allowed_collisions) 
+  { 
+    moveit2_wrapper_->disable_collision(object_id, true, object); 
+  }
   grip_in(planning_component, true);
   
 
@@ -462,8 +466,11 @@ int MotionCoordinator::pick_object(std::string planning_component, std::string o
     move_to_pose(planning_component, hover_pose, false, num_retries, visualize, blocking, false);
   }
 
-  // Re-enable collision checking for bin.
-  moveit2_wrapper_->disable_collision("table", false, object_id);
+  // Re-enable collision between pick object and elements in the enviroment 
+  for(auto object : allowed_collisions) 
+  { 
+    moveit2_wrapper_->disable_collision(object_id, false, object); 
+  }
 
   // Check if yumi's gripper contain the object, return if not.
   if(moveit2_wrapper_->gripper_closed(planning_component))
@@ -515,7 +522,7 @@ int MotionCoordinator::place_at_object(std::string planning_component, std::stri
   }
 
   // linear move down to drop point. If drop point cant be reached, drop object at current pose.
-  if(!linear_move_to_object(planning_component, object_id, 0, hover_height-0.05, visualize, true, true, percentage))
+  if(!linear_move_to_object(planning_component, object_id, 0, hover_height-0.1, visualize, true, true, percentage))
   {
     open_gripper(planning_component, true);
     table_monitor_->detatch_object(object);
@@ -773,7 +780,10 @@ std::vector<double> MotionCoordinator::equivalent_state(std::string planning_com
   std::vector<float> q_seed_left_l = {-2.83, -1.18, 2.64, -0.47, 1.89, 0.96, 1.56};
   std::vector<float> q_seed_right_l = {-1.95, -1.95, 0.94, 0.87, -3.55, 2.87, 2.41}; 
   std::vector<float> q_seed_left_r = {-0.68, -0.067, 0.0054, 0.17, -0.63, 0.53, 0.23};
-  std::vector<float> q_seed_right_3l = {-1.61, -1.68, 0.97, 0.91, 2.35, 2.07, 2.21};
+  std::vector<float> q_seed_middle_1r = {1.73, 0.34, -2.16, 0.56, -3.9, -0.35, 2.48};
+  std::vector<float> q_seed_middle_2r = {-1.81,-0.5, 1.27, 0.23, -0.04, 0.52, 2.41};
+  std::vector<float> q_seed_middle_3r = {-1.61, -1.68, 0.97, 0.91, 2.35, 2.07, 2.21};
+  std::vector<float> q_seed_middle_4r ={-2.64, -1.7, 0.6, 0.75, 1.82, 1.69, 1.29};
   std::vector<float> q_seed_middle_l = {-2.40, -0.3177, 2.62, 0.46, 1.86, 0.69, 1.39};
   std::vector<float> q_seed_middle_2l = {-1.68, -0.88, 1.57, 0.60, 2.10, 1.34, 1.66};
   std::vector<float> q_seed_1 = {0.24, -0.69, -0.77, 0.35, 2.2, -0.021, -1};
@@ -792,29 +802,32 @@ std::vector<double> MotionCoordinator::equivalent_state(std::string planning_com
   std::mt19937 rng((unsigned)time(NULL));
   std::uniform_int_distribution<int> gen(100, 200);
   
-  std::vector<double> q_seed_5 = q_seed_cur;
+  std::vector<double> q_seed_rand = q_seed_cur;
   for(int i = 0; i < q_seed_cur.size(); i++)
   {
     int r = gen(rng);
     int num = gen_even(rng_even);
-    if(num%2) q_seed_5[i] += r/100;
-    else q_seed_5[i] -= r/100;
+    if(num%2) q_seed_rand[i] += r/100;
+    else q_seed_rand[i] -= r/100;
   }
 
   std::vector<KDL::JntArray> seeds = 
-  { kdl_wrapper_->stdvec_to_jntarray(q_seed_left_l),
-    kdl_wrapper_->stdvec_to_jntarray(q_seed_right_l),
+  { kdl_wrapper_->stdvec_to_jntarray(q_seed_middle_1r),
+    kdl_wrapper_->stdvec_to_jntarray(q_seed_middle_2r),
+    kdl_wrapper_->stdvec_to_jntarray(q_seed_middle_3r),
+    kdl_wrapper_->stdvec_to_jntarray(q_seed_middle_4r),
     kdl_wrapper_->stdvec_to_jntarray(q_seed_left_r),
-    kdl_wrapper_->stdvec_to_jntarray(q_seed_right_3l),
-    kdl_wrapper_->stdvec_to_jntarray(q_seed_middle_l),
-    kdl_wrapper_->stdvec_to_jntarray(q_seed_middle_2l),
-    kdl_wrapper_->stdvec_to_jntarray(q_seed_1),
-    kdl_wrapper_->stdvec_to_jntarray(q_seed_2),
-    kdl_wrapper_->stdvec_to_jntarray(q_seed_3),
-    kdl_wrapper_->stdvec_to_jntarray(q_seed_4),
-    kdl_wrapper_->stdvec_to_jntarray(q_seed_5),
-    kdl_wrapper_->stdvec_to_jntarray(q_seed_6),
-    kdl_wrapper_->stdvec_to_jntarray(q_seed_7),
+    // kdl_wrapper_->stdvec_to_jntarray(q_seed_left_l),
+    // kdl_wrapper_->stdvec_to_jntarray(q_seed_right_l),
+    // kdl_wrapper_->stdvec_to_jntarray(q_seed_middle_l),
+    // kdl_wrapper_->stdvec_to_jntarray(q_seed_middle_2l),
+    // kdl_wrapper_->stdvec_to_jntarray(q_seed_1),
+    // kdl_wrapper_->stdvec_to_jntarray(q_seed_2),
+    // kdl_wrapper_->stdvec_to_jntarray(q_seed_3),
+    // kdl_wrapper_->stdvec_to_jntarray(q_seed_4),
+    kdl_wrapper_->stdvec_to_jntarray(q_seed_rand),
+    // kdl_wrapper_->stdvec_to_jntarray(q_seed_6),
+    // kdl_wrapper_->stdvec_to_jntarray(q_seed_7),
     kdl_wrapper_->stdvec_to_jntarray(q_seed_cur) };
 
   KDL::JntArray jntarr(7);
@@ -902,13 +915,13 @@ void MotionCoordinator::jog_gripper(std::string planning_component, double goal_
   }
 }
 
-void MotionCoordinator::open_gripper(std::string planning_component, double goal_pos, bool blocking)
+void MotionCoordinator::open_gripper(std::string planning_component, bool blocking)
 {
   jog_gripper(planning_component, 0.025, blocking);
 }
 
 
-void MotionCoordinator::close_gripper(std::string planning_component, double goal_pos, bool blocking)
+void MotionCoordinator::close_gripper(std::string planning_component, bool blocking)
 {
   jog_gripper(planning_component, 0.0, blocking);
 }
