@@ -25,12 +25,17 @@ SgControl::SgControl(rclcpp::NodeOptions &options, const std::string &ip)
 
 bool SgControl::init()
 {
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+
   // Using nodegroup namespace to determine which of the grippers this instance is representing
   namespace_ = this->get_namespace();
 
   sg_settings_ = std::make_shared<abb::rws::RWSStateMachineInterface::SGSettings>();
   rws_state_machine_interface_ = std::make_shared<abb::rws::RWSStateMachineInterface>(ip_);
-  gripper_position_publisher_ = this->create_publisher<std_msgs::msg::Float64>(namespace_ + "/gripper_pos", 1);
+  gripper_position_publisher_ = this->create_publisher<std_msgs::msg::Float64>(namespace_ + "/gripper_pos", 10);
+  jog_gripper_sub_ = this->create_subscription<std_msgs::msg::Float32>(namespace_+"/jog_gripper", 10,
+   std::bind(&SgControl::jog_gripper_callback, this, _1));
 
   // Connection check. Confirm robot controller is connected. Loops until connection is made.
   auto runtime_info = rws_state_machine_interface_->collectRuntimeInfo();
@@ -40,9 +45,6 @@ bool SgControl::init()
     RCLCPP_ERROR(this->get_logger(), "Connection failed. Check robot is connected.");
     return false;
   }
-
-  using std::placeholders::_1;
-  using std::placeholders::_2;
 
   // Start action server
   action_server_ = rclcpp_action::create_server<Grip>(
@@ -250,6 +252,25 @@ void SgControl::publish_gripper_position()
     std_msgs::msg::Float64 msg;
     msg.data = std::stod(s_pos)/10000.0;
     gripper_position_publisher_->publish(msg);
+  }
+}
+
+
+void SgControl::jog_gripper_callback(std_msgs::msg::Float32::UniquePtr msg)
+{
+  jog_gripper(msg->data);
+}
+
+
+void SgControl::jog_gripper(float pos)
+{
+  if (namespace_.compare("/l") == 0)
+  {
+    rws_state_machine_interface_->services().sg().leftMoveTo(pos);
+  }
+  else if (namespace_.compare("/r") == 0)
+  {
+    rws_state_machine_interface_->services().sg().rightMoveTo(pos);
   }
 }
 

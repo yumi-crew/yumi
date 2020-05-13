@@ -20,6 +20,7 @@
 #include <rws_clients/grip_client.hpp>
 #include <kdl_wrapper/kdl_wrapper.h>
 #include <rclcpp/parameter.hpp>
+#include <std_msgs/msg/float32.hpp>
 
 namespace motion_coordinator
 {
@@ -163,6 +164,7 @@ public:
   bool should_stop(){ return should_stop_; }
   void grip_in(std::string gripper, bool blocking);
   void grip_out(std::string gripper, bool blocking);
+  void jog_gripper(std::string gripper, double pos, bool blocking);
   std::shared_ptr<rclcpp::Node> get_node() { return node_; };
 
 private:
@@ -175,12 +177,15 @@ private:
   std::shared_ptr<moveit2_wrapper::TableMonitor> table_monitor_;
   std::shared_ptr<KdlWrapper> kdl_wrapper_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_subscription_;
+  rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr gripper_r_pos_publisher_;
+  rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr gripper_l_pos_publisher_;
 
   bool should_stop_ = false;
   bool robot_ready_ = false;
   double replan_delay_ = 1.0;
   double speed_scale_ = 1.0;
   double acc_scale_ = 1.0;
+  double grip_margin_ = 0.005;
   std::mutex should_replan_mutex_;
 
   enum error
@@ -189,7 +194,7 @@ private:
     LINEAR_PLAN_FAIL = -2,
     GRIP_FAIL = -3,
     PLANNING_SCENE_FAIL = -4
-  }
+  };
 
   /* Stops the trajectory controller of a registered planning_component. */
   void stop_motion(std::string planning_component);

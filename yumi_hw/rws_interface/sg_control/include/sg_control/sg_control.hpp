@@ -21,6 +21,7 @@
 #include <rcutils/logging_macros.h>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <std_msgs/msg/float64.hpp>
+#include <std_msgs/msg/float32.hpp>
 #include <abb_librws/rws_rapid.h>
 #include <abb_librws/rws_client.h>
 #include <abb_librws/rws_interface.h>
@@ -50,7 +51,8 @@ private:
   std::string ip_;
   std::shared_ptr<abb::rws::RWSStateMachineInterface> rws_state_machine_interface_;
   std::shared_ptr<abb::rws::RWSStateMachineInterface::SGSettings> sg_settings_;
-  std::shared_ptr<rclcpp::Publisher<std_msgs::msg::Float64>> gripper_position_publisher_;
+  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr gripper_position_publisher_;
+  rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr jog_gripper_sub_;
   rclcpp_action::Server<Grip>::SharedPtr action_server_; 
 
   bool should_grip_in_;
@@ -74,6 +76,8 @@ private:
   std::string get_gripper_pos();
   bool grip_in();
   bool grip_out();
+  void jog_gripper(float pos);
+  void jog_gripper_callback(std_msgs::msg::Float32::UniquePtr msg);
 };
 
 } //namespace sg_control

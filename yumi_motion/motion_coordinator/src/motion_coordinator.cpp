@@ -34,7 +34,8 @@ bool MotionCoordinator::init()
   moveit2_wrapper_ = std::make_shared<moveit2_wrapper::Moveit2Wrapper>(node_);
   joint_state_subscription_ = node_->create_subscription<sensor_msgs::msg::JointState>("joint_states", 
     10, std::bind(&MotionCoordinator::joint_state_callback, this, std::placeholders::_1));
-
+  gripper_l_pos_publisher_ = node_->create_publisher<std_msgs::msg::Float32>("/l/jog_gripper", 10);
+  gripper_r_pos_publisher_ = node_->create_publisher<std_msgs::msg::Float32>("/r/jog_gripper", 10);
   
   rclcpp::Parameter param = node_->get_parameter("robot_description_path");
   std::string path = param.as_string();
@@ -412,8 +413,8 @@ int MotionCoordinator::pick_object(std::string planning_component, std::string o
   auto planning_components_hash = moveit2_wrapper_->get_planning_components_hash();
   std::string ee_link = planning_components_hash->at(planning_component).ee_link;
 
-  // Find hover pose directly above grip and the grip pose
   std::vector<double> grip_pose = table_monitor_->find_object(object_id); // quaternions
+  std::vector<double> object_dimensions = table_monitor_->get_object_dimensions(object_id);
 
   // If object cant be found.
   if(grip_pose.empty())
@@ -428,9 +429,9 @@ int MotionCoordinator::pick_object(std::string planning_component, std::string o
   // Disable collision for the object to be picked.
   moveit2_wrapper_->disable_collision(object_id, true);
 
-  // Move to hover pose and open gripper
+  // Move to hover pose and open gripper enough to pick.
   move_to_pose(planning_component, hover_pose, false, num_retries, visualize, true, false);
-  grip_out(planning_component, true); 
+  jog_gripper(planning_component, object_dimensions[0]+grip_margin_, true);
   
   // Verify the grip pose is valid, give up if not.
   if(!moveit2_wrapper_->pose_valid(planning_component, ee_link, grip_pose, false))
@@ -878,6 +879,25 @@ void MotionCoordinator::move_object(std::string object_id, std::vector<double> p
 
     if(error <= allowed_deviation) break;
     else table_monitor_->move_object(object_id, pose); 
+  }
+}
+
+
+void MotionCoordinator::jog_gripper(std::string planning_component, double goal_pos, bool blocking)
+{
+  std_msgs::msg::Float32 msg;
+  msg.data = goal_pos;
+  if(planning_component == "right_arm") gripper_r_pos_publisher_->publish(msg);
+  else if(planning_component == "left_arm") gripper_l_pos_publisher_->publish(msg);
+
+  double error = 0.0;
+  double curr_pos = moveit2_wrapper_->gripper_pos(planning_component);
+  if(blocking)
+  {
+    while( abs(curr_pos-goal_pos) < 0.001)
+    {
+      sleep(0.1);
+    }
   }
 }
 
