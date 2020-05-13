@@ -266,11 +266,11 @@ void SgControl::jog_gripper(float pos)
 {
   if (namespace_.compare("/l") == 0)
   {
-    rws_state_machine_interface_->services().sg().leftMoveTo(pos);
+    rws_state_machine_interface_->services().sg().leftMoveTo(pos*1000.0);
   }
   else if (namespace_.compare("/r") == 0)
   {
-    rws_state_machine_interface_->services().sg().rightMoveTo(pos);
+    rws_state_machine_interface_->services().sg().rightMoveTo(pos*1000.0);
   }
 }
 

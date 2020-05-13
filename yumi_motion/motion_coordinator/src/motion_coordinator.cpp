@@ -437,7 +437,8 @@ int MotionCoordinator::pick_object(std::string planning_component, std::string o
   if(!moveit2_wrapper_->pose_valid(planning_component, ee_link, grip_pose, false))
   {
     std::cout << "[ERROR] The given goal pose is not valid. Aborting." << std::endl;
-    grip_in(planning_component, true);
+    close_gripper(planning_component, true);
+    table_monitor_->remove_object_from_scene(object_id, false);
     return error::INVALID_POSE;
   }
 
@@ -516,24 +517,24 @@ int MotionCoordinator::place_at_object(std::string planning_component, std::stri
   // linear move down to drop point. If drop point cant be reached, drop object at current pose.
   if(!linear_move_to_object(planning_component, object_id, 0, hover_height-0.05, visualize, true, true, percentage))
   {
-    grip_out(planning_component, true);
+    open_gripper(planning_component, true);
     table_monitor_->detatch_object(object);
     return 0;
   }
  
   // Let go object
-  grip_out(planning_component, true);
+  open_gripper(planning_component, true);
   table_monitor_->detatch_object(object);
 
   // Linear move back to hover point. If linear motion is not possible, try ordinary motion.
   if(!linear_move_to_object(planning_component, object_id, 0, hover_height, visualize, true, true, percentage))
   {
     move_to_object(planning_component, object_id, num_retries, hover_height, visualize, true, false);
-    grip_in(planning_component, true);
+    close_gripper(planning_component, true);
     return 0;
   }
 
-  grip_in(planning_component, true);
+  close_gripper(planning_component, true);
   return 0;
 }
 
@@ -886,7 +887,7 @@ void MotionCoordinator::move_object(std::string object_id, std::vector<double> p
 void MotionCoordinator::jog_gripper(std::string planning_component, double goal_pos, bool blocking)
 {
   std_msgs::msg::Float32 msg;
-  msg.data = goal_pos;
+  msg.data = goal_pos/2.0; // gripper = joint + mimic_joint
   if(planning_component == "right_arm") gripper_r_pos_publisher_->publish(msg);
   else if(planning_component == "left_arm") gripper_l_pos_publisher_->publish(msg);
 
@@ -899,6 +900,17 @@ void MotionCoordinator::jog_gripper(std::string planning_component, double goal_
       sleep(0.1);
     }
   }
+}
+
+void MotionCoordinator::open_gripper(std::string planning_component, double goal_pos, bool blocking)
+{
+  jog_gripper(planning_component, 0.025, blocking);
+}
+
+
+void MotionCoordinator::close_gripper(std::string planning_component, double goal_pos, bool blocking)
+{
+  jog_gripper(planning_component, 0.0, blocking);
 }
 
 } // namespace motion_coordinator
