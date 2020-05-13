@@ -97,6 +97,7 @@ int main(int argc, char **argv)
       "zivid_camera", lifecycle_msgs::msg::Transition::TRANSITION_ACTIVATE, 30s);
 
   int counter = 0;
+  int tries = 0;
   int num_picks = 5;
   bool first = true;
   bool cap_success{false};
@@ -107,8 +108,10 @@ int main(int argc, char **argv)
   int lin_retries = 3;
 
   // Add bins to scene
-  // yumi_motion_coordinator->add_object("bin", {0.4, 0, -0.10, 0, 180, 0}, true);
-  // yumi_motion_coordinator->add_object("bin2", {0.4, -0.20, -0.10, 0, 180, 0}, true);
+  std::string place_bin = "bin3";
+  yumi_motion_coordinator->move_to_home(arm, 3);
+  cap_success = pose_estimation_manager->call_capture_srv(30s);
+  pose_estimation_manager->call_estimate_pose_srv(place_bin, 0, 50s)
 
   std::map<int, std::string> errors;
   errors[0] = "SUCCESS";
@@ -117,7 +120,7 @@ int main(int argc, char **argv)
   errors[-3] = "GRIP_FAIL";
   errors[-4] = "PLANNING_SCENE_FAIL";
   std::map<std::string, int> exp_log;
-  for(auto [key, value] : errors)
+  for (auto [key, value] : errors)
   {
     exp_log[value] = 0;
   }
@@ -128,6 +131,7 @@ int main(int argc, char **argv)
   {
     for (auto object : objects)
     {
+      tries++;
       // Move away from the camera view
       yumi_motion_coordinator->move_to_home(arm, 3);
 
@@ -165,11 +169,12 @@ int main(int argc, char **argv)
       }
 
       // Place at a object
-      ret_val = yumi_motion_coordinator->place_at_object(arm, "bin2", lin_retries, 0.23, true, false, percentage);
+      ret_val = yumi_motion_coordinator->place_at_object(arm, place_bin, lin_retries, 0.23, true, false, percentage);
       if (ret_val < 0)
       {
         exp_log[errors[ret_val]]++;
         std::cout << "place failed" << std::endl;
+        continue;
       }
       counter++; // If place return true the object must be dropped at the destination and can thus be considered successfully picked and placed.
       exp_log[errors[0]]++;
@@ -183,7 +188,8 @@ int main(int argc, char **argv)
 
   std::fstream log_file;
   log_file.open("log_file.txt", std::fstream::out);
-  log_file << "Number of tries in run: " << num_picks << std::endl;
+  log_file << "Number of pics completed: " << num_picks << std::endl;
+  log_file << "Number of tries: " << tries << std::endl;
   for (auto [error, value] : exp_log)
   {
     log_file << error << ": " << value << std::endl;
