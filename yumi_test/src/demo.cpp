@@ -111,7 +111,9 @@ int main(int argc, char **argv)
   std::string place_bin = "bin3";
   yumi_motion_coordinator->move_to_home(arm, 3);
   cap_success = pose_estimation_manager->call_capture_srv(30s);
-  pose_estimation_manager->call_estimate_pose_srv(place_bin, 0, 50s)
+  est_success = pose_estimation_manager->call_estimate_pose_srv(place_bin, 0, 50s);
+  auto bin_pose = pose_estimation_manager->pose_transformer->obj_in_base_frame();
+  yumi_motion_coordinator->add_object(place_bin, bin_pose, false, {0, 0, 1, 1});
 
   std::map<int, std::string> errors;
   errors[0] = "SUCCESS";
