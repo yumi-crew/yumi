@@ -1,5 +1,7 @@
 #include <motion_coordinator/motion_coordinator.hpp>
 #include "pose_estimation_manager.hpp"
+#include <iostream>
+#include <fstream>
 
 std::shared_ptr<motion_coordinator::MotionCoordinator> yumi_motion_coordinator;
 std::shared_ptr<PoseEstimationManager> pose_estimation_manager;
@@ -76,7 +78,7 @@ int main(int argc, char **argv)
   pose_estimation_manager->add_camera_parameter("zivid_camera.capture.frame_2.gain", rclcpp::ParameterValue(1.6));
   pose_estimation_manager->add_camera_parameter("zivid_camera.capture.frame_3.iris", rclcpp::ParameterValue(37));
   pose_estimation_manager->add_camera_parameter("zivid_camera.capture.frame_3.gain", rclcpp::ParameterValue(3.1));
-  pose_estimation_manager->add_camera_parameter("zivid_camera.capture.general.filters.reflection.enabled", rclcpp::ParameterValue(true)); 
+  pose_estimation_manager->add_camera_parameter("zivid_camera.capture.general.filters.reflection.enabled", rclcpp::ParameterValue(true));
   pose_estimation_manager->call_set_param_srv(30s);
 
   auto state3 = pose_estimation_manager->get_state("zivid_camera", 30s);
@@ -94,7 +96,6 @@ int main(int argc, char **argv)
   auto transition_success3 = pose_estimation_manager->change_state(
       "zivid_camera", lifecycle_msgs::msg::Transition::TRANSITION_ACTIVATE, 30s);
 
-
   int counter = 0;
   int num_picks = 5;
   bool first = true;
@@ -109,14 +110,27 @@ int main(int argc, char **argv)
   // yumi_motion_coordinator->add_object("bin", {0.4, 0, -0.10, 0, 180, 0}, true);
   // yumi_motion_coordinator->add_object("bin2", {0.4, -0.20, -0.10, 0, 180, 0}, true);
 
+  std::map<int, std::string> errors;
+  errors[0] = "SUCCESS";
+  errors[-1] = "INVALID_POSE";
+  errors[-2] = "LINEAR_PLAN_FAIL";
+  errors[-3] = "GRIP_FAIL";
+  errors[-4] = "PLANNING_SCENE_FAIL";
+  std::map<std::string, int> exp_log;
+  for(auto [key, value] : errors)
+  {
+    exp_log[value] = 0;
+  }
+  exp_log["POSE_ESTIMATION_FAIL"] = 0;
 
+  int ret_val;
   while (counter < num_picks)
   {
     for (auto object : objects)
     {
       // Move away from the camera view
       yumi_motion_coordinator->move_to_home(arm, 3);
-      
+
       // Take image
       std::cout << "before call_capture_srv" << std::endl;
       cap_success = pose_estimation_manager->call_capture_srv(30s);
@@ -125,6 +139,7 @@ int main(int argc, char **argv)
       std::cout << "before call_estimate_pose_srv" << std::endl;
       if (!pose_estimation_manager->call_estimate_pose_srv(object, 1, 50s))
       {
+        exp_log["POSE_ESTIMATION_FAIL"]++;
         std::cout << "[ERROR] object cannot be found." << std::endl;
         if (yumi_motion_coordinator->object_present(object))
           yumi_motion_coordinator->remove_object(object);
@@ -141,26 +156,39 @@ int main(int argc, char **argv)
         yumi_motion_coordinator->move_object(object, grasp_pose);
 
       // Pick object
-      if (!yumi_motion_coordinator->pick_object(arm, object, lin_retries, 0.15, true, false, percentage))
+      ret_val = yumi_motion_coordinator->pick_object(arm, object, lin_retries, 0.15, true, false, percentage);
+      if (ret_val < 0)
       {
+        exp_log[errors[ret_val]]++;
         std::cout << "pick failed" << std::endl;
         continue;
       }
 
       // Place at a object
-      if (!yumi_motion_coordinator->place_at_object(arm, "bin2", lin_retries, 0.23, true, false, percentage))
+      ret_val = yumi_motion_coordinator->place_at_object(arm, "bin2", lin_retries, 0.23, true, false, percentage);
+      if (ret_val < 0)
       {
+        exp_log[errors[ret_val]]++;
         std::cout << "place failed" << std::endl;
       }
-      else counter++; // If place return true the object must be dropped at the destination and can thus be considered successfully picked and placed.
-
-      if(counter >= num_picks) break;
+      counter++; // If place return true the object must be dropped at the destination and can thus be considered successfully picked and placed.
+      exp_log[errors[0]]++;
+      if (counter >= num_picks)
+        break;
     }
   }
 
   // go to home
   yumi_motion_coordinator->move_to_home(arm, 3);
 
+  std::fstream log_file;
+  log_file.open("log_file.txt", std::fstream::out);
+  log_file << "Number of tries in run: " << num_picks << std::endl;
+  for (auto [error, value] : exp_log)
+  {
+    log_file << error << ": " << value << std::endl;
+  }
+  log_file.close();
   std::cout << "Motion completed, please ctrl+c" << std::endl;
   while (1)
   {
