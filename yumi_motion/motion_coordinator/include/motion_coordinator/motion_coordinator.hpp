@@ -127,7 +127,7 @@ public:
    * 
    * \return true if the object is estimated to be successfully picked.
    */
-  bool pick_object(std::string planning_component, std::string object_id, int num_retries, double hover_height, bool blocking, 
+  int pick_object(std::string planning_component, std::string object_id, int num_retries, double hover_height, bool blocking, 
                    bool visualize, double percentage);
   
   /**
@@ -136,7 +136,7 @@ public:
    * 
    * \return true if the object is estimated to be successfully placed.
    */
-  bool place_at_object(std::string planning_component, std::string object_id, int num_retries, double hover_height, bool blocking, 
+  int place_at_object(std::string planning_component, std::string object_id, int num_retries, double hover_height, bool blocking, 
                        bool visualize, double percentage);
 
   /* Return whether a planning_component is moving. */
@@ -182,6 +182,14 @@ private:
   double speed_scale_ = 1.0;
   double acc_scale_ = 1.0;
   std::mutex should_replan_mutex_;
+
+  enum error
+  {
+    INVALID_POSE = -1,
+    LINEAR_PLAN_FAIL = -2,
+    GRIP_FAIL = -3,
+    PLANNING_SCENE_FAIL = -4
+  }
 
   /* Stops the trajectory controller of a registered planning_component. */
   void stop_motion(std::string planning_component);

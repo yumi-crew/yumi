@@ -403,7 +403,7 @@ bool MotionCoordinator::linear_move_to_object(std::string planning_component, st
 }
 
 
-bool MotionCoordinator::pick_object(std::string planning_component, std::string object_id,int num_retries,  
+int MotionCoordinator::pick_object(std::string planning_component, std::string object_id,int num_retries,  
                                     double hover_height, bool blocking, bool visualize, double percentage)
 {
   std::cout << "pick_object() called for planning component '" << planning_component << "'." << std::endl;
@@ -420,7 +420,7 @@ bool MotionCoordinator::pick_object(std::string planning_component, std::string 
   { 
     stop(planning_component);
     std::cout <<  "[ERROR] Can't find object." << std::endl;
-    return false; 
+    return error::PLANNING_SCENE_FAIL; 
   }
 
   std::vector<double> hover_pose = grip_pose; hover_pose[2] += hover_height;
@@ -437,14 +437,14 @@ bool MotionCoordinator::pick_object(std::string planning_component, std::string 
   {
     std::cout << "[ERROR] The given goal pose is not valid. Aborting." << std::endl;
     grip_in(planning_component, true);
-    return false;
+    return error::INVALID_POSE;
   }
 
   // Linear move to gripping pose, give up if unable.
   if(!linear_move_to_pose(planning_component, grip_pose, false, num_retries, visualize, true, true, percentage))
   {
     table_monitor_->remove_object_from_scene(object_id, false);
-    return false;
+    return error::LINEAR_PLAN_FAIL;
   }
 
   // Grip object
@@ -468,13 +468,13 @@ bool MotionCoordinator::pick_object(std::string planning_component, std::string 
   {
     std::cout << "[ERROR] Pick failed. Aborting." << std::endl;
     table_monitor_->detatch_object(object_id);
-    return false;
+    return error::GRIP_FAIL;
   }
-  return true;
+  return 0;
 }
 
 
-bool MotionCoordinator::place_at_object(std::string planning_component, std::string object_id, int num_retries,  
+int MotionCoordinator::place_at_object(std::string planning_component, std::string object_id, int num_retries,  
                                          double hover_height,bool blocking, bool visualize, double percentage)
 {
   std::cout << "place_object() called for planning component '" << planning_component << "'." << std::endl;
@@ -491,7 +491,7 @@ bool MotionCoordinator::place_at_object(std::string planning_component, std::str
   {
     std::cout << "[ERROR] YuMi have lost the object to be placed. Aborting." << std::endl;
     table_monitor_->detatch_object(object);
-    return false;
+    return error::GRIP_FAIL;
   }
 
   // Find location object's pose
@@ -509,7 +509,7 @@ bool MotionCoordinator::place_at_object(std::string planning_component, std::str
   {
     std::cout << "[ERROR] YuMi has lost the object" << std::endl;
     table_monitor_->detatch_object(object);
-    return false;
+    return error::GRIP_FAIL;
   }
 
   // linear move down to drop point. If drop point cant be reached, drop object at current pose.
@@ -517,27 +517,23 @@ bool MotionCoordinator::place_at_object(std::string planning_component, std::str
   {
     grip_out(planning_component, true);
     table_monitor_->detatch_object(object);
-    return false;
+    return 0;
   }
  
   // Let go object
   grip_out(planning_component, true);
-  if(!moveit2_wrapper_->gripper_open(planning_component))
-  {
-    std::cout << "[ERROR] Was unable to grip out" << std::endl;
-    return false;
-  }
-  else table_monitor_->detatch_object(object);
+  table_monitor_->detatch_object(object);
 
   // Linear move back to hover point. If linear motion is not possible, try ordinary motion.
   if(!linear_move_to_object(planning_component, object_id, 0, hover_height, visualize, true, true, percentage))
   {
     move_to_object(planning_component, object_id, num_retries, hover_height, visualize, true, false);
-    return false;
+    grip_in(planning_component, true);
+    return 0;
   }
 
   grip_in(planning_component, true);
-  return true;
+  return 0;
 }
 
 
