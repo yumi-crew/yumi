@@ -189,7 +189,7 @@ private:
     LINEAR_PLAN_FAIL = -2,
     GRIP_FAIL = -3,
     PLANNING_SCENE_FAIL = -4
-  }
+  };
 
   /* Stops the trajectory controller of a registered planning_component. */
   void stop_motion(std::string planning_component);
