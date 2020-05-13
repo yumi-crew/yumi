@@ -101,13 +101,13 @@ int main(int argc, char **argv)
   bool cap_success{false};
   bool est_success{false};
   std::string arm = "right_arm";
-  std::vector<std::string> objects = {"small_marker", "battery"};
+  std::vector<std::string> objects = {"nail_polish", "battery"};
   double percentage = 0;
   int lin_retries = 3;
 
   // Add bins to scene
-  yumi_motion_coordinator->add_object("bin", {0.4, 0, -0.10, 0, 180, 0}, true);
-  yumi_motion_coordinator->add_object("bin2", {0.4, -0.20, -0.10, 0, 180, 0}, true);
+  // yumi_motion_coordinator->add_object("bin", {0.4, 0, -0.10, 0, 180, 0}, true);
+  // yumi_motion_coordinator->add_object("bin2", {0.4, -0.20, -0.10, 0, 180, 0}, true);
 
 
   while (counter < num_picks)

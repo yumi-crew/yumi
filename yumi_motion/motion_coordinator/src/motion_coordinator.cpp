@@ -426,7 +426,7 @@ bool MotionCoordinator::pick_object(std::string planning_component, std::string 
   std::vector<double> hover_pose = grip_pose; hover_pose[2] += hover_height;
 
   // Disable collision for the object to be picked.
-  moveit2_wrapper_->disable_collision(object_id);
+  moveit2_wrapper_->disable_collision(object_id, true);
 
   // Move to hover pose and open gripper
   move_to_pose(planning_component, hover_pose, false, num_retries, visualize, true, false);
@@ -448,17 +448,20 @@ bool MotionCoordinator::pick_object(std::string planning_component, std::string 
   }
 
   // Grip object
+  table_monitor_->attach_object(object_id, ee_link);
+  // Re-disable collision for the object. Additonally disable for bin. 
+  moveit2_wrapper_->disable_collision("table", true, object_id);
   grip_in(planning_component, true);
-  table_monitor_->attach_object(object_id, ee_link); 
-
-  // Re-disable collision for the object.
-  moveit2_wrapper_->disable_collision(object_id);
+  
 
   // Linear move back to hover point. If linear motion is not possible, try ordinary motion.
   if(!linear_move_to_pose(planning_component, hover_pose, false, 0, visualize, true, true, percentage))
   {
     move_to_pose(planning_component, hover_pose, false, num_retries, visualize, blocking, false);
   }
+
+  // Re-enable collision checking for bin.
+  moveit2_wrapper_->disable_collision("table", false, object_id);
 
   // Check if yumi's gripper contain the object, return if not.
   if(moveit2_wrapper_->gripper_closed(planning_component))
