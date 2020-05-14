@@ -410,6 +410,9 @@ int MotionCoordinator::pick_object(std::string planning_component, std::string o
 {
   std::cout << "pick_object() called for planning component '" << planning_component << "'." << std::endl;
 
+  // Gripper links
+  std::vector<std::string> gripper_links = {"gripper_r_finger_l", "gripper_r_finger_r"};
+
   // Get end effector link
   auto planning_components_hash = moveit2_wrapper_->get_planning_components_hash();
   std::string ee_link = planning_components_hash->at(planning_component).ee_link;
@@ -452,11 +455,13 @@ int MotionCoordinator::pick_object(std::string planning_component, std::string o
 
   // Grip object
   table_monitor_->attach_object(object_id, ee_link);
+  
   // Disable collision between pick object and elements in the enviroment 
   for(auto object : allowed_collisions) 
   { 
     moveit2_wrapper_->disable_collision(object_id, true, object); 
   }
+  for(auto link : gripper_links){ moveit2_wrapper_->disable_collision("bin6", true, link); }
   grip_in(planning_component, true);
   
 
@@ -471,6 +476,7 @@ int MotionCoordinator::pick_object(std::string planning_component, std::string o
   { 
     moveit2_wrapper_->disable_collision(object_id, false, object); 
   }
+  for(auto link : gripper_links){ moveit2_wrapper_->disable_collision("bin6", false, link); }
 
   // Check if yumi's gripper contain the object, return if not.
   if(moveit2_wrapper_->gripper_closed(planning_component))

@@ -44,7 +44,10 @@ int main(int argc, char **argv)
   // Initialize yumi motion coordinator
   yumi_motion_coordinator = std::make_shared<motion_coordinator::MotionCoordinator>("onsket_nodenavn");
   if (!yumi_motion_coordinator->init())
+  {
+    std::cout << "[ERROR]: MotionCoordinator failed to initialize." << std::endl;
     return -1;
+  }
 
   // Spin the moveit2 node countiously in another thread via an executor
   auto executor = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
@@ -54,7 +57,7 @@ int main(int argc, char **argv)
   // Activate yumi, EGM, Moveit2
   if (!yumi_motion_coordinator->activate())
   {
-    std::cout << "ERROR: MotionCoordinator failed to activate." << std::endl;
+    std::cout << "[ERROR]: MotionCoordinator failed to activate." << std::endl;
     return -1;
   }
 
@@ -97,6 +100,7 @@ int main(int argc, char **argv)
       "zivid_camera", lifecycle_msgs::msg::Transition::TRANSITION_ACTIVATE, 30s);
 
 
+  int ret_val;
   int counter = 0;
   int tries = 0;
   int num_picks = 10;
@@ -109,23 +113,21 @@ int main(int argc, char **argv)
   int lin_retries = 3;
 
   yumi_motion_coordinator->move_to_home(arm, 3);
-
-  // Add bins to scene
-  std::vector<double> pick_bin_pose = {3,3,3, 0,0,0};
-  std::string pick_bin = "bin3";
-  // cap_success = pose_estimation_manager->call_capture_srv(30s);
-  // est_success = pose_estimation_manager->call_estimate_pose_srv(pick_bin, 0, 50s);
-  // auto pick_bin_pose = pose_estimation_manager->pose_transformer->obj_in_base_frame();
-  yumi_motion_coordinator->add_object(pick_bin, pick_bin_pose, false, {1, 1, 1, 1});
-
-  // yumi_motion_coordinator->move_to_pose(arm, {0.008, -0.331, 0.257, 141, -20, -161}, true, 3);
-  // yumi_motion_coordinator->move_to_home(arm, 3);
-
-  std::string place_bin = "bin4";
   cap_success = pose_estimation_manager->call_capture_srv(30s);
-  est_success = pose_estimation_manager->call_estimate_pose_srv(place_bin, 0, 50s);
+
+  // Find and add place bin to scene
+  std::string place_bin = "bin5";
+  est_success = pose_estimation_manager->call_estimate_pose_srv(place_bin, 0, 100s, "", 0.0, true);
   auto place_bin_pose = pose_estimation_manager->pose_transformer->obj_in_base_frame();
-  yumi_motion_coordinator->add_object(place_bin, place_bin_pose, false, {0.95, 0.67, 0.61, 1});
+  yumi_motion_coordinator->add_object(place_bin, place_bin_pose, false, {0.95, 0.67, 0.61, 1}); //Pink
+
+  // Find and add pick bin bin to scene
+  std::string pick_bin = "bin6";
+  est_success = pose_estimation_manager->call_estimate_pose_srv(pick_bin, 0, 100s, "inliers", 0.1, true);
+  auto pick_bin_pose = pose_estimation_manager->pose_transformer->obj_in_base_frame();
+  yumi_motion_coordinator->add_object(pick_bin, pick_bin_pose, false, {0, 0, 1, 1});    //Blue
+
+
 
   std::map<int, std::string> errors;
   errors[0] = "SUCCESS";
@@ -140,10 +142,7 @@ int main(int argc, char **argv)
   }
   exp_log["POSE_ESTIMATION_FAIL"] = 0;
 
-  yumi_motion_coordinator->move_to_pose(arm, {0.008, -0.331, 0.257, 141, -20, -161}, true, 3);
 
-
-  int ret_val;
   while (counter < num_picks)
   {
     for (auto object : objects)
@@ -158,7 +157,7 @@ int main(int argc, char **argv)
 
       // Find the boject's pose in the the camera frame
       std::cout << "before call_estimate_pose_srv" << std::endl;
-      if (!pose_estimation_manager->call_estimate_pose_srv(object,1, 50s))
+      if (!pose_estimation_manager->call_estimate_pose_srv(object, 0, 50s, "outliers", 0.15))
       {
         exp_log["POSE_ESTIMATION_FAIL"]++;
         std::cout << "[ERROR] object cannot be found." << std::endl;
