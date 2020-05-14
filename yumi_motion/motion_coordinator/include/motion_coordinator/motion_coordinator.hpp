@@ -187,7 +187,7 @@ private:
   double replan_delay_ = 1.0;
   double speed_scale_ = 1.0;
   double acc_scale_ = 1.0;
-  double grip_margin_ = 0.005;
+  double grip_margin_ = 0.003;
   std::mutex should_replan_mutex_;
 
   enum error

@@ -436,6 +436,9 @@ int MotionCoordinator::pick_object(std::string planning_component, std::string o
   // Move to hover pose and open gripper enough to pick.
   move_to_pose(planning_component, hover_pose, false, num_retries, visualize, true, false);
   jog_gripper(planning_component, object_dimensions[0]+grip_margin_, true);
+
+  // Allow collision between fingers and bin
+  for(auto link : gripper_links){ moveit2_wrapper_->disable_collision("bin6", true, link); }
   
   // Verify the grip pose is valid, give up if not.
   if(!moveit2_wrapper_->pose_valid(planning_component, ee_link, grip_pose, false))
@@ -447,7 +450,7 @@ int MotionCoordinator::pick_object(std::string planning_component, std::string o
   }
 
   // Linear move to gripping pose, give up if unable.
-  if(!linear_move_to_pose(planning_component, grip_pose, false, num_retries, visualize, true, true, percentage))
+  if(!linear_move_to_pose(planning_component, grip_pose, false, num_retries, visualize, true, true, percentage, 0.2, 0.2))
   {
     table_monitor_->remove_object_from_scene(object_id, false);
     return error::LINEAR_PLAN_FAIL;
@@ -461,7 +464,6 @@ int MotionCoordinator::pick_object(std::string planning_component, std::string o
   { 
     moveit2_wrapper_->disable_collision(object_id, true, object); 
   }
-  for(auto link : gripper_links){ moveit2_wrapper_->disable_collision("bin6", true, link); }
   grip_in(planning_component, true);
   
 
@@ -476,6 +478,7 @@ int MotionCoordinator::pick_object(std::string planning_component, std::string o
   { 
     moveit2_wrapper_->disable_collision(object_id, false, object); 
   }
+  // Disallow collision between fingers and bin
   for(auto link : gripper_links){ moveit2_wrapper_->disable_collision("bin6", false, link); }
 
   // Check if yumi's gripper contain the object, return if not.
@@ -528,7 +531,7 @@ int MotionCoordinator::place_at_object(std::string planning_component, std::stri
   }
 
   // linear move down to drop point. If drop point cant be reached, drop object at current pose.
-  if(!linear_move_to_object(planning_component, object_id, 0, hover_height-0.1, visualize, true, true, percentage))
+  if(!linear_move_to_object(planning_component, object_id, 0, hover_height-0.05, visualize, true, true, percentage))
   {
     open_gripper(planning_component, true);
     table_monitor_->detatch_object(object);

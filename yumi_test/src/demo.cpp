@@ -113,20 +113,20 @@ int main(int argc, char **argv)
   int lin_retries = 3;
 
   yumi_motion_coordinator->move_to_home(arm, 3);
+  yumi_motion_coordinator->move_to_home("left_arm", 3);
   cap_success = pose_estimation_manager->call_capture_srv(30s);
-
+  sleep(5);
   // Find and add place bin to scene
   std::string place_bin = "bin5";
   est_success = pose_estimation_manager->call_estimate_pose_srv(place_bin, 0, 100s, "", 0.0, true);
   auto place_bin_pose = pose_estimation_manager->pose_transformer->obj_in_base_frame();
-  yumi_motion_coordinator->add_object(place_bin, place_bin_pose, false, {0.95, 0.67, 0.61, 1}); //Pink
+  yumi_motion_coordinator->add_object(place_bin, place_bin_pose, false, {1.0, 0.64, 0.0, 1}); //Pink
 
   // Find and add pick bin bin to scene
   std::string pick_bin = "bin6";
   est_success = pose_estimation_manager->call_estimate_pose_srv(pick_bin, 0, 100s, "inliers", 0.1, true);
   auto pick_bin_pose = pose_estimation_manager->pose_transformer->obj_in_base_frame();
   yumi_motion_coordinator->add_object(pick_bin, pick_bin_pose, false, {0, 0, 1, 1});    //Blue
-
 
 
   std::map<int, std::string> errors;
@@ -149,7 +149,7 @@ int main(int argc, char **argv)
     {
       tries++;
       // Move away from the camera view
-      yumi_motion_coordinator->move_to_home(arm, 3);
+      yumi_motion_coordinator->move_to_home(arm, 5);
 
       // Take image
       std::cout << "before call_capture_srv" << std::endl;
@@ -157,7 +157,7 @@ int main(int argc, char **argv)
 
       // Find the boject's pose in the the camera frame
       std::cout << "before call_estimate_pose_srv" << std::endl;
-      if (!pose_estimation_manager->call_estimate_pose_srv(object, 0, 50s, "outliers", 0.15))
+      if (!pose_estimation_manager->call_estimate_pose_srv(object, 1, 50s, "outliers", 0.12))
       {
         exp_log["POSE_ESTIMATION_FAIL"]++;
         std::cout << "[ERROR] object cannot be found." << std::endl;
