@@ -3,13 +3,16 @@
 <package format="3">
   <name>yumi_test</name>
   <version>1.0.0</version>
-  <description>Tools for testing purposes</description>
+  <description>Package for tests and demo scripts.</description>
   <maintainer email="mariunil@stud.ntnu.no">Marius Nilsen</maintainer>
+  <author email="markubjo@stud.ntnu.no">Markus Bjonnes</author>
+
   <license>Apache License 2.0</license>
   <author email="mariunil@stud.ntnu.no">Marius Nilsen</author>
+  <author email="markubjo@stud.ntnu.no">Markus Bjonnes</author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
-
+  
   <depend>rclcpp</depend>
   <depend>angles</depend>
   <depend>sensor_msgs</depend>

@@ -2,6 +2,7 @@
 #include "pose_estimation_manager.hpp"
 #include <iostream>
 #include <fstream>
+#include <chrono>
 
 std::shared_ptr<motion_coordinator::MotionCoordinator> yumi_motion_coordinator;
 std::shared_ptr<PoseEstimationManager> pose_estimation_manager;
@@ -112,8 +113,11 @@ int main(int argc, char **argv)
   double percentage = 0;
   int lin_retries = 3;
 
+  // Move arms to setup pos.
   yumi_motion_coordinator->move_to_home(arm, 3);
   yumi_motion_coordinator->move_to_home("left_arm", 3);
+  
+
   cap_success = pose_estimation_manager->call_capture_srv(30s);
   sleep(5);
   // Find and add place bin to scene
@@ -128,7 +132,6 @@ int main(int argc, char **argv)
   auto pick_bin_pose = pose_estimation_manager->pose_transformer->obj_in_base_frame();
   yumi_motion_coordinator->add_object(pick_bin, pick_bin_pose, false, {0, 0, 1, 1});    //Blue
 
-
   std::map<int, std::string> errors;
   errors[0] = "SUCCESS";
   errors[-1] = "INVALID_POSE";
@@ -142,14 +145,17 @@ int main(int argc, char **argv)
   }
   exp_log["POSE_ESTIMATION_FAIL"] = 0;
 
-
+  std::vector<double> cycle_times;
   while (counter < num_picks)
   {
     for (auto object : objects)
     {
+      auto cycle_start = std::chrono::high_resolution_clock::now();
+
       tries++;
       // Move away from the camera view
-      yumi_motion_coordinator->move_to_home(arm, 5);
+      //yumi_motion_coordinator->move_to_home(arm, 5);
+      yumi_motion_coordinator->move_to_state(arm, {0.43, -1.32, -0.61, 0.64, -1.44, 1.27, -0.07});
 
       // Take image
       std::cout << "before call_capture_srv" << std::endl;
@@ -176,7 +182,7 @@ int main(int argc, char **argv)
         yumi_motion_coordinator->move_object(object, grasp_pose);
 
       // Pick object
-      ret_val = yumi_motion_coordinator->pick_object(arm, object, {"table", pick_bin}, lin_retries, 0.15, true, false, percentage);
+      ret_val = yumi_motion_coordinator->pick_object(arm, object, {"table", pick_bin}, lin_retries, 0.10, true, false, percentage);
       if (ret_val < 0)
       {
         exp_log[errors[ret_val]]++;
@@ -194,6 +200,9 @@ int main(int argc, char **argv)
       }
       counter++; // If place return true the object must be dropped at the destination and can thus be considered successfully picked and placed.
       exp_log[errors[0]]++;
+      auto cycle_end = std::chrono::high_resolution_clock::now();
+      auto cycle_time = std::chrono::duration_cast<std::chrono::milliseconds>(cycle_end - cycle_start);
+      cycle_times.push_back((double)cycle_time.count()/1000.0);
       if (counter >= num_picks)
         break;
     }
@@ -210,6 +219,15 @@ int main(int argc, char **argv)
   {
     log_file << error << ": " << value << std::endl;
   }
+  log_file << "Cycle times: ";
+  double sum{0.0};
+  for(auto ct : cycle_times)
+  {
+    log_file << ct << ", ";
+    sum += ct;
+  }
+  log_file << std::endl << "Average cycle time: " << sum / tries << std::endl;
+
   log_file.close();
   std::cout << "Motion completed, please ctrl+c" << std::endl;
   while (1)

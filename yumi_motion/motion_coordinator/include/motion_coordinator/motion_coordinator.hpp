@@ -110,6 +110,20 @@ public:
                              double percentage=1, double speed_scaling=1, double acc_scaling=1);
 
   /** 
+   * Moves the planning component to the desired state. 
+   * 
+   * @param state state vector giving the desired configuration of the planning component. [rad]
+   * @param num_retries number of allowed attempts at planning a trajectory.
+   * @param visualize flag indicating whether the generated trajectory should be visualized before execution.
+   *                  Visualization is only available when no other planning_component is in motion.
+   * @param blocking flag indicating if the function call should be blocking.
+   * @param replan flag indicating whether the motion should replan upon changes in the planning scene during motion.
+   *               Replanning is only available for blocking motion.
+   */
+  void move_to_state(std::string planning_component, std::vector<double> state, int num_retries=3, bool visualize=false, 
+                     bool blocking=true, bool replan=false);
+
+  /** 
    * Moves the planning component to its registered home configuration. 
    * 
    * @param num_retries number of allowed attempts at planning a trajectory.
@@ -119,7 +133,7 @@ public:
    * @param replan flag indicating whether the motion should replan upon changes in the planning scene during motion.
    *               Replanning is only available for blocking motion.
    */
-  void move_to_home(std::string planning_component, int num_retries=2, bool visualize=false, bool blocking=true,
+  void move_to_home(std::string planning_component, int num_retries=3, bool visualize=false, bool blocking=true,
                     bool replan=false);
 
   /**
@@ -137,8 +151,8 @@ public:
    * 
    * \return true if the object is estimated to be successfully placed.
    */
-  int place_at_object(std::string planning_component, std::string object_id, int num_retries, double hover_height, bool blocking, 
-                       bool visualize, double percentage);
+  int place_at_object(std::string planning_component, std::string object_id, int num_retries, double hover_height, 
+                      bool blocking, bool visualize, double percentage);
 
   /* Return whether a planning_component is moving. */
   bool planning_component_in_motion(std::string planning_component);
@@ -168,6 +182,11 @@ public:
   void open_gripper(std::string planning_component, bool blocking);
   void close_gripper(std::string planning_component, bool blocking);
   std::shared_ptr<rclcpp::Node> get_node() { return node_; };
+  void drop_object(std::string object_id, std::string planning_component);
+  void grab_object(std::string object_id, std::string planning_component);
+  std::vector<double> find_link_pose(std::string link)
+  { return moveit2_wrapper_->find_pose(link); }
+
 
 private:
   std::string node_name_;
@@ -185,10 +204,12 @@ private:
   bool should_stop_ = false;
   bool robot_ready_ = false;
   double replan_delay_ = 1.0;
-  double speed_scale_ = 1.0;
-  double acc_scale_ = 1.0;
   double grip_margin_ = 0.003;
   std::mutex should_replan_mutex_;
+
+  // Scaling of velocity and acceleration for the configured Moveit 2 motion planning pipeline. (not linear motion)
+  double speed_scale_ = 1;
+  double acc_scale_ = 1;
 
   enum error
   {
@@ -219,9 +240,6 @@ private:
   std::vector<double> equivalent_state(std::string planning_component, std::vector<double> pose, bool eulerzyx); 
 
   void print_matrix(Eigen::Matrix4d mat);
-  
-  /* Returns true if the gripper is not fully open. */
-  bool gripper_contain_object(std::string planning_component);
   void joint_state_callback(sensor_msgs::msg::JointState::UniquePtr msg);
 };
 

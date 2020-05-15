@@ -370,7 +370,7 @@ bool MotionCoordinator::linear_move_to_pose(std::string planning_component, std:
 
 
 bool MotionCoordinator::linear_move_to_object(std::string planning_component, std::string object_id,int num_retries,
-                                              double hover_height,  bool visualize, bool blocking, bool collision_checking, 
+                                              double hover_height, bool visualize,bool blocking,bool collision_checking, 
                                               double percentage, double speed_scaling, double acc_scaling)
 {
   std::cout <<  "linear_move_to_object() called for planning component '" << planning_component << "'." << std::endl;
@@ -450,7 +450,7 @@ int MotionCoordinator::pick_object(std::string planning_component, std::string o
   }
 
   // Linear move to gripping pose, give up if unable.
-  if(!linear_move_to_pose(planning_component, grip_pose, false, num_retries, visualize, true, true, percentage, 0.2, 0.2))
+  if(!linear_move_to_pose(planning_component, grip_pose, false, num_retries, visualize, true, true, percentage, 0.3, 0.3))
   {
     table_monitor_->remove_object_from_scene(object_id, false);
     return error::LINEAR_PLAN_FAIL;
@@ -555,10 +555,10 @@ int MotionCoordinator::place_at_object(std::string planning_component, std::stri
 }
 
 
-void MotionCoordinator::move_to_home(std::string planning_component, int num_retries, bool visualize, bool blocking, 
-                                     bool replan)
+void MotionCoordinator::move_to_state(std::string planning_component, std::vector<double> state, int num_retries, 
+                                      bool visualize, bool blocking, bool replan)
 {
-  std::cout << "move_to_home() called for planning component '" << planning_component << "'." << std::endl;
+  std::cout << "move_to_state() called for planning component '" << planning_component << "'." << std::endl;
 
   if(replan && !blocking) 
   { 
@@ -568,13 +568,10 @@ void MotionCoordinator::move_to_home(std::string planning_component, int num_ret
 
   auto planning_component_hash = moveit2_wrapper_->get_planning_components_hash();
 
-  // Find home configuration
-  std::vector<double> home =  planning_component_hash->at(planning_component).home_configuration;
-
-  // If allready at home, don't do anything.
-  if(moveit2_wrapper_->state_reached(planning_component, home))
+  // If allready at state, don't do anything.
+  if(moveit2_wrapper_->state_reached(planning_component, state))
   {
-    std::cout << "planning component '" << planning_component << "' is already at goal pose." << std::endl;
+    std::cout << "planning component '" << planning_component << "' is already at goal state." << std::endl;
     return;
   }
 
@@ -582,16 +579,15 @@ void MotionCoordinator::move_to_home(std::string planning_component, int num_ret
   if(replan)
   {
     // Run initial motion non-blocking.
-    moveit2_wrapper_->state_to_state_motion(planning_component, home, num_retries, visualize, replan, false,
+    moveit2_wrapper_->state_to_state_motion(planning_component, state, num_retries, visualize, replan, false,
                                             speed_scale_, acc_scale_); 
                                             
-
-    while(!moveit2_wrapper_->state_reached(planning_component, home))
+    while(!moveit2_wrapper_->state_reached(planning_component, state))
     {
       if(planning_component_hash->at(planning_component).should_replan)
       {
         stop(planning_component);
-        moveit2_wrapper_->state_to_state_motion(planning_component, home, num_retries, visualize, replan, false, 
+        moveit2_wrapper_->state_to_state_motion(planning_component, state, num_retries, visualize, replan, false, 
                                                 speed_scale_, acc_scale_); 
                                                 
         should_replan_mutex_.lock();
@@ -604,9 +600,26 @@ void MotionCoordinator::move_to_home(std::string planning_component, int num_ret
   }
   else
   {
-    moveit2_wrapper_->state_to_state_motion(planning_component, home, num_retries, visualize, false, blocking, 
+    moveit2_wrapper_->state_to_state_motion(planning_component, state, num_retries, visualize, false, blocking, 
                                             speed_scale_, acc_scale_);                                    
   }
+}
+
+
+void MotionCoordinator::move_to_home(std::string planning_component, int num_retries, bool visualize, bool blocking, 
+                                     bool replan)
+{
+  std::cout << "move_to_home() called for planning component '" << planning_component << "'." << std::endl;
+
+  if(replan && !blocking) 
+  { 
+    std::cout << "[ERROR] Replanning is only available for blocking motion." << std::endl;
+    return;
+  }
+
+  auto planning_component_hash = moveit2_wrapper_->get_planning_components_hash();
+  std::vector<double> home =  planning_component_hash->at(planning_component).home_configuration;
+  move_to_state(planning_component, home, num_retries, visualize, blocking, replan);
 }
 
 
@@ -877,13 +890,6 @@ void MotionCoordinator::print_matrix(Eigen::Matrix4d mat)
 }
 
 
-bool MotionCoordinator::gripper_contain_object(std::string planning_component)
-{
-  // If gripper is open, it cannot contain a object. 
-  return !moveit2_wrapper_->gripper_open(planning_component);
-}
-
-
 void MotionCoordinator::move_object(std::string object_id, std::vector<double> pose)
 { 
   double error = 1;
@@ -933,6 +939,26 @@ void MotionCoordinator::open_gripper(std::string planning_component, bool blocki
 void MotionCoordinator::close_gripper(std::string planning_component, bool blocking)
 {
   jog_gripper(planning_component, 0.0, blocking);
+}
+
+
+void MotionCoordinator::drop_object(std::string object_id, std::string planning_component)
+{
+  grip_out(planning_component, true);
+  table_monitor_->detatch_object(object_id);
+}
+
+
+void MotionCoordinator::grab_object(std::string object_id, std::string planning_component)
+{
+  grip_in(planning_component, true);
+
+  // Get end effector link
+  auto planning_components_hash = moveit2_wrapper_->get_planning_components_hash();
+  std::string ee_link = planning_components_hash->at(planning_component).ee_link;
+  table_monitor_->attach_object(object_id, ee_link);
+  moveit2_wrapper_->disable_collision(object_id, true, "gripper_l_finger_r");
+  moveit2_wrapper_->disable_collision(object_id, true, "gripper_l_finger_l");
 }
 
 } // namespace motion_coordinator

@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 project(yumi_test)
 
-
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
 endif()
@@ -9,7 +8,6 @@ endif()
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
-
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -25,47 +23,12 @@ find_package(orocos_kdl REQUIRED)
 find_package(moveit2_wrapper REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
 find_package(motion_coordinator REQUIRED)
-
 find_package(pose_estimation REQUIRED)
 find_package(pose_estimation_manager REQUIRED)
 find_package(pose_estimation_interface REQUIRED)
 find_package(zivid_interfaces REQUIRED)
 find_package(Threads REQUIRED)
 
-
-# Sine wave 
-add_executable(sine_wave src/sine_wave.cpp)
-ament_target_dependencies(sine_wave 
-                          rclcpp                            
-                          sensor_msgs
-                          angles                             
-                          ros2_control_interfaces
-                          sg_control_interfaces
-                          yumi_robot_manager_interfaces
-                          rws_clients  
-)
-# Sine wave inf 
-add_executable(sine_wave_inf src/sine_wave_inf.cpp)
-ament_target_dependencies(sine_wave_inf 
-                          rclcpp                            
-                          sensor_msgs
-                          angles                             
-                          ros2_control_interfaces
-                          sg_control_interfaces
-                          yumi_robot_manager_interfaces
-                          rws_clients   
-)
-# Step
-add_executable(step src/step.cpp)
-ament_target_dependencies(step 
-                          rclcpp                            
-                          sensor_msgs
-                          angles                             
-                          ros2_control_interfaces
-                          sg_control_interfaces
-                          yumi_robot_manager_interfaces
-                          rws_clients  
-)
 # Demo                           
 add_executable(demo src/demo.cpp)
 target_include_directories(demo PRIVATE include)
@@ -80,9 +43,25 @@ ament_target_dependencies(demo
                           pose_estimation_manager
                           pose_estimation   
 )
-# demo_kdl_ik                         
-add_executable(demo_kdl_ik src/demo_kdl_ik.cpp)
-ament_target_dependencies(demo_kdl_ik 
+
+# Demo                           
+add_executable(demo_dual src/demo_dual.cpp)
+target_include_directories(demo_dual PRIVATE include)
+ament_target_dependencies(demo_dual 
+                          motion_coordinator
+                          Boost
+                          kdl_wrapper
+                          rclcpp     
+                          angles
+                          pose_estimation_interface
+                          zivid_interfaces
+                          pose_estimation_manager
+                          pose_estimation   
+)
+
+# test_kdl_ik                         
+add_executable(test_kdl_ik src/test_kdl_ik.cpp)
+ament_target_dependencies(test_kdl_ik 
                           rclcpp                            
                           sensor_msgs
                           angles                             
@@ -94,91 +73,34 @@ ament_target_dependencies(demo_kdl_ik
                           urdf
                           orocos_kdl
 )
-# demo_moveit2                         
-add_executable(demo_moveit2 src/demo_moveit2.cpp)
-ament_target_dependencies(demo_moveit2 
-                          rclcpp     
-                          sensor_msgs                      
-                          rws_clients
-                          moveit2_wrapper
-                          Boost
-                          angles                                      
-)
-# demo_moveit2_2chessboard
-# add_executable(demo_moveit2_2chessboard src/demo_moveit2_2chessboard.cpp)
-# ament_target_dependencies(demo_moveit2_2chessboard 
-#                           rclcpp     
-#                           sensor_msgs                      
-#                           rws_clients
-#                           moveit2_wrapper
-#                           Boost
-#                           angles
-#                           pose_estimation_interface
-#                           zivid_interfaces
-#                           pose_estimation_manager
-#                           pose_estimation                                      
-# )
-# graph_bringup                            
-add_executable(graph_bringup src/graph_bringup.cpp)
-ament_target_dependencies(graph_bringup 
-                          rclcpp                            
-                          sensor_msgs
-                          angles                             
-                          ros2_control_interfaces 
-                          sg_control_interfaces
-                          yumi_robot_manager_interfaces
-                          rws_clients 
-)
-# demo_go_to_chessboard                      
-# add_executable(demo_go_to_chessboard src/demo_go_to_chessboard.cpp)        
-# ament_target_dependencies(demo_go_to_chessboard 
-#                           rclcpp                            
-#                           sensor_msgs
-#                           angles                             
-#                           ros2_control_interfaces 
-#                           sg_control_interfaces
-#                           yumi_robot_manager_interfaces
-#                           rws_clients
-#                           kdl_wrapper 
-#                           urdf
-#                           orocos_kdl
-#                           pose_estimation_interface
-#                           zivid_interfaces
-#                           pose_estimation_manager
-#                           pose_estimation
-# )
-# socket_test
-add_executable(socket_test src/socket_test.cpp)
-target_link_libraries (socket_test ${CMAKE_THREAD_LIBS_INIT})
 
-# demo_motion_coordinator                         
-add_executable(demo_motion_coordinator src/demo_motion_coordinator.cpp)
-ament_target_dependencies(demo_motion_coordinator 
+# test_socket
+add_executable(test_socket src/test_socket.cpp)
+target_link_libraries (test_socket ${CMAKE_THREAD_LIBS_INIT})
+
+# test_motion_coordinator                         
+add_executable(test_motion_coordinator src/test_motion_coordinator.cpp)
+ament_target_dependencies(test_motion_coordinator 
                           motion_coordinator
                           Boost
                           kdl_wrapper                                    
 )
-# demo_torque                         
-add_executable(demo_torque src/demo_torque.cpp)
-ament_target_dependencies(demo_torque 
+
+# test_torque                         
+add_executable(test_torque src/test_torque.cpp)
+ament_target_dependencies(test_torque 
                           motion_coordinator
                           Boost
                           kdl_wrapper                                    
 )
 
 install(TARGETS 
-  sine_wave
-  sine_wave_inf
-  step
   demo
-  demo_kdl_ik
-  graph_bringup
-  demo_moveit2
-  #demo_go_to_chessboard
-  #demo_moveit2_2chessboard
-  demo_motion_coordinator
-  socket_test
-  demo_torque
+  demo_dual
+  test_kdl_ik
+  test_motion_coordinator
+  test_socket
+  test_torque
   DESTINATION lib/${PROJECT_NAME}
 )
 
