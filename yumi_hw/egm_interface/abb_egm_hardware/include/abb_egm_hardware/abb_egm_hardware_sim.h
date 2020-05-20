@@ -12,37 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ABB_EGM_HARDWARE__ABB_EGM_HARDWARE_HPP_
-#define ABB_EGM_HARDWARE__ABB_EGM_HARDWARE_HPP_
+#pragma once
 
 #include <memory>
 #include <string>
 #include <sstream>
 #include <random>
-
 #include <rclcpp/rclcpp.hpp>
 #include <rcutils/logging_macros.h>
 #include <angles/angles.h>
 #include <boost/asio/io_service.hpp>
 #include <boost/thread.hpp>
-
 #include <hardware_interface/robot_hardware.hpp>
 #include <hardware_interface/types/hardware_interface_return_values.hpp>
 #include <abb_egm_hardware/visibility_control.h>
-
-// parameter server services
 #include <parameter_server_interfaces/srv/get_port.hpp>
 #include <parameter_server_interfaces/srv/get_all_joints.hpp>
 #include <parameter_server_interfaces/srv/get_robot.hpp>
-
-
 
 namespace abb_egm_hardware
 {
 class AbbEgmHardware : public hardware_interface::RobotHardware
 {
 public:
-
   AbbEgmHardware(const std::string& name);
 
   ABB_EGM_HARDWARE_PUBLIC
@@ -54,9 +46,7 @@ public:
   ABB_EGM_HARDWARE_PUBLIC
   hardware_interface::hardware_interface_ret_t write();
 
-
 private:
-
   std::string name_;
   std::string robot_name_;
   std::shared_ptr<rclcpp::Node> node_;
@@ -101,11 +91,6 @@ private:
   hardware_interface::hardware_interface_ret_t get_joint_names();
   hardware_interface::hardware_interface_ret_t get_robot_name();
 
-  // Helper functions
-  hardware_interface::hardware_interface_ret_t initialize_vectors();
-                                                                                                        
+  hardware_interface::hardware_interface_ret_t initialize_vectors();                                                                                                      
 };
-
 }  // namespace abb_egm_hardware
-
-#endif  // ABB_EGM_HARDWARE__ABB_EGM_HARDWARE_HPP_
