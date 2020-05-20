@@ -45,8 +45,7 @@ std::string generate_hex(const unsigned int len)
 
 
 AbbEgmHardware::AbbEgmHardware(const std::string& name) : name_(name)
-{
-}
+{}
 
 
 hardware_interface::hardware_interface_ret_t 
@@ -123,12 +122,10 @@ AbbEgmHardware::init()
                   write_op_handle_names_[i].c_str());
       return ret;
     }
- 
   }
 
   return hardware_interface::HW_RET_OK;
 }
-
 
 
 hardware_interface::hardware_interface_ret_t 
@@ -138,18 +135,15 @@ AbbEgmHardware::read()
 }
 
 
-
 hardware_interface::hardware_interface_ret_t 
 AbbEgmHardware::write()
 { 
-  //usleep(1*100000); //0.1 seconds
 	for (size_t index = 0; index < n_joints_; ++index)
 	{
     joint_position_[index] = joint_position_command_[index];
 	}
 	return hardware_interface::HW_RET_OK;
 }
-
 
 
 hardware_interface::hardware_interface_ret_t
@@ -201,7 +195,6 @@ AbbEgmHardware::get_port()
       continue;
     }
 
-   
     port_ = resp.get()->port;
     return hardware_interface::HW_RET_OK;
   }
@@ -259,7 +252,6 @@ AbbEgmHardware::get_joint_names()
         "GetAllJoints service failed to execute. Retries left: %d", maxRetries - retryCount);
       continue;
     }
-
 
     joint_names_ = resp.get()->joints;
     n_joints_ = joint_names_.size();
@@ -319,7 +311,6 @@ AbbEgmHardware::get_robot_name()
       continue;
     }
 
-   
     robot_name_ =  resp.get()->robot;
     return hardware_interface::HW_RET_OK;
   }
@@ -349,27 +340,8 @@ AbbEgmHardware::initialize_vectors()
     read_op_[i] = false;
     write_op_[i] = true;
   }
-
-
-  // joint_state_handles_.resize(n_joints_);
-  // joint_command_handles_.resize(n_joints_);
-  // read_op_handles_.resize(n_joints_);
-  // write_op_handles_.resize(n_joints_);
-
-  // // Set size and zero intialize
-  // joint_position_.assign(n_joints_, 0.0);
-  // joint_velocity_.assign(n_joints_, 0.0);
-  // joint_effort_.assign(n_joints_, 0.0);
-  // joint_position_command_.assign(n_joints_, 0.0);
-
-  // for (int i = 0; i < n_joints_; ++i)
-  // {
-  //   read_op_[i] = false;
-  //   write_op_[i] = true;
-  // }
   
   return hardware_interface::HW_RET_OK;
 }
-
 
 }  // namespace abb_egm_hardware

@@ -17,7 +17,6 @@
 #include "abb_egm_hardware/abb_egm_hardware.hpp"
 
 
-
 void spin(std::shared_ptr<rclcpp::executors::MultiThreadedExecutor> exe)
 {
   exe->spin();
@@ -49,8 +48,6 @@ int main(int argc, char* argv[])
                                      "joint_state_controller");
   controller_manager.load_controller("controllers", "ros_controllers::JointTrajectoryController",
                                      "joint_trajectory_controller");
-  // controller_manager.load_controller("controllers", "ros_controllers::JointPositionController",
-  //                                    "joint_position_controller");
 
   // Pass namespace to controllers as well
   auto controllers = controller_manager.get_loaded_controller();
@@ -97,7 +94,6 @@ int main(int argc, char* argv[])
     {
       fprintf(stderr, "write failed!\n");
     }
-    
   }
 
   // teardown

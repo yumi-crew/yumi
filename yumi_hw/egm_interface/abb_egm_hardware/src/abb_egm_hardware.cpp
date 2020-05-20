@@ -120,7 +120,6 @@ AbbEgmHardware::init()
                   write_op_handle_names_[i].c_str());
       return ret;
     }
- 
   }
   
   // Create an EGM interface:
