@@ -43,8 +43,7 @@ std::string generate_hex(const unsigned int len)
 
 
 AbbEgmHardware::AbbEgmHardware(const std::string& name) : name_(name)
-{
-}
+{}
 
 
 hardware_interface::hardware_interface_ret_t 
@@ -167,7 +166,6 @@ AbbEgmHardware::init()
 }
 
 
-
 hardware_interface::hardware_interface_ret_t 
 AbbEgmHardware::read()
 {
@@ -206,11 +204,9 @@ AbbEgmHardware::read()
 }
 
 
-
 hardware_interface::hardware_interface_ret_t 
 AbbEgmHardware::write()
 { 
-
   // writes joint_position_command_ to command_ which is written to robot
   for (size_t index = 0; index < n_joints_; ++index)
   {
@@ -222,7 +218,6 @@ AbbEgmHardware::write()
   egm_interface_->write(command_);
   return hardware_interface::HW_RET_OK;
 }
-
 
 
 hardware_interface::hardware_interface_ret_t
@@ -274,7 +269,6 @@ AbbEgmHardware::get_port()
       continue;
     }
 
-   
     port_ = resp.get()->port;
     return hardware_interface::HW_RET_OK;
   }
@@ -332,7 +326,6 @@ AbbEgmHardware::get_joint_names()
         "GetAllJoints service failed to execute. Retries left: %d", maxRetries - retryCount);
       continue;
     }
-
 
     joint_names_ = resp.get()->joints;
     n_joints_ = joint_names_.size();
@@ -392,7 +385,6 @@ AbbEgmHardware::get_robot_name()
       continue;
     }
 
-   
     robot_name_ =  resp.get()->robot;
     return hardware_interface::HW_RET_OK;
   }
@@ -427,6 +419,5 @@ AbbEgmHardware::initialize_vectors()
 
   return hardware_interface::HW_RET_OK;
 }
-
 
 }  // namespace abb_egm_hardware
