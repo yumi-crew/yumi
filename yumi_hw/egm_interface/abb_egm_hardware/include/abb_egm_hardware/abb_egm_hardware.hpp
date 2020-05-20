@@ -1,4 +1,4 @@
-// Copyright 2019 Norwegian University of Science and Technology.
+// Copyright 2020 Norwegian University of Science and Technology.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,34 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ABB_EGM_HARDWARE__ABB_EGM_HARDWARE_HPP_
-#define ABB_EGM_HARDWARE__ABB_EGM_HARDWARE_HPP_
+#pragma once
 
 #include <memory>
 #include <string>
 #include <sstream>
 #include <random>
-
 #include <rclcpp/rclcpp.hpp>
 #include <rcutils/logging_macros.h>
-
 #include <angles/angles.h>
-
 #include <hardware_interface/robot_hardware.hpp>
 #include <hardware_interface/types/hardware_interface_return_values.hpp>
-
 #include <abb_libegm/egm_controller_interface.h>
 #include <abb_libegm/egm_wrapper.pb.h>
-
 #include <abb_egm_hardware/visibility_control.h>
-
-// parameter server services
 #include "parameter_server_interfaces/srv/get_port.hpp"
 #include "parameter_server_interfaces/srv/get_all_joints.hpp"
 #include "parameter_server_interfaces/srv/get_robot.hpp"
-
-
-
 
 namespace abb_egm_hardware
 {
@@ -57,9 +46,7 @@ public:
   ABB_EGM_HARDWARE_PUBLIC
   hardware_interface::hardware_interface_ret_t write();
 
-
 private:
-
   std::string name_;
   std::string robot_name_;
   std::shared_ptr<rclcpp::Node> node_;
@@ -97,23 +84,17 @@ private:
   bool *read_op_; 
   bool *write_op_; 
 
-  // fix, should be read from config file
+  // fix, should be read from config file or paramter server
   std::array<std::string, 7> read_op_handle_names_ = { "read1", "read2", "read7", "read3", 
                                                        "read4", "read5", "read6" };
   std::array<std::string, 7> write_op_handle_names_ = { "write1", "write2", "write7", "write3",
                                                         "write4", "write5", "write6" };
-
 
   // Loading of robot info from namepsaced parameter server
   hardware_interface::hardware_interface_ret_t get_port();
   hardware_interface::hardware_interface_ret_t get_joint_names();
   hardware_interface::hardware_interface_ret_t get_robot_name();
 
-  // Helper function
-  hardware_interface::hardware_interface_ret_t initialize_vectors();
-                                                                                                        
+  hardware_interface::hardware_interface_ret_t initialize_vectors();                                                                                                     
 };
-
 }  // namespace abb_egm_hardware
-
-#endif  // ABB_EGM_HARDWARE__ABB_EGM_HARDWARE_HPP_
