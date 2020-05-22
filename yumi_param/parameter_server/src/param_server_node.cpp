@@ -1,8 +1,7 @@
 #include <memory>
 #include <parameter_server/parameter_server.hpp>
 
-void
-print_usage()
+void print_usage()
 {
   fprintf(stderr, "lobot_param_server [yaml1.file ... yamlN.file]\n");
 }
@@ -12,7 +11,8 @@ int main(int argc, char ** argv)
   // fprintf(stderr, "Arg: %s", argv[1]);
   rclcpp::init(argc, argv);
 
-  if (argc < 2) {
+  if (argc < 2) 
+  {
     fprintf(stderr, "Missing arguments. No yaml files were given\n");
     print_usage();
     return -1;
