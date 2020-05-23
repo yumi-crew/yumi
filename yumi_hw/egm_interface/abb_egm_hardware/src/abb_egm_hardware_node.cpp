@@ -39,7 +39,11 @@ int main(int argc, char* argv[])
   }
 
   // Now load and initialize the controllers
-  // As there is no ROS2 equivalent to ROS1 nodegroups we will manually pass along namespace
+  
+  /* As there is no ROS2 equivalent to ROS1 nodegroups we will manually pass along namespace. This is done
+  by adjusting the constructor of the ControllerManager to expect the first part of its node-name string to include the namespace. 
+  By doing this, yumi is unfortunately in need of a maintained fork of ControllerManager where this adjustment of the 
+  constructor is implemented. We are farily certain this can be exchanged by private namespacing. */
   std::string nodegroup_namespace = argv[1];
   auto executor = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
   controller_manager::ControllerManager controller_manager(robot, executor, nodegroup_namespace+"/controller_manager"); 
