@@ -1,4 +1,3 @@
-
 // Copyright 2020 Norwegian University of Science and Technology.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,9 +32,8 @@
 
 /* Controller for executing joint-space trajectories on a group of joints.
 
-  Trajectories are specified as a set of waypoints to be reached at specific time instants, 
-  which the controller attempts to execute as well as the mechanism allows. Waypoints consist of positions, 
-  and optionally velocities and accelerations.
+  Trajectories are specified as a set of waypoints to be reached at specific time instants, which the controller 
+  attempts to execute as well as the mechanism allows. Waypoints consist of positions, velocities and accelerations.
 */
 
 namespace ros_controllers
@@ -89,7 +87,8 @@ JointTrajectoryController::update()
     }
     return CONTROLLER_INTERFACE_RET_SUCCESS;
   }
-
+  
+  // If execution is signaled to stop, or no new trajectory is recieved 
   if(is_stopped || !new_trajectory)
   {
     return CONTROLLER_INTERFACE_RET_SUCCESS;
@@ -101,21 +100,23 @@ JointTrajectoryController::update()
     return CONTROLLER_INTERFACE_RET_SUCCESS;
   }
 
-  // find next new point for current timestamp
+  // sample : Find the next valid point from the represented trajectory msg.
+  // valid point is the first point in the the msg with expected arrival time in the future.
   auto traj_point_ptr = (*traj_point_active_ptr_)->sample(rclcpp::Clock().now());
-  // find next new point for current timestamp
-  // set cmd only if a point is found
+  
+  // If no next valid point can be found
   if (traj_point_ptr == (*traj_point_active_ptr_)->end()) 
   {
     return CONTROLLER_INTERFACE_RET_SUCCESS;
   }
-
-  // check if new point ptr points to the same as previous point
+  
+  // If next valid point is the same as the previously found point
   if (prev_traj_point_ptr_ == traj_point_ptr) 
   {
     return CONTROLLER_INTERFACE_RET_SUCCESS;
   }
-
+  
+  // Point should be valid, set position command.
   size_t joint_num = registered_joint_cmd_handles_.size();
   for (size_t index = 0; index < joint_num; ++index) 
   {
@@ -358,12 +359,14 @@ JointTrajectoryController::halt()
 void
 JointTrajectoryController::stop_command_callback(std_msgs::msg::Bool::UniquePtr msg)
 {
+  // If signaled to stop.
   if(msg->data == true) 
   {
     is_stopped = true;
-    traj_point_active_ptr_ = nullptr;
+    traj_point_active_ptr_ = nullptr; // If execution is stopped, trash the rest of the trajectory.
     new_trajectory = false;
   }
+  // If signaled to start again.
   else if(msg->data == false)
   {
     traj_point_active_ptr_ = &traj_external_point_ptr_;
