@@ -44,7 +44,7 @@ private:
   std::string namespace_;
   std::string ip_;
 
-  rclcpp_action::Server<Grip>::SharedPtr action_server_; 
+  rclcpp_action::Server<Grip>::SharedPtr grip_action_server_; 
   bool should_grip_in_;
   bool should_execute_ = false;
   

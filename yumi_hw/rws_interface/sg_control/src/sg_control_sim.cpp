@@ -33,7 +33,7 @@ SgControl::init()
   namespace_ = this->get_namespace();
    
   // Start action server
-  action_server_ = rclcpp_action::create_server<Grip>(       
+  grip_action_server_ = rclcpp_action::create_server<Grip>(       
     this->shared_from_this(),
     "Grip",    // Topic names related
     std::bind(&SgControl::handle_goal, this, _1, _2), 

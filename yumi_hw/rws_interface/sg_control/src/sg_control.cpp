@@ -34,7 +34,7 @@ bool SgControl::init()
   sg_settings_ = std::make_shared<abb::rws::RWSStateMachineInterface::SGSettings>();
   rws_state_machine_interface_ = std::make_shared<abb::rws::RWSStateMachineInterface>(ip_);
   gripper_position_publisher_ = this->create_publisher<std_msgs::msg::Float64>(namespace_ + "/gripper_pos", 10);
-  jog_gripper_sub_ = this->create_subscription<std_msgs::msg::Float32>(namespace_+"/jog_gripper", 10,
+  jog_gripper_subscription_ = this->create_subscription<std_msgs::msg::Float32>(namespace_+"/jog_gripper", 10,
    std::bind(&SgControl::jog_gripper_callback, this, _1));
 
   // Connection check. Confirm robot controller is connected. Loops until connection is made.
@@ -47,7 +47,7 @@ bool SgControl::init()
   }
 
   // Start action server
-  action_server_ = rclcpp_action::create_server<Grip>(
+  grip_action_server_ = rclcpp_action::create_server<Grip>(
       this->shared_from_this(),
       "Grip",
       std::bind(&SgControl::handle_goal, this, _1, _2),

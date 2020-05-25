@@ -52,12 +52,12 @@ private:
   std::shared_ptr<abb::rws::RWSStateMachineInterface> rws_state_machine_interface_;
   std::shared_ptr<abb::rws::RWSStateMachineInterface::SGSettings> sg_settings_;
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr gripper_position_publisher_;
-  rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr jog_gripper_sub_;
-  rclcpp_action::Server<Grip>::SharedPtr action_server_; 
+  rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr jog_gripper_subscription_;
+  rclcpp_action::Server<Grip>::SharedPtr grip_action_server_; 
 
   bool should_grip_in_;
   bool should_execute_ = false;
-  double allowed_deviation_ = 0.001;
+  double allowed_deviation_ = 0.001; // Used for timing purposes
   
   rclcpp_action::GoalResponse 
   handle_goal(const rclcpp_action::GoalUUID &uuid, std::shared_ptr<const Grip::Goal> goal);
