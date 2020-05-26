@@ -15,7 +15,7 @@
 #pragma once
 
 #include <moveit2_wrapper/moveit2_wrapper.hpp>
-#include <moveit2_wrapper/table_monitor.hpp>
+#include <moveit2_wrapper/object_manager.hpp>
 #include <rws_clients/robot_manager_client.hpp>
 #include <rws_clients/grip_client.hpp>
 #include <kdl_wrapper/kdl_wrapper.h>
@@ -170,7 +170,7 @@ public:
   void move_object(std::string object_id, std::vector<double> pose);
 
   /* Checks if a registered object is present in the planning scene. */
-  bool object_present(std::string object_id){ return !table_monitor_->find_object(object_id).empty(); }
+  bool object_present(std::string object_id){ return !object_manager_->find_object(object_id).empty(); }
 
    /* Randomly side-shifts an registered object. Returns the new position. */
   std::vector<double> random_move_object(std::string object_id, double side_shift);
@@ -195,7 +195,7 @@ private:
   std::shared_ptr<rws_clients::GripClient> left_gripper_;
   std::shared_ptr<rws_clients::GripClient> right_gripper_;
   std::shared_ptr<moveit2_wrapper::Moveit2Wrapper> moveit2_wrapper_;
-  std::shared_ptr<moveit2_wrapper::TableMonitor> table_monitor_;
+  std::shared_ptr<moveit2_wrapper::ObjectManager> object_manager_;
   std::shared_ptr<KdlWrapper> kdl_wrapper_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_subscription_;
   rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr gripper_r_pos_publisher_;

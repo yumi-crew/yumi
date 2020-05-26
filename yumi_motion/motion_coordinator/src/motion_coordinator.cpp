@@ -72,10 +72,10 @@ bool MotionCoordinator::init()
     return false;
   }
 
-  table_monitor_ = std::make_shared<moveit2_wrapper::TableMonitor>(moveit2_wrapper_->get_moveit_cpp());
-  if(!table_monitor_->init())
+  object_manager_ = std::make_shared<moveit2_wrapper::ObjectManager>(moveit2_wrapper_->get_moveit_cpp());
+  if(!object_manager_->init())
   {
-    std::cout << "[ERROR] table_monitor failed to initialize." << std::endl;
+    std::cout << "[ERROR] object_manager failed to initialize." << std::endl;
     return false;
   }
 
@@ -102,9 +102,9 @@ bool MotionCoordinator::activate()
   joint_state_subscription_.reset(); 
   moveit2_wrapper_->launch_planning_scene();
   
-  if(!table_monitor_->activate())
+  if(!object_manager_->activate())
   {
-    std::cout << "[ERROR] table_monitor failed to activate." << std::endl;
+    std::cout << "[ERROR] object_manager failed to activate." << std::endl;
     return false;
   }
   return true;
@@ -218,7 +218,7 @@ void MotionCoordinator::move_to_object(std::string planning_component, std::stri
   auto planning_components_hash = moveit2_wrapper_->get_planning_components_hash();
   std::string ee_link = planning_components_hash->at(planning_component).ee_link;
 
-  std::vector<double> pose = table_monitor_->find_object(object_id);
+  std::vector<double> pose = object_manager_->find_object(object_id);
 
   // If object cant be found.
   if(pose.empty())
@@ -248,7 +248,7 @@ void MotionCoordinator::move_to_object(std::string planning_component, std::stri
       if(planning_components_hash->at(planning_component).should_replan)
       {
         stop(planning_component);
-        pose = table_monitor_->find_object(object_id); 
+        pose = object_manager_->find_object(object_id); 
 
         if(pose.empty())
         { 
@@ -378,7 +378,7 @@ bool MotionCoordinator::linear_move_to_object(std::string planning_component, st
   auto planning_components_hash = moveit2_wrapper_->get_planning_components_hash();
   std::string ee_link = planning_components_hash->at(planning_component).ee_link;
 
-  std::vector<double> pose = table_monitor_->find_object(object_id); 
+  std::vector<double> pose = object_manager_->find_object(object_id); 
   
   // If object cant be found.
   if(pose.empty())
@@ -417,8 +417,8 @@ int MotionCoordinator::pick_object(std::string planning_component, std::string o
   auto planning_components_hash = moveit2_wrapper_->get_planning_components_hash();
   std::string ee_link = planning_components_hash->at(planning_component).ee_link;
 
-  std::vector<double> grip_pose = table_monitor_->find_object(object_id); // quaternions
-  std::vector<double> object_dimensions = table_monitor_->get_object_dimensions(object_id);
+  std::vector<double> grip_pose = object_manager_->find_object(object_id); // quaternions
+  std::vector<double> object_dimensions = object_manager_->get_object_dimensions(object_id);
 
   // If object cant be found.
   if(grip_pose.empty())
@@ -445,19 +445,19 @@ int MotionCoordinator::pick_object(std::string planning_component, std::string o
   {
     std::cout << "[ERROR] The given goal pose is not valid. Aborting." << std::endl;
     close_gripper(planning_component, true);
-    table_monitor_->remove_object_from_scene(object_id, false);
+    object_manager_->remove_object_from_scene(object_id, false);
     return error::INVALID_POSE;
   }
 
   // Linear move to gripping pose, give up if unable.
   if(!linear_move_to_pose(planning_component, grip_pose, false, num_retries, visualize, true, true, percentage, 0.3, 0.3))
   {
-    table_monitor_->remove_object_from_scene(object_id, false);
+    object_manager_->remove_object_from_scene(object_id, false);
     return error::LINEAR_PLAN_FAIL;
   }
 
   // Grip object
-  table_monitor_->attach_object(object_id, ee_link);
+  object_manager_->attach_object(object_id, ee_link);
   
   // Disable collision between pick object and elements in the enviroment 
   for(auto object : allowed_collisions) 
@@ -485,7 +485,7 @@ int MotionCoordinator::pick_object(std::string planning_component, std::string o
   if(moveit2_wrapper_->gripper_closed(planning_component))
   {
     std::cout << "[ERROR] Pick failed. Aborting." << std::endl;
-    table_monitor_->detatch_object(object_id);
+    object_manager_->detatch_object(object_id);
     return error::GRIP_FAIL;
   }
   return 0;
@@ -502,18 +502,18 @@ int MotionCoordinator::place_at_object(std::string planning_component, std::stri
   std::string ee_link = planning_components_hash->at(planning_component).ee_link;
 
   // Object to be placed
-  std::string object = table_monitor_->object_held(ee_link);
+  std::string object = object_manager_->object_held(ee_link);
 
   // Check if yumi's gripper contain an object, return if not.
   if(moveit2_wrapper_->gripper_closed(planning_component))
   {
     std::cout << "[ERROR] YuMi have lost the object to be placed. Aborting." << std::endl;
-    table_monitor_->detatch_object(object);
+    object_manager_->detatch_object(object);
     return error::GRIP_FAIL;
   }
 
   // Find location object's pose
-  std::vector<double> location = table_monitor_->find_object(object_id);
+  std::vector<double> location = object_manager_->find_object(object_id);
 
   // linear move to hover point
   if(!linear_move_to_object(planning_component, object_id, 0, hover_height, visualize, true, true, percentage))
@@ -526,7 +526,7 @@ int MotionCoordinator::place_at_object(std::string planning_component, std::stri
   if(moveit2_wrapper_->gripper_closed(planning_component))
   {
     std::cout << "[ERROR] YuMi has lost the object" << std::endl;
-    table_monitor_->detatch_object(object);
+    object_manager_->detatch_object(object);
     return error::GRIP_FAIL;
   }
 
@@ -534,13 +534,13 @@ int MotionCoordinator::place_at_object(std::string planning_component, std::stri
   if(!linear_move_to_object(planning_component, object_id, 0, hover_height-0.05, visualize, true, true, percentage))
   {
     open_gripper(planning_component, true);
-    table_monitor_->detatch_object(object);
+    object_manager_->detatch_object(object);
     return 0;
   }
  
   // Let go object
   open_gripper(planning_component, true);
-  table_monitor_->detatch_object(object);
+  object_manager_->detatch_object(object);
 
   // Linear move back to hover point. If linear motion is not possible, try ordinary motion.
   if(!linear_move_to_object(planning_component, object_id, 0, hover_height, visualize, true, true, percentage))
@@ -632,10 +632,10 @@ std::vector<double> MotionCoordinator::random_move_object(std::string object_id,
   if(r%2) shift = side_shift;
   else shift = -side_shift;
   
-  std::vector<double> pose = table_monitor_->find_object(object_id);
+  std::vector<double> pose = object_manager_->find_object(object_id);
   pose[1] += shift; 
   
-  table_monitor_->move_object(object_id, pose);
+  object_manager_->move_object(object_id, pose);
 
   auto planning_components_hash = moveit2_wrapper_->get_planning_components_hash();
   should_replan_mutex_.lock();
@@ -710,7 +710,7 @@ std::vector<double> MotionCoordinator::get_random_nearby_pose(std::vector<double
 
 void MotionCoordinator::remove_object(std::string object_id)
 { 
-  table_monitor_->remove_object_from_scene(object_id, true); 
+  object_manager_->remove_object_from_scene(object_id, true); 
 
   auto planning_components_hash = moveit2_wrapper_->get_planning_components_hash();
   should_replan_mutex_.lock();
@@ -759,10 +759,10 @@ void MotionCoordinator::add_object(std::string object_id, std::vector<double> po
   }
   if(!rgba.empty())
   {
-    table_monitor_->add_object_to_scene(object_id, pose, false); 
-    table_monitor_->set_object_color(object_id, rgba);
+    object_manager_->add_object_to_scene(object_id, pose, false); 
+    object_manager_->set_object_color(object_id, rgba);
   }
-  else table_monitor_->add_object_to_scene(object_id, pose, true); 
+  else object_manager_->add_object_to_scene(object_id, pose, true); 
 }
 
 
@@ -893,21 +893,21 @@ void MotionCoordinator::print_matrix(Eigen::Matrix4d mat)
 void MotionCoordinator::move_object(std::string object_id, std::vector<double> pose)
 { 
   double error = 1;
-  table_monitor_->move_object(object_id, pose); 
+  object_manager_->move_object(object_id, pose); 
   std::vector<double> actual_pose(7);
   double allowed_deviation = 0.00005;
   
   while(error > allowed_deviation)
   {
     error = 0;
-    actual_pose = table_monitor_->find_object(object_id);
+    actual_pose = object_manager_->find_object(object_id);
     for(int i = 0; i < actual_pose.size(); i++)
     {
       error += abs(actual_pose[i]-pose[i]);
     }
 
     if(error <= allowed_deviation) break;
-    else table_monitor_->move_object(object_id, pose); 
+    else object_manager_->move_object(object_id, pose); 
   }
 }
 
@@ -945,7 +945,7 @@ void MotionCoordinator::close_gripper(std::string planning_component, bool block
 void MotionCoordinator::drop_object(std::string object_id, std::string planning_component)
 {
   grip_out(planning_component, true);
-  table_monitor_->detatch_object(object_id);
+  object_manager_->detatch_object(object_id);
 }
 
 
@@ -956,7 +956,7 @@ void MotionCoordinator::grab_object(std::string object_id, std::string planning_
   // Get end effector link
   auto planning_components_hash = moveit2_wrapper_->get_planning_components_hash();
   std::string ee_link = planning_components_hash->at(planning_component).ee_link;
-  table_monitor_->attach_object(object_id, ee_link);
+  object_manager_->attach_object(object_id, ee_link);
   moveit2_wrapper_->disable_collision(object_id, true, "gripper_l_finger_r");
   moveit2_wrapper_->disable_collision(object_id, true, "gripper_l_finger_l");
 }
