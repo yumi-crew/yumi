@@ -78,7 +78,7 @@ private:
   };
 
   SocketInfo socket_; 
-  void parse(std::string data_, bool debug_print=false);
+  void parse_and_publish(std::string data_, bool debug_print=false);
 };
 
 } // end namepsace socket_interface

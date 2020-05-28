@@ -86,7 +86,7 @@ void ETorqueReceiver::start_stream(bool debug)
 }
 
 
-void ETorqueReceiver::parse(std::string data, bool debug)
+void ETorqueReceiver::parse_and_publish(std::string data, bool debug)
 {
   size_t pos = 0;
   std::string token;
