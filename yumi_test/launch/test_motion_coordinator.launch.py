@@ -54,7 +54,7 @@ def generate_launch_description():
 
     # test_motion_coordinator
     test_motion_coordinator = Node(package='yumi_test',
-                                  node_executable='test_motion_coordinatort',
+                                  node_executable='test_motion_coordinator',
                                   output='screen',
                                   #emulate_tty=False, # Remove moveit-spam
                                   parameters=[moveit_cpp_yaml_file_name,
