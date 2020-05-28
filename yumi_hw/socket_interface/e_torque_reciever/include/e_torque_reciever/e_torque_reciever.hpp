@@ -65,7 +65,7 @@ private:
 
   bool connected_ = false;
   bool stop_sign_ = false;
-  int rate_ = 500; // Publishing rate
+  int rate_ = 400; // Publishing rate
   int allowed_consecutive_read_fails_ = 5;
   std::shared_ptr<rclcpp::Publisher<sensor_msgs::msg::JointState>> publisher_;
   
