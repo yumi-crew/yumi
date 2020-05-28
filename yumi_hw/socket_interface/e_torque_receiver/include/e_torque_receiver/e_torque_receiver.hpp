@@ -25,10 +25,10 @@
 
 namespace socket_interface
 {
-class ETorqueReciever
+class ETorqueReceiver
 {
 public:
-  ETorqueReciever(std::string node_name, std::string robot_ip, uint port);
+  ETorqueReceiver(std::string node_name, std::string robot_ip, uint port);
 
   /** 
    * Establishes connection with a TCP server on the robot controller of YuMi. 
@@ -48,7 +48,7 @@ public:
   /** 
    * @brief Opens the stream, recieving the sent motor torques cause by an external load.
    * 
-   * The call is blocking and will only exit upon recieved stop signal or loss of connection with YuMi. It is
+   * The call is blocking and will only exit upon received stop signal or loss of connection with YuMi. It is
    * recommended to call this method in a seperate thread.
    */
   void start_stream(bool debug = false);

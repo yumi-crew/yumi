@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>e_torque_reciever</name>
+  <name>e_torque_receiver</name>
   <version>0.0.1</version>
-  <description>Class comprising a UDP client used to recieve motor torques caused by 
+  <description>Class comprising a UDP client used to receive motor torques caused by 
   an external load from the ABB YuMi</description>
 
   <author email="mariunil@stud.ntnu.no">Marius Nilsen</author>

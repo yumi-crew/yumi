@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <e_torque_reciever/e_torque_reciever.hpp>
+#include <e_torque_receiver/e_torque_receiver.hpp>
 
 namespace socket_interface
 {
   
-ETorqueReciever::ETorqueReciever(std::string node_name, std::string robot_ip, uint port)
+ETorqueReceiver::ETorqueReceiver(std::string node_name, std::string robot_ip, uint port)
 :
 connected_{false}, stop_sign_{false}
 {
@@ -34,7 +34,7 @@ connected_{false}, stop_sign_{false}
 }
 
 
-bool ETorqueReciever::establish_connection(int num_retries)
+bool ETorqueReceiver::establish_connection(int num_retries)
 {
   if(connect(socket_.comm_socket,(struct sockaddr*)&(socket_.servaddr),sizeof(socket_.servaddr))==0) 
   {
@@ -65,7 +65,7 @@ bool ETorqueReciever::establish_connection(int num_retries)
 }
 
 
-void ETorqueReciever::start_stream(bool debug)
+void ETorqueReceiver::start_stream(bool debug)
 {
   std::cout << " ** entering start_streams()" << std::endl;
   char buf[100]; 
@@ -86,7 +86,7 @@ void ETorqueReciever::start_stream(bool debug)
 }
 
 
-void ETorqueReciever::parse(std::string data, bool debug)
+void ETorqueReceiver::parse(std::string data, bool debug)
 {
   size_t pos = 0;
   std::string token;
@@ -95,7 +95,7 @@ void ETorqueReciever::parse(std::string data, bool debug)
   data.erase(0, start);  // Filter out junk before vector
   size_t end = data.find("}");
 
-  // If recieved string contain both start symbol "{" and end symbol "}"
+  // If received string contain both start symbol "{" and end symbol "}"
   if( (start != std::string::npos) && (end != std::string::npos) && (start<end) )
   {
     // Find start of torque-vector and remove all content before start.
@@ -128,11 +128,11 @@ void ETorqueReciever::parse(std::string data, bool debug)
 
     if(debug) debug_print();
   }
-  else return; // If recieved string doesn't contain both the start-delimiter "{" and the end-delimiter "}", skip.
+  else return; // If received string doesn't contain both the start-delimiter "{" and the end-delimiter "}", skip.
 }
 
 
-void ETorqueReciever::debug_print()
+void ETorqueReceiver::debug_print()
 {
   std::cout << "{" << std::endl;
   int j = 0;
@@ -147,7 +147,7 @@ void ETorqueReciever::debug_print()
 }
 
 
-bool ETorqueReciever::disconnect()
+bool ETorqueReceiver::disconnect()
 {
   if(close(socket_.comm_socket != 0))
   {
