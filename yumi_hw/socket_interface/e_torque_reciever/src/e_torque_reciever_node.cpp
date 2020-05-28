@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
   signal(SIGINT, signal_callback_handler);
 
   rclcpp::init(argc, argv);
-  etorque_reciever = std::make_shared<socket_interface::ETorqueReciever>("e_torque_reciever", "192.168.125.1", 2021, 2020);
+  etorque_reciever = std::make_shared<socket_interface::ETorqueReciever>("e_torque_reciever", "192.168.125.1", 2020);
 
   std::cout << "before connect()" << std::endl;
   int num_retries = 10;

@@ -28,31 +28,32 @@ namespace socket_interface
 class ETorqueReciever
 {
 public:
-  ETorqueReciever(std::string node_name, std::string robot_ip, uint port_left, uint port_right);
+  ETorqueReciever(std::string node_name, std::string robot_ip, uint port);
 
   /** 
-   * Establishes connection with the UDP servers on the ABB YuMi. 
+   * Establishes connection with a TCP server on the robot controller of YuMi. 
    * 
-   * \param retries number of allowed attempts at forming the connections.
-   * \return true upon succesfull connection. 
+   * @param retries number of allowed attempts at forming the connections.
+   * @return bool indicating if the connection was successfull. 
    */
   bool establish_connection(int num_retries = 0);
 
   /** 
-   * Terminates the connection to the UDP servers. 
-   * \return true if both sockets close succesfully.
+   * Terminates the connection to the TCP server. 
+   * 
+   * @return bool indicating if the socket closed succesfully.
    */ 
   bool disconnect();
 
   /** 
-   * Starts two streams, recieving motor torques from each arm of the ABB YuMi. 
+   * @brief Opens the stream, recieving the sent motor torques cause by an external load.
    * 
-   * The call is blocking and will only exit upon recieved stop signal or loss of connection with the ABB YuMi. It is
+   * The call is blocking and will only exit upon recieved stop signal or loss of connection with YuMi. It is
    * recommended to call this method in a seperate thread.
    */
   void start_streams(bool debug = false);
 
-  /* Stops the two channels streaming motor torques. The connection is not terminated. */
+  /* Stops the the stream of motor torques. The connection is not terminated. */
   void stop_streams(){ stop_sign_ = true; };
 
   void debug_print();
@@ -60,10 +61,11 @@ public:
 private:
   std::shared_ptr<rclcpp::Node> node_;
   std::array<double, 7> e_torques_;
+  std::string namespace_;
 
   bool connected_ = false;
   bool stop_sign_ = false;
-  int rate_ = 500;
+  int rate_ = 500; // Publishing rate
   int allowed_consecutive_read_fails_ = 5;
   std::shared_ptr<rclcpp::Publisher<sensor_msgs::msg::JointState>> publisher_;
   
@@ -75,11 +77,7 @@ private:
     int consecutive_read_fails_counter;
   };
 
-  SocketInfo socket_left_;
-  SocketInfo socket_right_;
-  std::mutex thread_left_mutex_;
-  std::mutex thread_right_mutex_;
-  
+  SocketInfo socket_; 
   void parse(std::string data_, bool debug_print=false);
 };
 

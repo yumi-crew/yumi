@@ -17,28 +17,28 @@
 namespace socket_interface
 {
   
-ETorqueReciever::ETorqueReciever(std::string node_name, std::string robot_ip, uint port_left, uint port_right)
+ETorqueReciever::ETorqueReciever(std::string node_name, std::string robot_ip, uint port)
 :
 connected_{false}, stop_sign_{false}
 {
   node_ = std::make_shared<rclcpp::Node>(node_name);
-  publisher_ = node_->create_publisher<sensor_msgs::msg::JointState>("/r/external_joint_torques", 10);
+  namespace_ = node_->get_namespace();
+  publisher_ = node_->create_publisher<sensor_msgs::msg::JointState>(namespace_+"/external_joint_torques", 10);
 
-  // Right arm UDP socket
-  socket_right_.comm_socket = socket(AF_INET, SOCK_STREAM, 0);
-  socket_right_.servaddr.sin_family = AF_INET;
-  socket_right_.servaddr.sin_port = htons(port_right);
-  inet_pton(AF_INET, robot_ip.c_str(), &(socket_right_.servaddr.sin_addr));
-  socket_right_.consecutive_read_fails_counter = 0;
-  socket_right_.connected = true;
+  socket_.comm_socket = socket(AF_INET, SOCK_STREAM, 0);
+  socket_.servaddr.sin_family = AF_INET;
+  socket_.servaddr.sin_port = htons(port);
+  inet_pton(AF_INET, robot_ip.c_str(), &(socket_.servaddr.sin_addr));
+  socket_.consecutive_read_fails_counter = 0;
+  socket_.connected = true;
 }
 
 
 bool ETorqueReciever::establish_connection(int num_retries)
 {
-  if(connect(socket_right_.comm_socket,(struct sockaddr*)&(socket_right_.servaddr),sizeof(socket_right_.servaddr))==0) 
+  if(connect(socket_.comm_socket,(struct sockaddr*)&(socket_.servaddr),sizeof(socket_.servaddr))==0) 
   {
-    socket_right_.connected = true;
+    socket_.connected = true;
     connected_ = true;
   }
 
@@ -47,16 +47,16 @@ bool ETorqueReciever::establish_connection(int num_retries)
   {
     if(retries_left)
     {
-      if(connect(socket_right_.comm_socket,(struct sockaddr*)&(socket_right_.servaddr),sizeof(socket_right_.servaddr))==0)
+      if(connect(socket_.comm_socket,(struct sockaddr*)&(socket_.servaddr),sizeof(socket_.servaddr))==0)
       {
-        socket_right_.connected = true;
+        socket_.connected = true;
         connected_ = true;
       }
     }
     else
     {
       RCLCPP_ERROR_STREAM(node_->get_logger(), "Unable to establish socket connection with YuMi." 
-      << "  right_socket connected: " << std::boolalpha << socket_right_.connected);
+      << "  right_socket connected: " << std::boolalpha << socket_.connected);
       return false;
     }
     --retries_left; 
@@ -68,46 +68,14 @@ bool ETorqueReciever::establish_connection(int num_retries)
 void ETorqueReciever::start_streams(bool debug)
 {
   std::cout << " ** entering start_streams()" << std::endl;
-  char buf_r[100]; 
-   
-  // std::cout << " ** before spinning out right thread" << std::endl;
-  // // Right socket thread
-  // std::thread right_thread([this, &buf_r]()
-  // {
-  //   int ret_r;
-  //   rclcpp::WallRate loop(rate_);
-  //   while (!stop_sign_ && connected_)
-  //   {
-  //     ret_r = read(socket_right_.comm_socket, buf_r, sizeof(buf_r));
-  //     if(ret_r >= 0) 
-  //     {
-  //       socket_right_.consecutive_read_fails_counter = 0;
-  //     }
-  //     else
-  //     {
-  //       if(socket_right_.consecutive_read_fails_counter < allowed_consecutive_read_fails_)
-  //       {
-  //         socket_right_.consecutive_read_fails_counter++;
-  //         continue;
-  //       }
-  //       else 
-  //       {
-  //         RCLCPP_ERROR_STREAM(node_->get_logger(), "Right socket failed to read " << allowed_consecutive_read_fails_ 
-  //           << " consecutive attempts. Stopping right stream.");
-  //         break;
-  //       }
-  //     }
-  //     loop.sleep();
-  //   }
-  // });
-
-
-  // Parse
+  char buf[100]; 
+  
+  // read-parse loop
   rclcpp::WallRate loop(rate_);
   while(!stop_sign_ && connected_)
   {
-    read(socket_right_.comm_socket, buf_r, sizeof(buf_r));
-    parse(buf_r, debug);    
+    read(socket_.comm_socket, buf, sizeof(buf));
+    parse(buf, debug);    
     if(stop_sign_)
     {
       std::cout << "Aborting streams, stop_sign_:  "<< stop_sign_ << " , connected_: " << connected_ << std::endl; 
@@ -115,8 +83,6 @@ void ETorqueReciever::start_streams(bool debug)
     }
     loop.sleep();
   }
-  //right_thread.join();
-  //RCLCPP_INFO_STREAM(node_->get_logger(), "Threads stopped successfully.");
 }
 
 
@@ -170,7 +136,6 @@ void ETorqueReciever::debug_print()
 {
   std::cout << "{" << std::endl;
   int j = 0;
-  std::cout << "  Right arm" << std::endl;
   for(auto e : e_torques_) 
   {
     if(j == 2) std::cout << "\tjoint 7: " << e << std::endl;
@@ -184,13 +149,12 @@ void ETorqueReciever::debug_print()
 
 bool ETorqueReciever::disconnect()
 {
-  bool success_right = true;
-  if(close(socket_right_.comm_socket != 0))
+  if(close(socket_.comm_socket != 0))
   {
-    success_right = false;
-    std::cout << "[ERROR] An error occured while disconnecting right socket." << std::endl;
+    std::cout << "[ERROR] An error occured while disconnecting the socket." << std::endl;
+    return false;
   }
-  return success_right;
+  else return true
 }
 
 } // end namespace socket_interface
