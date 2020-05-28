@@ -172,21 +172,16 @@ public:
   /* Checks if a registered object is present in the planning scene. */
   bool object_present(std::string object_id){ return !object_manager_->find_object(object_id).empty(); }
 
-   /* Randomly side-shifts an registered object. Returns the new position. */
-  std::vector<double> random_move_object(std::string object_id, double side_shift);
- 
   bool should_stop(){ return should_stop_; }
   void grip_in(std::string planning_component, bool blocking);
   void grip_out(std::string planning_component, bool blocking);
   void jog_gripper(std::string planning_component, double pos, bool blocking);
   void open_gripper(std::string planning_component, bool blocking);
   void close_gripper(std::string planning_component, bool blocking);
-  std::shared_ptr<rclcpp::Node> get_node() { return node_; };
   void drop_object(std::string object_id, std::string planning_component);
   void grab_object(std::string object_id, std::string planning_component);
-  std::vector<double> find_link_pose(std::string link)
-  { return moveit2_wrapper_->find_pose(link); }
-
+  std::vector<double> get_link_pose(std::string link) { return moveit2_wrapper_->find_pose(link); }
+  std::shared_ptr<rclcpp::Node> get_node() { return node_; };
 
 private:
   std::string node_name_;
@@ -238,6 +233,9 @@ private:
 
   /* Finds a configuration giving the same end-effector pose. */
   std::vector<double> equivalent_state(std::string planning_component, std::vector<double> pose, bool eulerzyx); 
+
+  /* Randomly side-shifts an registered object. Returns the new position. */
+  std::vector<double> random_move_object(std::string object_id, double side_shift);
 
   void print_matrix(Eigen::Matrix4d mat);
   void joint_state_callback(sensor_msgs::msg::JointState::UniquePtr msg);

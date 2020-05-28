@@ -114,7 +114,7 @@ int main(int argc, char **argv)
   int lin_retries = 3;
 
   // attach serving tray
-  auto gripper_pose = yumi_motion_coordinator->find_link_pose("gripper_l_center");
+  auto gripper_pose = yumi_motion_coordinator->get_link_pose("gripper_l_center");
   yumi_motion_coordinator->add_object("chessboard_holder", gripper_pose, false, {1, 1, 0, 1});  //yellow
   yumi_motion_coordinator->grab_object("chessboard_holder", "left_arm");
 
