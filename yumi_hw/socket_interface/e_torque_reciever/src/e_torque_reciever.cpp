@@ -65,7 +65,7 @@ bool ETorqueReciever::establish_connection(int num_retries)
 }
 
 
-void ETorqueReciever::start_streams(bool debug)
+void ETorqueReciever::start_stream(bool debug)
 {
   std::cout << " ** entering start_streams()" << std::endl;
   char buf[100]; 

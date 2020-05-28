@@ -51,10 +51,10 @@ public:
    * The call is blocking and will only exit upon recieved stop signal or loss of connection with YuMi. It is
    * recommended to call this method in a seperate thread.
    */
-  void start_streams(bool debug = false);
+  void start_stream(bool debug = false);
 
   /* Stops the the stream of motor torques. The connection is not terminated. */
-  void stop_streams(){ stop_sign_ = true; };
+  void stop_stream(){ stop_sign_ = true; };
 
   void debug_print();
 

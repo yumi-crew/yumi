@@ -7,7 +7,7 @@ void signal_callback_handler(int signum)
 {
   std::cout << "Caught signal " << signum << std::endl;
   // Stop streams
-  etorque_reciever->stop_streams();
+  etorque_reciever->stop_stream();
   // Disconenct
   etorque_reciever->disconnect();
   // Terminate ros node
@@ -32,8 +32,8 @@ int main(int argc, char *argv[])
     return -1;
   }
 
-  std::cout << "before start_streams()" << std::endl;
-  etorque_reciever->start_streams(false);
+  std::cout << "before start_stream()" << std::endl;
+  etorque_reciever->start_stream(false);
 
 
   while (1)
