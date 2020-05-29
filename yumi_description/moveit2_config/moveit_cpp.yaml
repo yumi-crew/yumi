@@ -1,4 +1,4 @@
-onsket_nodenavn:
+motion_coordinator:
   ros__parameters:
     planning_scene_monitor_options:
       name: "planning_scene_monitor"

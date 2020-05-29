@@ -59,24 +59,6 @@ ament_target_dependencies(demo_dual
                           pose_estimation   
 )
 
-# test_kdl_ik                         
-add_executable(test_kdl_ik src/test_kdl_ik.cpp)
-ament_target_dependencies(test_kdl_ik 
-                          rclcpp                            
-                          sensor_msgs
-                          angles                             
-                          ros2_control_interfaces 
-                          sg_control_interfaces
-                          yumi_robot_manager_interfaces
-                          rws_clients
-                          kdl_wrapper 
-                          urdf
-                          orocos_kdl
-)
-
-# test_socket
-add_executable(test_socket src/test_socket.cpp)
-target_link_libraries (test_socket ${CMAKE_THREAD_LIBS_INIT})
 
 # test_motion_coordinator                         
 add_executable(test_motion_coordinator src/test_motion_coordinator.cpp)
@@ -97,9 +79,7 @@ ament_target_dependencies(test_torque
 install(TARGETS 
   demo
   demo_dual
-  test_kdl_ik
   test_motion_coordinator
-  test_socket
   test_torque
   DESTINATION lib/${PROJECT_NAME}
 )

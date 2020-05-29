@@ -75,7 +75,7 @@ void ETorqueReceiver::start_stream(bool debug)
   while(!stop_sign_ && connected_)
   {
     read(socket_.comm_socket, buf, sizeof(buf));
-    parse(buf, debug);    
+    parse_and_publish(buf, debug);    
     if(stop_sign_)
     {
       std::cout << "Aborting streams, stop_sign_:  "<< stop_sign_ << " , connected_: " << connected_ << std::endl; 
@@ -154,7 +154,7 @@ bool ETorqueReceiver::disconnect()
     std::cout << "[ERROR] An error occured while disconnecting the socket." << std::endl;
     return false;
   }
-  else return true
+  else return true;
 }
 
 } // end namespace socket_interface

@@ -72,7 +72,7 @@ bool MotionCoordinator::init()
     return false;
   }
 
-  object_manager_ = std::make_shared<moveit2_wrapper::ObjectManager>(moveit2_wrapper_->get_moveit_cpp());
+  object_manager_ = std::make_shared<moveit2_wrapper::ObjectManager>(moveit2_wrapper_->get_planning_interface());
   if(!object_manager_->init())
   {
     std::cout << "[ERROR] object_manager failed to initialize." << std::endl;

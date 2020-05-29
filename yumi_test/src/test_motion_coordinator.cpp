@@ -21,9 +21,12 @@ void spin(std::shared_ptr<rclcpp::executors::MultiThreadedExecutor> exe)
 
 int main(int argc, char** argv)
 {
+  // Ctrl+C handler
+  signal(SIGINT, signal_callback_handler);
+  
   rclcpp::init(argc, argv);
 
-  yumi_motion_coordinator = std::make_shared<motion_coordinator::MotionCoordinator>("onsket_nodenavn");
+  yumi_motion_coordinator = std::make_shared<motion_coordinator::MotionCoordinator>("motion_coordinator");
   if(!yumi_motion_coordinator->init()) return -1;
 
   // Spin the moveit2 node countiously in another thread via an executor
@@ -41,35 +44,21 @@ int main(int argc, char** argv)
   std::vector<double> bin_pose = {0.4, -0.1, -0.2, 0, 0, 0 };
   int counter = 0; int retries = 3; double percentage = 1; double speed_scale = 1; double acc_scale = 1;
   
-  //  ** TEST 1 ** 
+
   while(!yumi_motion_coordinator->should_stop())
   {
-    yumi_motion_coordinator->add_object("screwdriver", pose, true);
     yumi_motion_coordinator->move_to_pose("left_arm", {0.4, 0.1, 0.3, 0, 0, 180}, true, 3, false, true, false);
-    sleep(1);
-    yumi_motion_coordinator->linear_move_to_pose("left_arm", {0.4, 0.1, 0.1, 0, 0, 180}, true, retries, false, true, true, percentage, speed_scale, acc_scale);
-    sleep(1);
-    yumi_motion_coordinator->linear_move_to_pose("left_arm", {0.4, 0.1, 0.3, 0, 0, 180}, true, 0, false, true, true, percentage, speed_scale, acc_scale);
-
-
-    yumi_motion_coordinator->move_to_pose("left_arm", {0.4, -0.2, 0.3, 0, 0, 180}, true, 3, false, true, false);
-    sleep(1);
-    yumi_motion_coordinator->linear_move_to_pose("left_arm", {0.4, -0.2, 0.1, 0, 0, 180}, true, retries, false, true, true, percentage, speed_scale, acc_scale);
-    sleep(1);
-    yumi_motion_coordinator->linear_move_to_pose("left_arm", {0.4, -0.2, 0.3, 0, 0, 180}, true, 0, false, true, true, percentage, speed_scale, acc_scale);
-
-
-    yumi_motion_coordinator->move_to_pose("left_arm", {0.4, 0, 0.3, 0, 0, 180}, true, 3, false, true, false);
-    sleep(1);
-    yumi_motion_coordinator->linear_move_to_pose("left_arm", {0.4, 0, 0.1, 0, 0, 180}, true, retries, false, true, true, percentage, speed_scale, acc_scale);
-    sleep(1);
-    yumi_motion_coordinator->linear_move_to_pose("left_arm", {0.4, 0, 0.3, 0, 0, 180}, true, 0, false, true, true, percentage, speed_scale, acc_scale);
     
+    yumi_motion_coordinator->grip_out("left_arm", true);
+    yumi_motion_coordinator->grip_out("right_arm", true);
+
+    yumi_motion_coordinator->jog_gripper("left_arm", 0.01, true);
+    yumi_motion_coordinator->jog_gripper("right_arm", 0.01, true);
+
+    yumi_motion_coordinator->grip_in("left_arm", true);
+    yumi_motion_coordinator->grip_in("right_arm", true);
 
     yumi_motion_coordinator->move_to_home("left_arm", 3);
-    ++counter;
-    std::cout << "++++++ " << counter << " rounds completed" <<std::endl;
-    yumi_motion_coordinator->remove_object("screwdriver");
   }
 
   
