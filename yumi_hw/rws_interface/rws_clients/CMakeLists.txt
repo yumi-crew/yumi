@@ -32,21 +32,10 @@ target_compile_definitions( robot_manager_client PRIVATE
                            "RWS_CLIENTS_BUILDING_DLL"
 )
 
-
-# robot_manager_client_node (TO BE REMOVED BY LIFECYCLE)
-add_executable(robot_manager_client_node src/robot_manager_client_node.cpp)
-target_include_directories(robot_manager_client_node PRIVATE include )
-target_link_libraries(robot_manager_client_node robot_manager_client)
-ament_target_dependencies(robot_manager_client_node
-                          rcutils
-                          rclcpp
-                          yumi_robot_manager_interfaces                
-) 
-
-# grip_client
-add_library(grip_client SHARED src/grip_client.cpp)
-target_include_directories(grip_client PRIVATE include)
-ament_target_dependencies(grip_client
+# gripper_client
+add_library(gripper_client SHARED src/gripper_client.cpp)
+target_include_directories(gripper_client PRIVATE include)
+ament_target_dependencies(gripper_client
                           rcutils
                           rclcpp
                           rclcpp_action
@@ -54,38 +43,22 @@ ament_target_dependencies(grip_client
 )
 # Causes the visibility macros to use dllexport rather than dllimport, which is
 # appropriate when building the dll but not consuming it.
-target_compile_definitions( grip_client PRIVATE
+target_compile_definitions( gripper_client PRIVATE
                            "RWS_CLIENTS_BUILDING_DLL"
 )                
-# grip_client_node (TO BE REMOVED BY LIFECYCLE)
-add_executable(grip_client_node src/grip_client_node.cpp)
-target_include_directories(grip_client_node PRIVATE include )
-target_link_libraries(grip_client_node grip_client)
-ament_target_dependencies(grip_client_node
-                          rcutils
-                          rclcpp
-                          rclcpp_action
-                          sg_control_interfaces                        
-)
 
                           
 install(DIRECTORY include/ DESTINATION include)
 
-
-install(TARGETS robot_manager_client grip_client
+install(TARGETS robot_manager_client gripper_client
         ARCHIVE DESTINATION lib
         LIBRARY DESTINATION lib
         RUNTIME DESTINATION bin
 )
 
-install(TARGETS 
-        robot_manager_client_node
-        grip_client_node
-        DESTINATION lib/${PROJECT_NAME}
-)
 
 ament_export_include_directories(include)
 ament_export_dependencies(yumi_robot_manager_interfaces sg_control_interfaces)
-ament_export_libraries(robot_manager_client grip_client)
+ament_export_libraries(robot_manager_client gripper_client)
 
 ament_package()                          

@@ -28,21 +28,21 @@ namespace sg_control
 using Grip = sg_control_interfaces::action::Grip;
 using GoalHandleGrip = rclcpp_action::ServerGoalHandle<Grip>;
 
-class SgControl : public rclcpp::Node
+class SgControl 
 {
 public:
   SG_CONTROL_PUBLIC
-  SgControl(rclcpp::NodeOptions &options, const std::string &ip);
+  SgControl(std::shared_ptr<rclcpp::Node> node);
   
   SG_CONTROL_PUBLIC
   bool init();
-
+  
   SG_CONTROL_PUBLIC
-  bool is_gripper_open();
+  std::shared_ptr<rclcpp::Node> get_node(){ return node_; }
 
 private:
   std::string namespace_;
-  std::string ip_;
+  std::shared_ptr<rclcpp::Node> node_;
 
   rclcpp_action::Server<Grip>::SharedPtr grip_action_server_; 
   bool should_grip_in_;
@@ -65,7 +65,6 @@ private:
   bool perform_grip_out();
  
   // Helper functions
-  void busy_wait_for_gripper_to_finish_motion();
   bool grip_in();
   bool grip_out();
 };

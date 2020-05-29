@@ -28,14 +28,13 @@ bool MotionCoordinator::init()
   node_options.automatically_declare_parameters_from_overrides(true);
   node_ = std::make_shared<rclcpp::Node>(node_name_, "", node_options);
 
-  yumi_manager_ = std::make_shared<rws_clients::RobotManagerClient>("yumi_manager_client");
-  left_gripper_ = std::make_shared<rws_clients::GripClient>("grip_client_left", "/l");
-  right_gripper_ = std::make_shared<rws_clients::GripClient>("grip_client_right", "/r");
+  yumi_manager_ = std::make_shared<rws_clients::RobotManagerClient>(node_);
+  left_gripper_ = std::make_shared<rws_clients::GripperClient>(node_, "/l");
+  right_gripper_ = std::make_shared<rws_clients::GripperClient>(node_, "/r");
   moveit2_wrapper_ = std::make_shared<moveit2_wrapper::Moveit2Wrapper>(node_);
   joint_state_subscription_ = node_->create_subscription<sensor_msgs::msg::JointState>("joint_states", 
     10, std::bind(&MotionCoordinator::joint_state_callback, this, std::placeholders::_1));
-  gripper_l_pos_publisher_ = node_->create_publisher<std_msgs::msg::Float32>("/l/jog_gripper", 10);
-  gripper_r_pos_publisher_ = node_->create_publisher<std_msgs::msg::Float32>("/r/jog_gripper", 10);
+
   
   rclcpp::Parameter param = node_->get_parameter("robot_description_path");
   std::string path = param.as_string();
@@ -768,8 +767,8 @@ void MotionCoordinator::add_object(std::string object_id, std::vector<double> po
 
 void MotionCoordinator::grip_in(std::string planning_component, bool blocking)
 {
-  if(planning_component == "left_arm") left_gripper_->perform_grip(100);
-  if(planning_component == "right_arm") right_gripper_->perform_grip(100);
+  if(planning_component == "left_arm") left_gripper_->grip_in();
+  if(planning_component == "right_arm") right_gripper_->grip_in();
 
   if(blocking){ sleep(1.5); } // Takes at most approx 1.2 seconds to close
 }
@@ -777,8 +776,8 @@ void MotionCoordinator::grip_in(std::string planning_component, bool blocking)
 
 void MotionCoordinator::grip_out(std::string planning_component, bool blocking)
 {
-  if(planning_component == "left_arm") left_gripper_->perform_grip(0);
-  if(planning_component == "right_arm") right_gripper_->perform_grip(0);
+  if(planning_component == "left_arm") left_gripper_->grip_out();
+  if(planning_component == "right_arm") right_gripper_->grip_out();
 
   if(blocking){ sleep(1.5); } // Takes at most approx 1.2 seconds to close
 }
@@ -916,8 +915,8 @@ void MotionCoordinator::jog_gripper(std::string planning_component, double goal_
 {
   std_msgs::msg::Float32 msg;
   msg.data = goal_pos/2.0; // gripper = joint + mimic_joint
-  if(planning_component == "right_arm") gripper_r_pos_publisher_->publish(msg);
-  else if(planning_component == "left_arm") gripper_l_pos_publisher_->publish(msg);
+  if(planning_component == "right_arm") right_gripper_->jog_gripper(goal_pos);
+  else if(planning_component == "left_arm") left_gripper_->jog_gripper(goal_pos);
 
   double error = 0.0;
   double curr_pos = moveit2_wrapper_->gripper_pos(planning_component);
@@ -926,6 +925,7 @@ void MotionCoordinator::jog_gripper(std::string planning_component, double goal_
     while( abs(curr_pos-goal_pos) < 0.001)
     {
       sleep(0.1);
+      curr_pos = moveit2_wrapper_->gripper_pos(planning_component);
     }
   }
 }

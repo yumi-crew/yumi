@@ -17,10 +17,10 @@
 #include <moveit2_wrapper/moveit2_wrapper.hpp>
 #include <moveit2_wrapper/object_manager.hpp>
 #include <rws_clients/robot_manager_client.hpp>
-#include <rws_clients/grip_client.hpp>
+#include <rws_clients/gripper_client.hpp>
 #include <kdl_wrapper/kdl_wrapper.h>
 #include <rclcpp/parameter.hpp>
-#include <std_msgs/msg/float32.hpp>
+
 
 namespace motion_coordinator
 {
@@ -187,14 +187,12 @@ private:
   std::string node_name_;
   std::shared_ptr<rclcpp::Node> node_;
   std::shared_ptr<rws_clients::RobotManagerClient> yumi_manager_;
-  std::shared_ptr<rws_clients::GripClient> left_gripper_;
-  std::shared_ptr<rws_clients::GripClient> right_gripper_;
+  std::shared_ptr<rws_clients::GripperClient> left_gripper_;
+  std::shared_ptr<rws_clients::GripperClient> right_gripper_;
   std::shared_ptr<moveit2_wrapper::Moveit2Wrapper> moveit2_wrapper_;
   std::shared_ptr<moveit2_wrapper::ObjectManager> object_manager_;
   std::shared_ptr<KdlWrapper> kdl_wrapper_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_subscription_;
-  rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr gripper_r_pos_publisher_;
-  rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr gripper_l_pos_publisher_;
 
   bool should_stop_ = false;
   bool robot_ready_ = false;

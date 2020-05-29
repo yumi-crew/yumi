@@ -20,7 +20,7 @@ namespace yumi_robot_manager
 YumiRobotManager::YumiRobotManager(const std::string &name, const std::string &ip_address) 
 : 
 name_(name),
-abb::rws::RWSStateMachineInterface(ip_address)
+ip_address_(ip_address)
 {}
 
 
@@ -32,23 +32,24 @@ bool YumiRobotManager::init()
   //--------------------------------------------------------------------------------------------------------------------
   
   node_ = rclcpp::Node::make_shared(name_); 
+  rws_state_machine_interface_ = std::make_shared<abb::rws::RWSStateMachineInterface>(ip_address_);
   egm_settings_l_ = std::make_shared<abb::rws::RWSStateMachineInterface::EGMSettings>();
   egm_settings_r_ = std::make_shared<abb::rws::RWSStateMachineInterface::EGMSettings>();
 
   // Connection check. Checks if robot controller is connected. Loops until connection is made.
-  auto runtime_info = this->collectRuntimeInfo();
+  auto runtime_info = rws_state_machine_interface_->collectRuntimeInfo();
   RCLCPP_INFO(node_->get_logger(), "Connecting to Robot...");
   while(!runtime_info.rws_connected)
   {
     RCLCPP_WARN(node_->get_logger(), "Connection failed. Check robot is connected. Retrying...");
-    runtime_info = this->collectRuntimeInfo();
+    runtime_info = rws_state_machine_interface_->collectRuntimeInfo();
     usleep(2*1000000);
   }
   RCLCPP_INFO(node_->get_logger(), "Succesfully connected to Robot.");
 
   // Auto mode check. Check if robot controller is in Auto mode. Auto mode is required for RWS.
   RCLCPP_INFO(node_->get_logger(), "Checking if robot controller is in auto mode...");
-  if(!this->isAutoMode().isTrue() )
+  if(!rws_state_machine_interface_->isAutoMode().isTrue() )
   {
     RCLCPP_ERROR(node_->get_logger(), "Robot controller must be in auto mode. Exiting.");
     return false;
@@ -58,12 +59,12 @@ bool YumiRobotManager::init()
   // RAPID Execution check. Checks if RAPID Execution is stopped so program pointer can be reset. Additonally to
   // avoid unexpected execution during configuration the StateMachine should not be running.
   RCLCPP_INFO(node_->get_logger(), "Checking if StateMachine is running...");
-  if(this->isRAPIDRunning().isTrue())
+  if(rws_state_machine_interface_->isRAPIDRunning().isTrue())
   {
     RCLCPP_WARN(node_->get_logger(), "StateMachine should not be running during initialization. Stopping StateMachine...");
-    this->stopRAPIDExecution();
+    rws_state_machine_interface_->stopRAPIDExecution();
     sleep(1);
-    if(this->isRAPIDRunning().isTrue())
+    if(rws_state_machine_interface_->isRAPIDRunning().isTrue())
     {
       RCLCPP_ERROR(node_->get_logger(), "Unable to stop StateMachine");
       return false;
@@ -108,9 +109,9 @@ bool YumiRobotManager::start_state_machine()
 { 
   // Motor check. Check if motors are on, turn on if not.
   RCLCPP_INFO(node_->get_logger(), "Checking if motors are on...");
-  if(!this->isMotorOn().isTrue())
+  if(!rws_state_machine_interface_->isMotorOn().isTrue())
   {
-    if(!this->setMotorsOn())
+    if(!rws_state_machine_interface_->setMotorsOn())
     {
       RCLCPP_WARN(node_->get_logger(), "Not able to turn on motors");
     }
@@ -121,7 +122,7 @@ bool YumiRobotManager::start_state_machine()
   if(!first_execution_)
   {
     RCLCPP_INFO(node_->get_logger(), "Reseting program pointer...");       
-    if(!this->resetRAPIDProgramPointer())
+    if(!rws_state_machine_interface_->resetRAPIDProgramPointer())
     {
       RCLCPP_ERROR(node_->get_logger(), "Not able to reset program pointer. Exiting");
       return false;
@@ -130,19 +131,19 @@ bool YumiRobotManager::start_state_machine()
   }
   else
   {
-    // To fix documented issue with abb_libegm
-    this->startRAPIDExecution();
+    // Trying to fix documented issue with abb_libegm
+    rws_state_machine_interface_->startRAPIDExecution();
     usleep(0.5*1000000);
-    this->stopRAPIDExecution();
+    rws_state_machine_interface_->stopRAPIDExecution();
     usleep(0.5*1000000);
-    this->resetRAPIDProgramPointer();
+    rws_state_machine_interface_->resetRAPIDProgramPointer();
   }
 
 
   // Start state machine.
   RCLCPP_INFO(node_->get_logger(), "Starting StateMachine...");
-  this->startRAPIDExecution();
-  if(!this->isRAPIDRunning().isTrue())
+  rws_state_machine_interface_->startRAPIDExecution();
+  if(!rws_state_machine_interface_->isRAPIDRunning().isTrue())
   {
     RCLCPP_WARN(node_->get_logger(), "Unable to start StateMachine");
     return false;
@@ -164,7 +165,7 @@ bool YumiRobotManager::go_to_state(std::string mode)
   requested_state_ = boost::algorithm::to_lower_copy(mode);
 
   // RAPID execution check. Check if StateMachine is running.
-  if(!this->isRAPIDRunning().isTrue())
+  if(!rws_state_machine_interface_->isRAPIDRunning().isTrue())
   {
     RCLCPP_ERROR(node_->get_logger(), "Unable to change state, please confirm StateMachine is running");
     return false;
@@ -181,8 +182,9 @@ bool YumiRobotManager::go_to_state(std::string mode)
     RCLCPP_INFO(node_->get_logger(), "StateMachine entering EGM mode...");
 
     // Sending signal EGM_START_JOINT, triggering the interrupt.
-    this->services().egm().signalEGMStartJoint(); 
-    if( !((this->services().main().getCurrentState(task_L_) == 3) && (this->services().main().getCurrentState(task_R_) == 3 )))
+    rws_state_machine_interface_->services().egm().signalEGMStartJoint(); 
+    if( !((rws_state_machine_interface_->services().main().getCurrentState(task_L_) == 3) && 
+          (rws_state_machine_interface_->services().main().getCurrentState(task_R_) == 3 )))
     {
       RCLCPP_ERROR(node_->get_logger(), "Unable to start EGM mode.");
       return false;
@@ -195,12 +197,13 @@ bool YumiRobotManager::go_to_state(std::string mode)
     // To solve known issue with abb_libegm:
     // "RAPID execution state is UNDEFINED (might happen first time after controller start/restart). 
     // "Try to restart the RAPID program."
-    if( ((this->services().main().getCurrentState(task_L_) == 4) || (this->services().main().getCurrentState(task_R_) == 4 )) )
+    if( ((rws_state_machine_interface_->services().main().getCurrentState(task_L_) == 4) || 
+        (rws_state_machine_interface_->services().main().getCurrentState(task_R_) == 4 )) )
     {
       RCLCPP_INFO(node_->get_logger(), "Known issue, 'RAPID execution state is UNDEFINED' encountered. Restarting StateMachine");
-      this->stopRAPIDExecution();
+      rws_state_machine_interface_->stopRAPIDExecution();
       usleep(0.5*1000000);
-      this->resetRAPIDProgramPointer();
+      rws_state_machine_interface_->resetRAPIDProgramPointer();
       usleep(0.5*1000000);
       start_state_machine();
       usleep(0.5*1000000);
@@ -235,10 +238,10 @@ bool YumiRobotManager::configure()
   {
     abb::rws::RWSStateMachineInterface::SGSettings p_left_settings;
     abb::rws::RWSStateMachineInterface::SGSettings p_right_settings;
-    this->services().sg().dualGetSettings(&p_left_settings, &p_right_settings);
+    rws_state_machine_interface_->services().sg().dualGetSettings(&p_left_settings, &p_right_settings);
     p_left_settings.hold_force = 20;
     p_right_settings.hold_force = 20;
-    this->services().sg().dualSetSettings(p_left_settings, p_right_settings);
+    rws_state_machine_interface_->services().sg().dualSetSettings(p_left_settings, p_right_settings);
     is_ready_ = true;
     return true;
   }
@@ -256,60 +259,10 @@ void YumiRobotManager::spin()
 }
 
 
-//----------Helper Functions--------------------------------------------------------------------------------------------
-bool YumiRobotManager::configure_egm()
-{
-  bool left_successfull = false;
-  if(this->services().egm().getSettings(task_L_, egm_settings_l_.get())) // Fetchen funker ikke
-  {
-    RCLCPP_INFO_STREAM(node_->get_logger(), "**** setup_uc.use_filtering.value : " << egm_settings_l_->setup_uc.use_filtering.value);
-    RCLCPP_INFO_STREAM(node_->get_logger(), "**** egm_settings_l_->setup_uc.comm_timeout.value : " << egm_settings_l_->setup_uc.comm_timeout.value );
-    egm_settings_l_->setup_uc.use_filtering.value = false;
-    egm_settings_l_->setup_uc.comm_timeout.value = 60.0;
-    egm_settings_l_->run.ramp_in_time.value = 0.1;
-    egm_settings_l_->run.pos_corr_gain.value  = 1.0;
-    egm_settings_l_->activate.lp_filter.value = 0.0;
-    egm_settings_l_->activate.sample_rate.value = 4.0;
-    egm_settings_l_->activate.max_speed_deviation.value = 10.0;
-    RCLCPP_INFO_STREAM(node_->get_logger(), "**** setup_uc.use_filtering.value : " << egm_settings_l_->setup_uc.use_filtering.value);
-    RCLCPP_INFO_STREAM(node_->get_logger(), "**** egm_settings_l_->setup_uc.comm_timeout.value : " << egm_settings_l_->setup_uc.comm_timeout.value );
-    if(this->services().egm().setSettings(task_L_, *egm_settings_l_.get()))
-    {
-      left_successfull = true;
-      RCLCPP_INFO(node_->get_logger(), "writing to left StateMachine succesfull");
-    }
-    else
-    {
-      RCLCPP_ERROR(node_->get_logger(), "unable to write changes");
-      return false;
-    }
-  }
-
-  if(this->services().egm().getSettings(task_R_, egm_settings_r_.get()))
-  {
-    egm_settings_r_->setup_uc.use_filtering.value = false;
-    egm_settings_r_->setup_uc.comm_timeout.value = 60.0;
-    egm_settings_r_->run.ramp_in_time.value = 0.1;
-    egm_settings_r_->run.pos_corr_gain.value  = 1.0;
-    egm_settings_r_->activate.lp_filter.value = 0.0;
-    egm_settings_r_->activate.sample_rate.value = 4.0;
-    egm_settings_r_->activate.max_speed_deviation.value = 10.0;
-    if(this->services().egm().setSettings(task_R_, *egm_settings_r_.get()))
-    {
-      RCLCPP_INFO(node_->get_logger(), "writing to right StateMachine succesfull");
-      if(left_successfull) return true;
-    }
-  }
-  return true;
-  // RCLCPP_ERROR(node_->get_logger(), "Unable to adjust EGM settings of both StateMachines");
-  // return false;
-}
-
-
 void YumiRobotManager::busy_wait_until_idle()
 {
-  while(!(this->services().main().isStateIdle(task_L_).isTrue() 
-        && this->services().main().isStateIdle(task_R_).isTrue()))
+  while(!(rws_state_machine_interface_->services().main().isStateIdle(task_L_).isTrue() 
+        && rws_state_machine_interface_->services().main().isStateIdle(task_R_).isTrue()))
   {
     usleep(0.1*1000000); 
   }
@@ -326,7 +279,7 @@ void YumiRobotManager::wait_for_gripper_to_finish_motion()
 bool YumiRobotManager::calibrate_grippers()
 {
   // RAPID execution check. Check if StateMachine is running.
-  if(!this->isRAPIDRunning().isTrue())
+  if(!rws_state_machine_interface_->isRAPIDRunning().isTrue())
   {
     RCLCPP_ERROR(node_->get_logger(), "Unable to calibrate SmartGrippers without StateMachine executing.");
     return false;
@@ -338,7 +291,7 @@ bool YumiRobotManager::calibrate_grippers()
 
   // Calibrate Grippers. It is assumed grippers are closed.
   RCLCPP_INFO(node_->get_logger(), "Calibrating SmartGrippers...");
-  if(!this->services().sg().dualCalibrate())
+  if(!rws_state_machine_interface_->services().sg().dualCalibrate())
   {
     RCLCPP_ERROR(node_->get_logger(), "Could not Calibrate SmartGrippers");  
     return false;
@@ -354,7 +307,7 @@ bool YumiRobotManager::calibrate_grippers()
 
 bool YumiRobotManager::stop_egm()
 {
-  if(!this->services().egm().signalEGMStop())
+  if(!rws_state_machine_interface_->services().egm().signalEGMStop())
   {
     RCLCPP_WARN(node_->get_logger(), "Unable to stop EGM execution");
     return false;
@@ -412,9 +365,9 @@ void YumiRobotManager::handle_StopMotors(const std::shared_ptr<rmw_request_id_t>
 {
   (void) request_header;
   (void) request;
-  if(this->setMotorsOff())
+  if(rws_state_machine_interface_->setMotorsOff())
   {
-    if(this->isMotorOn().isFalse())
+    if(rws_state_machine_interface_->isMotorOn().isFalse())
     {
       response->motors_off = true;
     }

@@ -34,11 +34,11 @@ namespace sg_control
 using Grip = sg_control_interfaces::action::Grip;
 using GoalHandleGrip = rclcpp_action::ServerGoalHandle<Grip>;
 
-class SgControl : public rclcpp::Node
+class SgControl 
 {
 public:
   SG_CONTROL_PUBLIC
-  SgControl(rclcpp::NodeOptions &options, const std::string &ip);
+  SgControl(std::string name, const std::string &ip);
   
   SG_CONTROL_PUBLIC
   bool init();
@@ -46,11 +46,15 @@ public:
   SG_CONTROL_PUBLIC
   void publish_gripper_position();
 
+  SG_CONTROL_PUBLIC
+  rclcpp::Node::SharedPtr get_node(){ return node_; }
+
 private:
   std::string namespace_;
   std::string ip_;
+  std::string name_;
+  std::shared_ptr<rclcpp::Node> node_;
   std::shared_ptr<abb::rws::RWSStateMachineInterface> rws_state_machine_interface_;
-  std::shared_ptr<abb::rws::RWSStateMachineInterface::SGSettings> sg_settings_;
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr gripper_position_publisher_;
   rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr jog_gripper_subscription_;
   rclcpp_action::Server<Grip>::SharedPtr grip_action_server_; 

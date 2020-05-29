@@ -17,11 +17,11 @@
 namespace sg_control
 {
 
-SgControl::SgControl(rclcpp::NodeOptions &options, const std::string &ip)
-    : Node("sg_control", options),
-      ip_(ip)
-{
-}
+SgControl::SgControl(std::string name, const std::string &ip)
+: 
+name_(name),
+ip_(ip)
+{}
 
 bool SgControl::init()
 {
@@ -29,26 +29,26 @@ bool SgControl::init()
   using std::placeholders::_2;
 
   // Using nodegroup namespace to determine which of the grippers this instance is representing
-  namespace_ = this->get_namespace();
+  node_ = std::make_shared<rclcpp::Node>(name_);
+  namespace_ = node_->get_namespace();
 
-  sg_settings_ = std::make_shared<abb::rws::RWSStateMachineInterface::SGSettings>();
   rws_state_machine_interface_ = std::make_shared<abb::rws::RWSStateMachineInterface>(ip_);
-  gripper_position_publisher_ = this->create_publisher<std_msgs::msg::Float64>(namespace_ + "/gripper_pos", 10);
-  jog_gripper_subscription_ = this->create_subscription<std_msgs::msg::Float32>(namespace_+"/jog_gripper", 10,
+  gripper_position_publisher_ = node_->create_publisher<std_msgs::msg::Float64>(namespace_ + "/gripper_pos", 10);
+  jog_gripper_subscription_ = node_->create_subscription<std_msgs::msg::Float32>(namespace_+"/jog_gripper", 10,
    std::bind(&SgControl::jog_gripper_callback, this, _1));
 
   // Connection check. Confirm robot controller is connected. Loops until connection is made.
   auto runtime_info = rws_state_machine_interface_->collectRuntimeInfo();
-  RCLCPP_INFO(this->get_logger(), "Connecting to Robot...");
+  RCLCPP_INFO(node_->get_logger(), "Connecting to Robot...");
   if (!runtime_info.rws_connected)
   {
-    RCLCPP_ERROR(this->get_logger(), "Connection failed. Check robot is connected.");
+    RCLCPP_ERROR(node_->get_logger(), "Connection failed. Check robot is connected.");
     return false;
   }
 
   // Start action server
   grip_action_server_ = rclcpp_action::create_server<Grip>(
-      this->shared_from_this(),
+      node_->shared_from_this(),
       "Grip",
       std::bind(&SgControl::handle_goal, this, _1, _2),
       std::bind(&SgControl::handle_cancel, this, _1),
@@ -56,34 +56,35 @@ bool SgControl::init()
   return true;
 }
 
-rclcpp_action::GoalResponse
-SgControl::handle_goal(const rclcpp_action::GoalUUID &uuid, std::shared_ptr<const Grip::Goal> goal)
+rclcpp_action::GoalResponse SgControl::handle_goal(const rclcpp_action::GoalUUID &uuid, 
+                                                   std::shared_ptr<const Grip::Goal> goal)
 {
   switch ((int)goal->grip_percentage_closed)
   {
   case 0:
     should_grip_in_ = false;
-    RCLCPP_INFO(this->get_logger(), "Recieved goal request: Grip Out");
+    RCLCPP_INFO(node_->get_logger(), "Recieved goal request: Grip Out");
     break;
   case 100:
     should_grip_in_ = true;
-    RCLCPP_INFO(this->get_logger(), "Recieved goal request: Grip In");
+    RCLCPP_INFO(node_->get_logger(), "Recieved goal request: Grip In");
     break;
   default:
-    RCLCPP_ERROR(this->get_logger(), "Only values 0 and 100 is supported at the moment");
+    RCLCPP_ERROR(node_->get_logger(), "Only values 0 and 100 is supported at the moment");
   }
   (void)uuid;
   should_execute_ = true;
   return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
 }
 
-rclcpp_action::CancelResponse
-SgControl::handle_cancel(const std::shared_ptr<GoalHandleGrip> goal_handle)
+
+rclcpp_action::CancelResponse SgControl::handle_cancel(const std::shared_ptr<GoalHandleGrip> goal_handle)
 {
-  RCLCPP_INFO(this->get_logger(), "Not possible to cancel goal");
+  RCLCPP_INFO(node_->get_logger(), "Not possible to cancel goal");
   (void)goal_handle;
   return rclcpp_action::CancelResponse::ACCEPT;
 }
+
 
 void SgControl::handle_accepted(const std::shared_ptr<GoalHandleGrip> goal_handle)
 {
@@ -97,12 +98,12 @@ void SgControl::execute(const std::shared_ptr<GoalHandleGrip> goal_handle)
   if (should_grip_in_ && should_execute_)
   {
     perform_grip_in();
-    RCLCPP_INFO(this->get_logger(), "Executing Grip In");
+    RCLCPP_INFO(node_->get_logger(), "Executing Grip In");
   }
   if (!should_grip_in_ && should_execute_)
   {
     perform_grip_out();
-    RCLCPP_INFO(this->get_logger(), "Executing Grip Out");
+    RCLCPP_INFO(node_->get_logger(), "Executing Grip Out");
   }
 
   const auto goal = goal_handle->get_goal();
@@ -111,8 +112,8 @@ void SgControl::execute(const std::shared_ptr<GoalHandleGrip> goal_handle)
   auto result = std::make_shared<Grip::Result>();
 
   // Estimated to take a second to close gripper. Publish feedback at 250 hz for a second.
-  auto start_time = this->now();
-  auto elapsed_time = this->now() - start_time;
+  auto start_time = node_->now();
+  auto elapsed_time = node_->now() - start_time;
   double percentage = 0;
   rclcpp::Rate loop(250);
   while (elapsed_time.seconds() < 1.0)
@@ -122,7 +123,7 @@ void SgControl::execute(const std::shared_ptr<GoalHandleGrip> goal_handle)
     {
       result->res_grip = position;
       goal_handle->canceled(result);
-      RCLCPP_INFO(this->get_logger(), "Goal Canceled");
+      RCLCPP_INFO(node_->get_logger(), "Goal Canceled");
       should_execute_ = false;
       return;
     }
@@ -131,7 +132,7 @@ void SgControl::execute(const std::shared_ptr<GoalHandleGrip> goal_handle)
     position = std::stof(s_pos); 
     goal_handle->publish_feedback(feedback);
     loop.sleep();
-    elapsed_time = this->now() - start_time;
+    elapsed_time = node_->now() - start_time;
   }
 
   // Will not evaluate if gripper is closed/opened. Even though the desired
@@ -141,33 +142,36 @@ void SgControl::execute(const std::shared_ptr<GoalHandleGrip> goal_handle)
 
   result->res_grip = percentage; //percentage closed
   goal_handle->succeed(result);
-  RCLCPP_INFO(this->get_logger(), "Goal Succeeded");
+  RCLCPP_INFO(node_->get_logger(), "Goal Succeeded");
   should_execute_ = false;
 }
+
 
 bool SgControl::perform_grip_in()
 {
   // RAPID execution check. Confirm StateMachine is running.
   if (!rws_state_machine_interface_->isRAPIDRunning().isTrue())
   {
-    RCLCPP_ERROR(this->get_logger(), "Unable to grip in without StateMachine executing.");
+    RCLCPP_ERROR(node_->get_logger(), "Unable to grip in without StateMachine executing.");
     return false;
   }
   // grips in with correct gripper
   grip_in();
 }
 
+
 bool SgControl::perform_grip_out()
 {
   // RAPID execution check. Confirm StateMachine is running.
   if (!rws_state_machine_interface_->isRAPIDRunning().isTrue())
   {
-    RCLCPP_ERROR(this->get_logger(), "Unable to grip out without StateMachine executing.");
+    RCLCPP_ERROR(node_->get_logger(), "Unable to grip out without StateMachine executing.");
     return false;
   }
   // grips out with correct gripper
   grip_out();
 }
+
 
 bool SgControl::grip_in()
 {
@@ -175,7 +179,7 @@ bool SgControl::grip_in()
   {
     if (!rws_state_machine_interface_->services().sg().rightGripIn())
     {
-      RCLCPP_ERROR(this->get_logger(), "Unable to grip in with right gripper.");
+      RCLCPP_ERROR(node_->get_logger(), "Unable to grip in with right gripper.");
       return false;
     }
     else
@@ -185,7 +189,7 @@ bool SgControl::grip_in()
   {
     if (!rws_state_machine_interface_->services().sg().leftGripIn())
     {
-      RCLCPP_ERROR(this->get_logger(), "Unable to grip in with left gripper.");
+      RCLCPP_ERROR(node_->get_logger(), "Unable to grip in with left gripper.");
       return false;
     }
     else
@@ -193,7 +197,7 @@ bool SgControl::grip_in()
   }
   else
   {
-    RCLCPP_ERROR(this->get_logger(), "Invalid namepsace occured.");
+    RCLCPP_ERROR(node_->get_logger(), "Invalid namepsace occured.");
     return false;
   }
 }
@@ -204,7 +208,7 @@ bool SgControl::grip_out()
   {
     if (!rws_state_machine_interface_->services().sg().rightGripOut())
     {
-      RCLCPP_ERROR(this->get_logger(), "Unable to grip out with right gripper.");
+      RCLCPP_ERROR(node_->get_logger(), "Unable to grip out with right gripper.");
       return false;
     }
     else
@@ -214,7 +218,7 @@ bool SgControl::grip_out()
   {
     if (!rws_state_machine_interface_->services().sg().leftGripOut())
     {
-      RCLCPP_ERROR(this->get_logger(), "Unable to grip out with left gripper.");
+      RCLCPP_ERROR(node_->get_logger(), "Unable to grip out with left gripper.");
       return false;
     }
     else
@@ -222,7 +226,7 @@ bool SgControl::grip_out()
   }
   else
   {
-    RCLCPP_ERROR(this->get_logger(), "Invalid namespace occured.");
+    RCLCPP_ERROR(node_->get_logger(), "Invalid namespace occured.");
     return false;
   }
 }
@@ -239,7 +243,7 @@ std::string SgControl::get_gripper_pos()
   }
   else
   {
-    RCLCPP_ERROR(this->get_logger(), "Invalid namespace occured.");
+    RCLCPP_ERROR(node_->get_logger(), "Invalid namespace occured.");
     return {};
   }
 }

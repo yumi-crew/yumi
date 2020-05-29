@@ -23,7 +23,7 @@ int main(int argc, char** argv)
 {
   // Ctrl+C handler
   signal(SIGINT, signal_callback_handler);
-  
+
   rclcpp::init(argc, argv);
 
   yumi_motion_coordinator = std::make_shared<motion_coordinator::MotionCoordinator>("motion_coordinator");
@@ -52,8 +52,10 @@ int main(int argc, char** argv)
     yumi_motion_coordinator->grip_out("left_arm", true);
     yumi_motion_coordinator->grip_out("right_arm", true);
 
+    
     yumi_motion_coordinator->jog_gripper("left_arm", 0.01, true);
     yumi_motion_coordinator->jog_gripper("right_arm", 0.01, true);
+    sleep(1);
 
     yumi_motion_coordinator->grip_in("left_arm", true);
     yumi_motion_coordinator->grip_in("right_arm", true);

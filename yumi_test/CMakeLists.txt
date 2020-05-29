@@ -59,7 +59,6 @@ ament_target_dependencies(demo_dual
                           pose_estimation   
 )
 
-
 # test_motion_coordinator                         
 add_executable(test_motion_coordinator src/test_motion_coordinator.cpp)
 ament_target_dependencies(test_motion_coordinator 

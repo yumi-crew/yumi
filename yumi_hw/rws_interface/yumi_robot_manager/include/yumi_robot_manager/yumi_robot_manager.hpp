@@ -36,7 +36,7 @@ namespace yumi_robot_manager
   using IsReady  = yumi_robot_manager_interfaces::srv::IsReady;
   using StopMotors = yumi_robot_manager_interfaces::srv::StopMotors;
 
-class YumiRobotManager : public abb::rws::RWSStateMachineInterface
+class YumiRobotManager
 {
 public:
   YUMI_ROBOT_MANAGER_PUBLIC
@@ -62,10 +62,12 @@ public:
 
 private:
   std::string name_;
+  std::string ip_address_;
   std::shared_ptr<rclcpp::Node> node_;
   bool first_execution_ = true;
   std::string requested_state_;
   bool is_ready_ = false;
+  std::shared_ptr<abb::rws::RWSStateMachineInterface> rws_state_machine_interface_;
 
   std::string task_L_ = "T_ROB_L";   
   std::string task_R_ = "T_ROB_R";

@@ -29,23 +29,19 @@ std::string generate_hex(const unsigned int len)
 // .....................................................................................................................
 
 
-RobotManagerClient::RobotManagerClient(std::string name)
+RobotManagerClient::RobotManagerClient(std::shared_ptr<rclcpp::Node> node)
 :
-name_(name)
-{
-}
+node_(node)
+{}
 
 
-bool
-RobotManagerClient::init()
+bool RobotManagerClient::init()
 {
-  node_ = rclcpp::Node::make_shared(name_);
   return true;
 }
 
 
-bool
-RobotManagerClient::robot_is_ready()
+bool RobotManagerClient::robot_is_ready()
 {
   using IsReady  = yumi_robot_manager_interfaces::srv::IsReady;
   using namespace std::chrono_literals;
@@ -108,8 +104,7 @@ RobotManagerClient::robot_is_ready()
 
 
 
-bool
-RobotManagerClient::stop_egm()
+bool RobotManagerClient::stop_egm()
 {
   using StopEgm  = yumi_robot_manager_interfaces::srv::StopEgm;
   using namespace std::chrono_literals;
@@ -175,9 +170,7 @@ RobotManagerClient::stop_egm()
 }
   
 
-
-bool
-RobotManagerClient::start_egm()
+bool RobotManagerClient::start_egm()
 {
   using StartEgm = yumi_robot_manager_interfaces::srv::StartEgm;
   using namespace std::chrono_literals;
@@ -242,8 +235,7 @@ RobotManagerClient::start_egm()
 }
 
 
-bool
-RobotManagerClient::stop_motors()
+bool RobotManagerClient::stop_motors()
 {
   using StopMotors = yumi_robot_manager_interfaces::srv::StopMotors;
   using namespace std::chrono_literals;

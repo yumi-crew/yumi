@@ -17,24 +17,22 @@
 namespace sg_control
 {
 
-SgControl::SgControl(rclcpp::NodeOptions &options, const std::string &ip)
+SgControl::SgControl(std::shared_ptr<rclcpp::Node> node)
 :
-Node("sg_control", options),
-ip_(ip)   
+node_(node)
 {}
 
 
-bool
-SgControl::init()
+bool SgControl::init()
 {
   using std::placeholders::_1; using std::placeholders::_2;
 
   // Using nodegroup namespace to determine which of the grippers this instance is representing
-  namespace_ = this->get_namespace();
+  namespace_ = node_->get_namespace();
    
   // Start action server
   grip_action_server_ = rclcpp_action::create_server<Grip>(       
-    this->shared_from_this(),
+    node_->shared_from_this(),
     "Grip",    // Topic names related
     std::bind(&SgControl::handle_goal, this, _1, _2), 
     std::bind(&SgControl::handle_cancel, this, _1),
@@ -44,23 +42,23 @@ SgControl::init()
 }
 
 
-rclcpp_action::GoalResponse 
-SgControl::handle_goal(const rclcpp_action::GoalUUID &uuid, std::shared_ptr<const Grip::Goal> goal)
+rclcpp_action::GoalResponse SgControl::handle_goal(const rclcpp_action::GoalUUID &uuid, 
+                                                   std::shared_ptr<const Grip::Goal> goal)
 {
   switch((int)goal->grip_percentage_closed)
   {
     case 0:
       should_grip_in_ = false;
-      RCLCPP_INFO(this->get_logger(), "Recieved goal request: Grip Out");
+      RCLCPP_INFO(node_->get_logger(), "Recieved goal request: Grip Out");
       break;
 
     case 100:
       should_grip_in_ = true;
-      RCLCPP_INFO(this->get_logger(), "Recieved goal request: Grip In");
+      RCLCPP_INFO(node_->get_logger(), "Recieved goal request: Grip In");
       break;
 
     default:
-      RCLCPP_ERROR(this->get_logger(), "Only values 0 and 100 is supported at the moment");
+      RCLCPP_ERROR(node_->get_logger(), "Only values 0 and 100 is supported at the moment");
   }
  
   (void)uuid;
@@ -71,7 +69,7 @@ SgControl::handle_goal(const rclcpp_action::GoalUUID &uuid, std::shared_ptr<cons
 
 rclcpp_action::CancelResponse SgControl::handle_cancel(const std::shared_ptr<GoalHandleGrip> goal_handle)
 {
-  RCLCPP_WARN(this->get_logger(), "Not possible to cancel goal.");
+  RCLCPP_WARN(node_->get_logger(), "Not possible to cancel goal.");
   (void)goal_handle;
   return rclcpp_action::CancelResponse::ACCEPT;
 }
@@ -90,12 +88,12 @@ void SgControl::execute(const std::shared_ptr<GoalHandleGrip> goal_handle)
   if(should_grip_in_ && should_execute_)
   {
     perform_grip_in();
-    RCLCPP_INFO(this->get_logger(), "Executing Grip In");
+    RCLCPP_INFO(node_->get_logger(), "Executing Grip In");
   }
   if(!should_grip_in_ && should_execute_)
   {
     perform_grip_out();
-    RCLCPP_INFO(this->get_logger(), "Executing Grip Out");
+    RCLCPP_INFO(node_->get_logger(), "Executing Grip Out");
   }
 
   const auto goal = goal_handle->get_goal();
@@ -104,8 +102,8 @@ void SgControl::execute(const std::shared_ptr<GoalHandleGrip> goal_handle)
   auto result = std::make_shared<Grip::Result>();
   
   // Estimated to take a second to close gripper. Publish feedback at 250 hz.
-  auto start_time = this->now();
-  auto elapsed_time = this->now()-start_time;
+  auto start_time = node_->now();
+  auto elapsed_time = node_->now()-start_time;
   double percentage = 0;
   rclcpp::Rate loop(250);
   while(elapsed_time.seconds() < 1.0)
@@ -115,19 +113,19 @@ void SgControl::execute(const std::shared_ptr<GoalHandleGrip> goal_handle)
     {
       result->res_grip = position;
       goal_handle->canceled(result);
-      RCLCPP_INFO(this->get_logger(), "Goal Canceled");
+      RCLCPP_INFO(node_->get_logger(), "Goal Canceled");
       should_execute_ = false;
       return;
     }
     // Estimate gripper position.
-    elapsed_time = this->now()-start_time;
+    elapsed_time = node_->now()-start_time;
     if(should_grip_in_) position = 0.02 - (0.02/1.0)*elapsed_time.seconds();
     else position = (0.02/1.0)*elapsed_time.seconds();
     
     // Publish feedback
     goal_handle->publish_feedback(feedback);
     loop.sleep();
-    elapsed_time = this->now()-start_time;
+    elapsed_time = node_->now()-start_time;
   }
 
   if(should_grip_in_) percentage = ceil((position/0.02)*100);
@@ -141,16 +139,11 @@ void SgControl::execute(const std::shared_ptr<GoalHandleGrip> goal_handle)
   {
     result->res_grip = percentage; //percentage closed
     goal_handle->succeed(result);
-    RCLCPP_INFO(this->get_logger(), "Goal Succeeded");
+    RCLCPP_INFO(node_->get_logger(), "Goal Succeeded");
     should_execute_ = false;
   }
 }
 
-bool SgControl::is_gripper_open()
-{
-  // not yet implemented
-  return true;
-}
 
 bool SgControl::perform_grip_in()
 {
