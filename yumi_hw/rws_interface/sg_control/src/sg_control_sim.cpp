@@ -29,6 +29,9 @@ bool SgControl::init()
 
   // Using nodegroup namespace to determine which of the grippers this instance is representing
   namespace_ = node_->get_namespace();
+  jog_gripper_subscription_ = node_->create_subscription<std_msgs::msg::Float32>(namespace_+"/jog_gripper", 10,
+    std::bind(&SgControl::jog_gripper_callback, this, _1));
+  gripper_position_publisher_ = node_->create_publisher<std_msgs::msg::Float64>(namespace_ + "/gripper_pos", 10);
    
   // Start action server
   grip_action_server_ = rclcpp_action::create_server<Grip>(       
@@ -150,19 +153,39 @@ bool SgControl::perform_grip_in()
   return grip_in();
 }
 
+
 bool SgControl::perform_grip_out()
 {
   return grip_out();
 }
+
 
 bool SgControl::grip_in()
 {
   return true;
 }
 
+
 bool SgControl::grip_out()
 {
   return true;
+}
+
+
+void SgControl::jog_gripper_callback(std_msgs::msg::Float32::UniquePtr msg)
+{
+  jog_gripper(msg->data);
+}
+
+
+void SgControl::jog_gripper(float pos)
+{
+  for(int i = 0; i<50; i++)
+  {
+    std_msgs::msg::Float64 msg; msg.data = i*pos/50.0;
+    gripper_position_publisher_->publish(msg);
+    sleep(0.02);
+  }
 }
 
 } //end namespace sg_control

@@ -28,7 +28,7 @@ int main(int argc, char **argv)
   rclcpp::init(argc, argv);
 
   // Initialize yumi motion coordinator
-  yumi_motion_coordinator = std::make_shared<motion_coordinator::MotionCoordinator>("onsket_nodenavn");
+  yumi_motion_coordinator = std::make_shared<motion_coordinator::MotionCoordinator>("motion_coordinator");
   if (!yumi_motion_coordinator->init())
     return -1;
 

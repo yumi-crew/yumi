@@ -11,6 +11,8 @@
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <sg_control_interfaces/action/grip.hpp>
 #include <angles/angles.h>
+#include <std_msgs/msg/float64.hpp>
+#include <std_msgs/msg/float32.hpp>
 
 std::array<double, 8> recieved_joint_pos_l{0, 0, 0, 0, 0, 0, 0, 0};
 std::array<double, 8> recieved_joint_pos_r{0, 0, 0, 0, 0, 0, 0, 0};
@@ -95,6 +97,16 @@ void callback_g_l(sg_control_interfaces::action::Grip_FeedbackMessage::UniquePtr
   recieved_joint_pos_l[7] = msg->feedback.position;
 }
 
+void callback_g_jr(std_msgs::msg::Float64::UniquePtr msg)
+{
+  recieved_joint_pos_r[7] = msg->data;
+}
+
+void callback_g_jl(std_msgs::msg::Float64::UniquePtr msg)
+{
+  recieved_joint_pos_l[7] = msg->data;
+}
+
 void spin(std::shared_ptr<rclcpp::executors::MultiThreadedExecutor> exe)
 {
   exe->spin();
@@ -122,6 +134,10 @@ int main(int argc, char *argv[])
     node->create_subscription<sg_control_interfaces::action::Grip_FeedbackMessage>("/r/Grip/_action/feedback",10, callback_g_r);
   auto gripper_state_subscription_l = 
     node->create_subscription<sg_control_interfaces::action::Grip_FeedbackMessage>("/l/Grip/_action/feedback",10, callback_g_l);
+  auto gripper_state_subscription_jr = 
+    node->create_subscription<std_msgs::msg::Float64>("/r/gripper_pos",10, callback_g_jr);
+  auto gripper_state_subscription_jl = 
+    node->create_subscription<std_msgs::msg::Float64>("/l/gripper_pos",10, callback_g_jl);
 
   auto executor = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
   executor->add_node(node);

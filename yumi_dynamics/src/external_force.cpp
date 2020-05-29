@@ -108,9 +108,9 @@ namespace yumi_dynamics
     // }
     // end test
 
-    // gravity compansation (might not be needed)
-    ext_torques_l_ -= kdl_wrapper_.dynamics_gravity("left_arm", q_l_).data;
-    ext_torques_r_ -= kdl_wrapper_.dynamics_gravity("right_arm", q_r_).data;
+    // gravity compansation
+    // ext_torques_l_ -= kdl_wrapper_.dynamics_gravity("left_arm", q_l_).data;
+    // ext_torques_r_ -= kdl_wrapper_.dynamics_gravity("right_arm", q_r_).data;
 
     // calculate the TCP wrenches
     //Eigen::Matrix<double, 6, 1> W_l = jac_t_pinv_l * ext_torques_l_;
@@ -127,6 +127,17 @@ namespace yumi_dynamics
       log << "x:" << wrench_r.wrench.force.x << ",y:" << wrench_r.wrench.force.y << ",z:" << wrench_r.wrench.force.z << std::endl;
       log.close();
     }
+    std::fstream log2{"torque_log.txt", std::fstream::app};
+    if (log2)
+    {
+      for(int i =0;i<joints_r_;++i)
+      {
+        log2 << ext_torques_r_(i) << ",";
+      }
+      log2 << std::endl;
+      log2.close();
+    }
+ 
 
     //wrench_pub_l_->publish(wrench_l);
     wrench_pub_r_->publish(wrench_r);

@@ -17,11 +17,14 @@
 #include <string>
 #include <memory>
 #include <math.h>
+#include <unistd.h>
 #include <rclcpp/rclcpp.hpp>
 #include <rcutils/logging_macros.h>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <sg_control_interfaces/action/grip.hpp>
 #include <sg_control/visibility_control.h>
+#include <std_msgs/msg/float64.hpp>
+#include <std_msgs/msg/float32.hpp>
 
 namespace sg_control
 {
@@ -45,6 +48,8 @@ private:
   std::shared_ptr<rclcpp::Node> node_;
 
   rclcpp_action::Server<Grip>::SharedPtr grip_action_server_; 
+  rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr jog_gripper_subscription_;
+  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr gripper_position_publisher_;
   bool should_grip_in_;
   bool should_execute_ = false;
   
@@ -67,6 +72,8 @@ private:
   // Helper functions
   bool grip_in();
   bool grip_out();
+  void jog_gripper(float pos);
+  void jog_gripper_callback(std_msgs::msg::Float32::UniquePtr msg);
 };
 
 } //namespace sg_control

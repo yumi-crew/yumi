@@ -23,7 +23,7 @@ connected_{false}, stop_sign_{false}
 {
   node_ = std::make_shared<rclcpp::Node>(node_name);
   namespace_ = node_->get_namespace();
-  publisher_ = node_->create_publisher<sensor_msgs::msg::JointState>(namespace_+"/external_joint_torques", 10);
+  publisher_ = node_->create_publisher<sensor_msgs::msg::JointState>("/r/external_joint_torques", 10);
 
   socket_.comm_socket = socket(AF_INET, SOCK_STREAM, 0);
   socket_.servaddr.sin_family = AF_INET;
