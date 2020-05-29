@@ -1,4 +1,4 @@
-# ROS 2 integration of ABB IRB 14000 YuMi
+# ROS 2 stack for external control of the ABB YuMi.
 
 
 
