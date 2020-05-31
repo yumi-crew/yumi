@@ -187,7 +187,7 @@ int main(int argc, char **argv)
       yumi_motion_coordinator->move_to_state("left_arm", {-1.17, -1.71, 1.19, 0.37, 0.63, 1.1, 2.02}, 5, false, false);
 
       // Pick object
-      ret_val = yumi_motion_coordinator->pick_object(arm, object, {"table", pick_bin}, lin_retries, 0.10, true, false, percentage);
+      ret_val = yumi_motion_coordinator->pick_object(arm, object, {"table", pick_bin}, lin_retries, 0.10, false);
       if (ret_val < 0)
       {
         exp_log[errors[ret_val]]++;

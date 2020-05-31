@@ -182,7 +182,7 @@ int main(int argc, char **argv)
         yumi_motion_coordinator->move_object(object, grasp_pose);
 
       // Pick object
-      ret_val = yumi_motion_coordinator->pick_object(arm, object, {"table", pick_bin}, lin_retries, 0.10, true, false, percentage);
+      ret_val = yumi_motion_coordinator->pick_object(arm, object, {"table", pick_bin}, lin_retries, 0.10, false);
       if (ret_val < 0)
       {
         exp_log[errors[ret_val]]++;
@@ -191,7 +191,7 @@ int main(int argc, char **argv)
       }
 
       // Place at a object
-      ret_val = yumi_motion_coordinator->place_at_object(arm, place_bin, lin_retries, 0.15, true, false, percentage);
+      ret_val = yumi_motion_coordinator->place_in_object(arm, place_bin, lin_retries, 0.15, true, false, percentage);
       if (ret_val < 0)
       {
         exp_log[errors[ret_val]]++;

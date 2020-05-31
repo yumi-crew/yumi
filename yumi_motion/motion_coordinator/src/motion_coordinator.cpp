@@ -402,7 +402,7 @@ bool MotionCoordinator::linear_move_to_object(std::string planning_component, st
 
 int MotionCoordinator::pick_object(std::string planning_component, std::string object_id,   
                                    std::vector<std::string> allowed_collisions, int num_retries, double hover_height, 
-                                   bool blocking, bool visualize, double percentage)
+                                   bool visualize)
 {
   std::cout << "pick_object() called for planning component '" << planning_component << "'." << std::endl;
 
@@ -417,7 +417,7 @@ int MotionCoordinator::pick_object(std::string planning_component, std::string o
   std::vector<double> object_dimensions = object_manager_->get_object_dimensions(object_id);
 
   // If object cant be found.
-  if(grip_pose.empty())
+  if(grip_pose.empty() || object_dimensions.empty())
   { 
     stop(planning_component);
     std::cout <<  "[ERROR] Can't find object." << std::endl;
@@ -425,9 +425,6 @@ int MotionCoordinator::pick_object(std::string planning_component, std::string o
   }
 
   std::vector<double> hover_pose = grip_pose; hover_pose[2] += hover_height;
-
-  // Disable collision for the object to be picked.
-  moveit2_wrapper_->disable_collision(object_id, true);
 
   // Move to hover pose and open gripper enough to pick.
   move_to_pose(planning_component, hover_pose, false, num_retries, visualize, true, false);
@@ -446,8 +443,10 @@ int MotionCoordinator::pick_object(std::string planning_component, std::string o
   }
 
   // Linear move to gripping pose, give up if unable.
-  if(!linear_move_to_pose(planning_component, grip_pose, false, num_retries, visualize, true, true, percentage, 0.3, 0.3))
+  if(!linear_move_to_pose(planning_component, grip_pose, false, num_retries, visualize, true, true, 1.0, 0.3, 0.3))
   {
+    std::cout << "[ERROR] Unable to find a linear path. Aborting." << std::endl;
+    close_gripper(planning_component, true);
     object_manager_->remove_object_from_scene(object_id, false);
     return error::LINEAR_PLAN_FAIL;
   }
@@ -464,17 +463,18 @@ int MotionCoordinator::pick_object(std::string planning_component, std::string o
   
 
   // Linear move back to hover point. If linear motion is not possible, try ordinary motion.
-  if(!linear_move_to_pose(planning_component, hover_pose, false, 0, visualize, true, true, percentage))
+  if(!linear_move_to_pose(planning_component, hover_pose, false, 0, visualize, true, true, 1.0))
   {
-    move_to_pose(planning_component, hover_pose, false, num_retries, visualize, blocking, false);
+    move_to_pose(planning_component, hover_pose, false, num_retries, visualize, true, false);
   }
 
-  // Re-enable collision between pick object and elements in the enviroment 
+  // Re-enable collision checking between pick object and elements in the enviroment .
   for(auto object : allowed_collisions) 
   { 
     moveit2_wrapper_->disable_collision(object_id, false, object); 
   }
-  // Disallow collision between fingers and bin
+
+  // Re-enable collision checking between fingers and bin.
   for(auto link : gripper_links){ moveit2_wrapper_->disable_collision("bin6", false, link); }
 
   // Check if yumi's gripper contain the object, return if not.
@@ -484,12 +484,13 @@ int MotionCoordinator::pick_object(std::string planning_component, std::string o
     object_manager_->detatch_object(object_id);
     return error::GRIP_FAIL;
   }
+
   return 0;
 }
 
 
-int MotionCoordinator::place_at_object(std::string planning_component, std::string object_id, int num_retries,  
-                                         double hover_height,bool blocking, bool visualize, double percentage)
+int MotionCoordinator::place_in_object(std::string planning_component, std::string object_id, int num_retries,  
+                                         double hover_height, bool visualize)
 {
   std::cout << "place_object() called for planning component '" << planning_component << "'." << std::endl;
 
@@ -508,11 +509,8 @@ int MotionCoordinator::place_at_object(std::string planning_component, std::stri
     return error::GRIP_FAIL;
   }
 
-  // Find location object's pose
-  std::vector<double> location = object_manager_->find_object(object_id);
-
   // linear move to hover point
-  if(!linear_move_to_object(planning_component, object_id, 0, hover_height, visualize, true, true, percentage))
+  if(!linear_move_to_object(planning_component, object_id, 0, hover_height, visualize, true, true, 1.0))
   {
     // If linear motion is not possible, try ordinary motion.
     move_to_object(planning_component, object_id, num_retries, hover_height, visualize, true, false);
@@ -527,10 +525,11 @@ int MotionCoordinator::place_at_object(std::string planning_component, std::stri
   }
 
   // linear move down to drop point. If drop point cant be reached, drop object at current pose.
-  if(!linear_move_to_object(planning_component, object_id, 0, hover_height-0.05, visualize, true, true, percentage))
+  if(!linear_move_to_object(planning_component, object_id, 0, hover_height-0.05, visualize, true, true, 1.0))
   {
     open_gripper(planning_component, true);
     object_manager_->detatch_object(object);
+    close_gripper(planning_component, true);
     return 0;
   }
  
@@ -539,11 +538,9 @@ int MotionCoordinator::place_at_object(std::string planning_component, std::stri
   object_manager_->detatch_object(object);
 
   // Linear move back to hover point. If linear motion is not possible, try ordinary motion.
-  if(!linear_move_to_object(planning_component, object_id, 0, hover_height, visualize, true, true, percentage))
+  if(!linear_move_to_object(planning_component, object_id, 0, hover_height, visualize, true, true, 1.0))
   {
     move_to_object(planning_component, object_id, num_retries, hover_height, visualize, true, false);
-    close_gripper(planning_component, true);
-    return 0;
   }
 
   close_gripper(planning_component, true);

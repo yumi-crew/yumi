@@ -137,22 +137,44 @@ public:
                     bool replan=false);
 
   /**
-   * Opens the gripper of the planning component, moves to the gripping point in a straight line, closes the gripper and 
-   * returns to the starting pose in a straight line.
+   * @brief Picks a registered object present in the planning scene.
    * 
-   * \return true if the object is estimated to be successfully picked.
+   * Moves the registered end-effector link of the planning component to a hover pose above the object, 
+   * opens the gripper enough the grip object, moves the registered end-effector link of the planning component in a 
+   * straight-line to the grip pose of the object, grips and moves the registered end-effector link of the 
+   * planning component in a straight-line back to the hover pose.
+   * 
+   * @param object_id the registered object to be picked.
+   * @param allowed_collisions a list of objects that the picked object are allowed to be in contact with during a pick.             
+   * @param num_retries number of allowed attempts of finding minimum \percentage linear path.
+   * @param hover_height the desired stopping-height over the object.
+   * @param visualize flag indicating whether the generated trajectory should be visualized before execution.
+   *                  Visualization is only available when no other planning_component is in motion.
+   * 
+   * @return integer indicating if the object is estimated to be successfully picked, and if not what type of failure
+   *         occured.
    */
   int pick_object(std::string planning_component, std::string object_id, std::vector<std::string> allowed_collisions, 
-                  int num_retries, double hover_height, bool blocking, bool visualize, double percentage);
+                  int num_retries, double hover_height, bool visualize);
   
   /**
-   * Moves the planning component in a straight line to the given pose, opens the gripper and returns to the starting 
-   * pose in a straight line.
+   * @brief Places the picked object in a registered object in the planning scene.
    * 
-   * \return true if the object is estimated to be successfully placed.
+   * Attempts to move the registered end-effector link of the planning component in straight-line to a hover pose above
+   * the object the picked object is to be placed in, attempts to move linearly down towards the object, opens the 
+   * gripper, attempts to move linearly back up to the hover pose then closes the gripper.
+   * 
+   * @param object_id the registered object to place the picked object in.            
+   * @param num_retries number of allowed attempts of finding minimum \percentage linear path.
+   * @param hover_height the desired stopping-height over the object.
+   * @param visualize flag indicating whether the generated trajectory should be visualized before execution.
+   *                  Visualization is only available when no other planning_component is in motion.
+   * 
+   * @return integer indicating if the object is estimated to be successfully placed, and if not what type of failure
+   *         occured.
    */
-  int place_at_object(std::string planning_component, std::string object_id, int num_retries, double hover_height, 
-                      bool blocking, bool visualize, double percentage);
+  int place_in_object(std::string planning_component, std::string object_id, int num_retries, double hover_height, 
+                      bool visualize);
 
   /* Return whether a planning_component is moving. */
   bool planning_component_in_motion(std::string planning_component);
