@@ -395,11 +395,8 @@ bool MotionCoordinator::linear_move_to_object(std::string planning_component, st
     return true;
   }
 
-  bool success = linear_move_to_pose(planning_component, pose, false, num_retries, visualize, blocking, 
-                                     collision_checking, percentage, speed_scaling, acc_scaling);
-  
-  if(success) return true;
-  else return false;
+  return linear_move_to_pose(planning_component, pose, false, num_retries, visualize, blocking, 
+                             collision_checking, percentage, speed_scaling, acc_scaling);
 }
 
 
