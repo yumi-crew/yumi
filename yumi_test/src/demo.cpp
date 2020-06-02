@@ -62,7 +62,7 @@ int main(int argc, char **argv)
     return -1;
   }
 
-  // zivid + pose_estimation
+  // // zivid + pose_estimation
   pose_estimation_manager = std::make_shared<PoseEstimationManager>("pose_estimation_manager");
 
   rclcpp::executors::MultiThreadedExecutor exe;
@@ -116,10 +116,10 @@ int main(int argc, char **argv)
   // Move arms to setup pos.
   yumi_motion_coordinator->move_to_home(arm, 3);
   yumi_motion_coordinator->move_to_home("left_arm", 3);
-  
+
 
   cap_success = pose_estimation_manager->call_capture_srv(30s);
-  sleep(5);
+  sleep(1);
   // Find and add place bin to scene
   std::string place_bin = "bin5";
   est_success = pose_estimation_manager->call_estimate_pose_srv(place_bin, 0, 100s, "", 0.0, true);
@@ -191,7 +191,7 @@ int main(int argc, char **argv)
       }
 
       // Place at a object
-      ret_val = yumi_motion_coordinator->place_in_object(arm, place_bin, lin_retries, 0.15, true, false, percentage);
+      ret_val = yumi_motion_coordinator->place_in_object(arm, place_bin, lin_retries, 0.15, false);
       if (ret_val < 0)
       {
         exp_log[errors[ret_val]]++;
