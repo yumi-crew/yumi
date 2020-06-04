@@ -120,8 +120,8 @@ JointTrajectoryController::update()
   size_t joint_num = registered_joint_cmd_handles_.size();
   for (size_t index = 0; index < joint_num; ++index) 
   {
-    // registered_joint_cmd_handles_[index]->set_cmd(traj_point_ptr->positions[index]);
-    registered_joint_cmd_handles_[index]->set_cmd(traj_point_ptr->velocities[index]);
+    registered_joint_cmd_handles_[index]->set_cmd(traj_point_ptr->positions[index]);
+    registered_joint_vel_cmd_handles_[index]->set_cmd(traj_point_ptr->velocities[index]);
   }
 
 
@@ -167,13 +167,21 @@ JointTrajectoryController::on_configure(const rclcpp_lifecycle::State & previous
         return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::FAILURE;
       }
     }
+
     registered_joint_cmd_handles_.resize(joint_names_.size());
+    registered_joint_vel_cmd_handles_.resize(joint_names_.size());
     for (size_t index = 0; index < joint_names_.size(); ++index) 
     {
       auto ret = robot_hardware->get_joint_command_handle(joint_names_[index].c_str(), &registered_joint_cmd_handles_[index]);
       if (ret != hardware_interface::HW_RET_OK) 
       {
         RCLCPP_WARN( logger, "unable to obtain joint command handle for %s", joint_names_[index].c_str());
+        return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::FAILURE;
+      }
+      ret = robot_hardware->get_joint_command_handle((joint_names_[index] + "_vel").c_str(), &registered_joint_vel_cmd_handles_[index]);
+      if (ret != hardware_interface::HW_RET_OK) 
+      {
+        RCLCPP_WARN( logger, "unable to obtain joint velocity command handle for %s", (joint_names_[index] + "_vel").c_str());
         return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::FAILURE;
       }
     }
@@ -353,8 +361,8 @@ JointTrajectoryController::halt()
   size_t joint_num = registered_joint_cmd_handles_.size();
   for (size_t index = 0; index < joint_num; ++index) 
   {
-    // registered_joint_cmd_handles_[index]->set_cmd(registered_joint_state_handles_[index]->get_position());
-    registered_joint_cmd_handles_[index]->set_cmd(registered_joint_state_handles_[index]->get_velocity());
+    registered_joint_cmd_handles_[index]->set_cmd(registered_joint_state_handles_[index]->get_position());
+    //registered_joint_cmd_handles_[index]->set_cmd(registered_joint_state_handles_[index]->get_velocity());
   }
   set_op_mode(hardware_interface::OperationMode::ACTIVE);
 }

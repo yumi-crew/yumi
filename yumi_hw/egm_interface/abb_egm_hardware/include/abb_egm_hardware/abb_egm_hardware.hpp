@@ -30,6 +30,12 @@
 #include "parameter_server_interfaces/srv/get_all_joints.hpp"
 #include "parameter_server_interfaces/srv/get_robot.hpp"
 
+#include <ReflexxesAPI.h>
+#include <RMLPositionFlags.h>
+#include <RMLPositionInputParameters.h>
+#include <RMLPositionOutputParameters.h>
+
+
 namespace abb_egm_hardware
 {
 class AbbEgmHardware : public hardware_interface::RobotHardware
@@ -52,6 +58,12 @@ private:
   std::shared_ptr<rclcpp::Node> node_;
   std::string namespace_;
 
+  // RML
+  std::unique_ptr<ReflexxesAPI> rml_;
+  std::unique_ptr<RMLPositionInputParameters> rml_input_;
+  std::unique_ptr<RMLPositionOutputParameters> rml_output_;
+  RMLPositionFlags rml_flags_;
+
   // Handles
   std::vector<hardware_interface::JointStateHandle> joint_state_handles_;
   std::vector<hardware_interface::JointCommandHandle> joint_command_handles_;
@@ -72,6 +84,7 @@ private:
   std::unique_ptr<abb::egm::EGMControllerInterface> egm_interface_;
   abb::egm::wrapper::Input state_;
   abb::egm::wrapper::Output command_;
+  abb::egm::wrapper::Output rml_command_;
 
   unsigned int sequence_number_ = 0.0;
   bool first_packet_ = true;

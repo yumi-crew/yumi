@@ -85,7 +85,7 @@
     <child link="yumi_link_1_r"/>
     <origin rpy="-0.9795   -0.5682   -2.3155" xyz="0.05355 -0.0725 0.41492"/>
     <axis xyz="0 0 1"/>
-    <limit effort="300" lower="-2.9" upper="2.9" velocity="3.14159265359"/>
+    <limit effort="300" lower="-2.7" upper="2.7" velocity="3.14159265359"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="yumi_link_1_r">
@@ -115,7 +115,7 @@
     <child link="yumi_link_2_r"/>
     <origin rpy="1.57079632679 0.0 0.0" xyz="0.03 0.0 0.1"/>
     <axis xyz="0 0 1"/>
-    <limit effort="300" lower="-2.4" upper="0.7" velocity="3.14159265359"/>
+    <limit effort="300" lower="-2.4" upper="0.6" velocity="3.14159265359"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="yumi_link_2_r">
@@ -145,7 +145,7 @@
     <child link="yumi_link_3_r"/>
     <origin rpy="-1.57079632679 0.0 0.0" xyz="-0.03 0.17283 0.0"/>
     <axis xyz="0 0 1"/>
-    <limit effort="300" lower="-2.9" upper="2.9" velocity="3.14159265359"/>
+    <limit effort="300" lower="-2.7" upper="2.7" velocity="3.14159265359"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="yumi_link_3_r">
@@ -175,7 +175,7 @@
     <child link="yumi_link_4_r"/>
     <origin rpy="1.57079632679 -1.57079632679 0.0" xyz="-0.04188 0.0 0.07873"/>
     <axis xyz="0 0 1"/>
-    <limit effort="300" lower="-2.1" upper="1.3" velocity="3.14159265359"/>
+    <limit effort="300" lower="-1.9" upper="1.1" velocity="3.14159265359"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="yumi_link_4_r">
@@ -205,7 +205,7 @@
     <child link="yumi_link_5_r"/>
     <origin rpy="-1.57079632679 0.0 0.0" xyz="0.0405 0.16461 0.0"/>
     <axis xyz="0 0 1"/>
-    <limit effort="300" lower="-5.0" upper="5.0" velocity="6.98131700798"/>
+    <limit effort="300" lower="-4.8" upper="4.8" velocity="6.98131700798"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="yumi_link_5_r">
@@ -235,7 +235,7 @@
     <child link="yumi_link_6_r"/>
     <origin rpy="1.57079632679 0.0 0.0" xyz="-0.027 0 0.10039"/>
     <axis xyz="0 0 1"/>
-    <limit effort="300" lower="-1.5" upper="2.4" velocity="6.98131700798"/>
+    <limit effort="300" lower="-1.4" upper="2.3" velocity="6.98131700798"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="yumi_link_6_r">
@@ -265,7 +265,7 @@
     <child link="yumi_link_7_r"/>
     <origin rpy="-1.57079632679 0.0 0.0" xyz="0.027 0.029 0.0"/>
     <axis xyz="0 0 1"/>
-    <limit effort="300" lower="-3.9" upper="3.9" velocity="6.98131700798"/>
+    <limit effort="300" lower="-3.7" upper="3.7" velocity="6.98131700798"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="yumi_link_7_r">
@@ -296,7 +296,7 @@
     <child link="yumi_link_1_l"/>
     <origin rpy="0.9781 -0.5716 2.3180" xyz="0.05355 0.07250 0.41492"/>
     <axis xyz="0 0 1"/>
-    <limit effort="300" lower="-2.9" upper="2.9" velocity="3.14159265359"/>
+    <limit effort="300" lower="-2.7" upper="2.7" velocity="3.14159265359"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="yumi_link_1_l">
@@ -326,7 +326,7 @@
     <child link="yumi_link_2_l"/>
     <origin rpy="1.57079632679 0.0 0.0" xyz="0.03 0.0 0.1"/>
     <axis xyz="0 0 1"/>
-    <limit effort="300" lower="-2.4" upper="0.7" velocity="3.14159265359"/>
+    <limit effort="300" lower="-2.4" upper="0.6" velocity="3.14159265359"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="yumi_link_2_l">
@@ -356,7 +356,7 @@
     <child link="yumi_link_3_l"/>
     <origin rpy="-1.57079632679 0.0 0.0" xyz="-0.03 0.17283 0.0"/>
     <axis xyz="0 0 1"/>
-    <limit effort="300" lower="-2.9" upper="2.9" velocity="3.14159265359"/>
+    <limit effort="300" lower="-2.7" upper="2.7" velocity="3.14159265359"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="yumi_link_3_l">
@@ -386,7 +386,7 @@
     <child link="yumi_link_4_l"/>
     <origin rpy="1.57079632679 -1.57079632679 0.0" xyz="-0.04188 0.0 0.07873"/>
     <axis xyz="0 0 1"/>
-    <limit effort="300" lower="-2.1" upper="1.3" velocity="3.14159265359"/>
+    <limit effort="300" lower="-1.9" upper="1.1" velocity="3.14159265359"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="yumi_link_4_l">
@@ -416,7 +416,7 @@
     <child link="yumi_link_5_l"/>
     <origin rpy="-1.57079632679 0.0 0.0" xyz="0.0405 0.16461 0.0"/>
     <axis xyz="0 0 1"/>
-    <limit effort="300" lower="-5.0" upper="5.0" velocity="6.98131700798"/>
+    <limit effort="300" lower="-4.8" upper="4.8" velocity="6.98131700798"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="yumi_link_5_l">
@@ -446,7 +446,7 @@
     <child link="yumi_link_6_l"/>
     <origin rpy="1.57079632679 0.0 0.0" xyz="-0.027 0 0.10039"/>
     <axis xyz="0 0 1"/>
-    <limit effort="300" lower="-1.5" upper="2.4" velocity="6.98131700798"/>
+    <limit effort="300" lower="-1.4" upper="2.3" velocity="6.98131700798"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="yumi_link_6_l">
@@ -476,7 +476,7 @@
     <child link="yumi_link_7_l"/>
     <origin rpy="-1.57079632679 0.0 0.0" xyz="0.027 0.029 0.0"/>
     <axis xyz="0 0 1"/>
-    <limit effort="300" lower="-3.9" upper="3.9" velocity="6.98131700798"/>
+    <limit effort="300" lower="-3.7" upper="3.7" velocity="6.98131700798"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="yumi_link_7_l">

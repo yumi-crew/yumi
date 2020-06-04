@@ -20,10 +20,12 @@ find_package(controller_manager REQUIRED)
 find_package(abb_libegm REQUIRED)
 find_package(parameter_server_interfaces REQUIRED)
 
+add_subdirectory(external/ReflexxesTypeII)
 
 # abb_egm_hardware
 add_library(abb_egm_hardware SHARED src/abb_egm_hardware.cpp)
-target_include_directories(abb_egm_hardware PRIVATE include)
+target_include_directories(abb_egm_hardware PRIVATE include external/ReflexxesTypeII/include)
+target_link_libraries(abb_egm_hardware RMLTypeII)
 ament_target_dependencies(abb_egm_hardware
                           angles
                           rcutils
@@ -40,7 +42,8 @@ target_compile_definitions(abb_egm_hardware PRIVATE
 #abb_egm_hardware_sim
 add_library(abb_egm_hardware_sim SHARED src/abb_egm_hardware_sim.cpp)
 target_link_libraries(abb_egm_hardware_sim ${Boost_LIBRARIES})
-target_include_directories(abb_egm_hardware_sim PRIVATE include )
+target_include_directories(abb_egm_hardware_sim PRIVATE include external/ReflexxesTypeII/include )
+target_link_libraries(abb_egm_hardware_sim RMLTypeII)
 ament_target_dependencies(abb_egm_hardware_sim
                           angles
                           rcutils
@@ -57,7 +60,7 @@ target_compile_definitions(abb_egm_hardware_sim PRIVATE
 
 # abb_egm_hardware_node
 add_executable(abb_egm_hardware_node src/abb_egm_hardware_node.cpp)
-target_include_directories(abb_egm_hardware_node PRIVATE include)
+target_include_directories(abb_egm_hardware_node PRIVATE include external/ReflexxesTypeII/include)
 target_link_libraries(abb_egm_hardware_node abb_egm_hardware ${Boost_LIBRARIES})
 ament_target_dependencies(abb_egm_hardware_node
                           rclcpp
@@ -66,7 +69,7 @@ ament_target_dependencies(abb_egm_hardware_node
 
 # abb_egm_hardware_sim_node
 add_executable(abb_egm_hardware_sim_node src/abb_egm_hardware_sim_node.cpp)
-target_include_directories(abb_egm_hardware_sim_node PRIVATE include)
+target_include_directories(abb_egm_hardware_sim_node PRIVATE include external/ReflexxesTypeII/include )
 target_link_libraries(abb_egm_hardware_sim_node abb_egm_hardware_sim ${Boost_LIBRARIES})
 ament_target_dependencies(abb_egm_hardware_sim_node
                           rclcpp

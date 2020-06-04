@@ -78,6 +78,7 @@ private:
   std::vector<std::string> write_op_names_;
 
   std::vector<hardware_interface::JointCommandHandle *> registered_joint_cmd_handles_;
+  std::vector<hardware_interface::JointCommandHandle *> registered_joint_vel_cmd_handles_;
   std::vector<const hardware_interface::JointStateHandle *> registered_joint_state_handles_;
   std::vector<hardware_interface::OperationModeHandle *> registered_operation_mode_handles_;
 

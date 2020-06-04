@@ -53,6 +53,12 @@ AbbEgmHardware::init()
   namespace_ = node_->get_namespace();
   auto ret = hardware_interface::HW_RET_ERROR;
 
+    // RML
+  n_joints_ = 7;
+  rml_.reset(new ReflexxesAPI(n_joints_, 0.004));
+  rml_input_.reset(new RMLPositionInputParameters(n_joints_));
+  rml_output_.reset(new RMLPositionOutputParameters(n_joints_));
+
   ret = get_robot_name();
   if (ret != hardware_interface::HW_RET_OK)
   {
@@ -90,19 +96,21 @@ AbbEgmHardware::init()
       return ret;
     }
 
-    // joint_command_handles_[i] = hardware_interface::JointCommandHandle(joint_names_[i], &joint_position_command_[i]);
-    // ret = register_joint_command_handle(&joint_command_handles_[i]);
-    // if (ret != hardware_interface::HW_RET_OK)
-    // {
-    //   RCLCPP_WARN(node_->get_logger(), "Can't register joint command handle %s", joint_names_[i].c_str());
-    //   return ret;
-    // }
-
-    joint_command_handles_vel_[i] = hardware_interface::JointCommandHandle(joint_names_[i], &joint_velocity_command_[i]);
-    ret = register_joint_command_handle(&joint_command_handles_vel_[i]);
+    joint_command_handles_[i] = hardware_interface::JointCommandHandle(joint_names_[i], &joint_position_command_[i]);
+    ret = register_joint_command_handle(&joint_command_handles_[i]);
     if (ret != hardware_interface::HW_RET_OK)
     {
       RCLCPP_WARN(node_->get_logger(), "Can't register joint command handle %s", joint_names_[i].c_str());
+      return ret;
+    }
+
+
+
+    joint_command_handles_vel_[i] = hardware_interface::JointCommandHandle(joint_names_[i] + "_vel", &joint_velocity_command_[i]);
+    ret = register_joint_command_handle(&joint_command_handles_vel_[i]);
+    if (ret != hardware_interface::HW_RET_OK)
+    {
+      RCLCPP_WARN(node_->get_logger(), "Can't register joint command handle %s", (joint_names_[i] + "_vel").c_str());
       return ret;
     }
 
@@ -133,7 +141,7 @@ AbbEgmHardware::init()
   // * Sets up an EGM server (that the robot controller's EGM client can connect to).
   // * Provides APIs to the user (for setting motion references, that are sent in reply to the EGM client's request).
   configuration_.axes = num_axes_;
-  configuration_.use_velocity_outputs = true;
+  configuration_.use_velocity_outputs = true; // Must be set for velocity control
   egm_interface_.reset(new abb::egm::EGMControllerInterface(io_service_, port_, configuration_));
 
   if (!egm_interface_->isInitialized())
@@ -186,7 +194,8 @@ AbbEgmHardware::read()
     if (first_packet_)
     {
       first_packet_ = false;
-      abb::egm::wrapper::Joints initial_position, initial_velocity;
+      abb::egm::wrapper::Joints initial_position;
+      abb::egm::wrapper::Joints initial_velocity; 
       initial_position.CopyFrom(state_.feedback().robot().joints().position());
       initial_velocity.CopyFrom(state_.feedback().robot().joints().velocity());
 
@@ -194,12 +203,25 @@ AbbEgmHardware::read()
       {
         joint_position_command_[index] = angles::from_degrees(initial_position.values(index));
         joint_velocity_command_[index] = angles::from_degrees(initial_velocity.values(index));
+
+        /* For rml interpolation of segments */
+        rml_input_->CurrentPositionVector->VecData[index] = joint_position_command_[index];
+        rml_input_->CurrentVelocityVector->VecData[index] = joint_velocity_command_[index];
+        rml_input_->CurrentAccelerationVector->VecData[index] = 0.0;
+        rml_input_->SelectionVector->VecData[index] = true;
+
+        rml_input_->MaxVelocityVector->VecData[index] = 7.0;
+        rml_input_->MaxAccelerationVector->VecData[index] = 100.0;
+        rml_input_->MaxJerkVector->VecData[index] = 1000.0;
       }
 
       // clear command_ to be sure it is empty
       command_.Clear();
-      // command_.mutable_robot()->mutable_joints()->mutable_position()->CopyFrom(initial_position);     
-      command_.mutable_robot()->mutable_joints()->mutable_velocity()->CopyFrom(initial_velocity);   
+      command_.mutable_robot()->mutable_joints()->mutable_position()->CopyFrom(initial_position); 
+      command_.mutable_robot()->mutable_joints()->mutable_velocity()->CopyFrom(initial_velocity);  
+
+      // rml_command_.Clear();
+      // rml_command_.mutable_robot()->mutable_joints()->mutable_velocity()->CopyFrom(initial_velocity);     
     }
    
     for (size_t i = 0; i < n_joints_; ++i)
@@ -216,16 +238,52 @@ AbbEgmHardware::read()
 hardware_interface::hardware_interface_ret_t 
 AbbEgmHardware::write()
 { 
+  /* for rml interpolation of segments */
+  for (std::size_t i = 0; i < n_joints_; ++i)
+  {
+    rml_input_->CurrentPositionVector->VecData[i] = joint_position_[i];
+    rml_input_->CurrentVelocityVector->VecData[i] = joint_velocity_[i];
+
+    rml_input_->TargetPositionVector->VecData[i] = joint_position_command_[i];
+    rml_input_->TargetVelocityVector->VecData[i] = joint_velocity_command_[i];
+
+  }
+  int result = rml_->RMLPosition(*rml_input_.get(), rml_output_.get(), rml_flags_);
+  if (result < 0)
+  {
+    RCLCPP_ERROR_STREAM(node_->get_logger(), "rml error: " << result);
+  }
+
+
   // writes joint_position_command_ to command_ which is written to robot
   for (size_t index = 0; index < n_joints_; ++index)
   {
-    // command_.mutable_robot()->mutable_joints()->mutable_position()->set_values(index, 
-    //    angles::to_degrees(joint_position_command_[index]));
+
+    rml_input_->CurrentAccelerationVector->VecData[index] = rml_output_->NewAccelerationVector->VecData[index];
+
+    // std::cout << joint_velocity_command_[index] << " " << rml_output_->NewVelocityVector->VecData[index] << std::endl;
+
+    // joint_position_command_[index] = rml_output_->NewPositionVector->VecData[index];
+    // joint_velocity_command_[index] = rml_output_->NewVelocityVector->VecData[index];
+
+    // rml_command_.mutable_robot()->mutable_joints()->mutable_position()->set_values(index, 
+    //     angles::to_degrees(rml_output_->NewPositionVector->VecData[index]));
+    // rml_command_.mutable_robot()->mutable_joints()->mutable_velocity()->set_values(index, 
+    //     angles::to_degrees(rml_output_->NewVelocityVector->VecData[index]));
+
+
+    command_.mutable_robot()->mutable_joints()->mutable_position()->set_values(index, 
+        angles::to_degrees(joint_position_command_[index]));
     command_.mutable_robot()->mutable_joints()->mutable_velocity()->set_values(index, 
-      angles::to_degrees(joint_velocity_command_[index]));
+     angles::to_degrees(joint_velocity_command_[index]));
   }
 
-  // command_.PrintDebugString();
+  // std::cout << "\n";
+
+  //command_.PrintDebugString();
+  //rml_command_.PrintDebugString();
+  
+  // egm_interface_->write(rml_command_);
   egm_interface_->write(command_);
   return hardware_interface::HW_RET_OK;
 }

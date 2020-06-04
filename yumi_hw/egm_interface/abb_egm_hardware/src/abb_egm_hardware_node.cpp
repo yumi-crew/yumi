@@ -79,7 +79,8 @@ int main(int argc, char* argv[])
     RCLCPP_ERROR(controller_manager.get_logger(), "at least one controller failed to activate");
     return -1;
   }
-  
+
+  rclcpp::WallRate loop_rate(250);
   // Real-time control loop
   while (rclcpp::ok())
   {
@@ -98,6 +99,7 @@ int main(int argc, char* argv[])
     {
       fprintf(stderr, "write failed!\n");
     }
+    loop_rate.sleep();
   }
 
   // teardown

@@ -45,7 +45,7 @@ int main(int argc, char** argv)
 
   while(1)
   {
-    yumi_motion_coordinator->move_to_pose("right_arm", {0.4, 0.1, 0.3, 0, 0, 180}, true, 3, false, true, false);
+    yumi_motion_coordinator->move_to_pose("right_arm", {0.4, 0.1, 0.2, 0, 0, 180}, true, 3, false, true, false);
     sleep(1);
     yumi_motion_coordinator->move_to_home("right_arm", 3);
   }
