@@ -45,6 +45,9 @@ def generate_launch_description():
     controllers_yaml = load_yaml('yumi_description', 'moveit2_config/controllers.yaml')
     moveit_controllers = { 'moveit_simple_controller_manager' : controllers_yaml }
 
+    joint_limits_yaml = load_yaml('yumi_description', 'moveit2_config/joint_limits.yaml')
+    joint_limits = {'robot_description_planning' : joint_limits_yaml}
+
     ompl_planning_pipeline_config = { 'ompl' : {
         'planning_plugin' : 'ompl_interface/OMPLPlanner',
         'request_adapters' : """default_planner_request_adapters/AddTimeOptimalParameterization default_planner_request_adapters/FixWorkspaceBounds default_planner_request_adapters/FixStartStateBounds default_planner_request_adapters/FixStartStateCollision default_planner_request_adapters/FixStartStatePathConstraints""" ,
@@ -63,6 +66,7 @@ def generate_launch_description():
                                               robot_description_semantic,
                                               kinematics_yaml,
                                               ompl_planning_pipeline_config,
-                                              moveit_controllers])
+                                              moveit_controllers,
+                                              joint_limits])
 
     return LaunchDescription([ test_motion_coordinator ])

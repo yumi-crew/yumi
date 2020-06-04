@@ -203,8 +203,8 @@ void MotionCoordinator::move_to_pose(std::string planning_component, std::vector
 }
 
 
-void MotionCoordinator::move_to_object(std::string planning_component, std::string object_id, int num_retries, double hover_height,  
-                                        bool visualize, bool blocking, bool replan)
+void MotionCoordinator::move_to_object(std::string planning_component, std::string object_id, int num_retries,   
+                                       double hover_height, bool visualize, bool blocking, bool replan)
 {
   std::cout << "move_to_object() called for planning component '"<< planning_component << "'." << std::endl;
 

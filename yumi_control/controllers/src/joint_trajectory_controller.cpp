@@ -116,12 +116,14 @@ JointTrajectoryController::update()
     return CONTROLLER_INTERFACE_RET_SUCCESS;
   }
   
-  // Point should be valid, set position command.
+
   size_t joint_num = registered_joint_cmd_handles_.size();
   for (size_t index = 0; index < joint_num; ++index) 
   {
-    registered_joint_cmd_handles_[index]->set_cmd(traj_point_ptr->positions[index]);
+    // registered_joint_cmd_handles_[index]->set_cmd(traj_point_ptr->positions[index]);
+    registered_joint_cmd_handles_[index]->set_cmd(traj_point_ptr->velocities[index]);
   }
+
 
   prev_traj_point_ptr_ = traj_point_ptr;
   set_op_mode(hardware_interface::OperationMode::ACTIVE);
@@ -351,7 +353,8 @@ JointTrajectoryController::halt()
   size_t joint_num = registered_joint_cmd_handles_.size();
   for (size_t index = 0; index < joint_num; ++index) 
   {
-    registered_joint_cmd_handles_[index]->set_cmd(registered_joint_state_handles_[index]->get_position());
+    // registered_joint_cmd_handles_[index]->set_cmd(registered_joint_state_handles_[index]->get_position());
+    registered_joint_cmd_handles_[index]->set_cmd(registered_joint_state_handles_[index]->get_velocity());
   }
   set_op_mode(hardware_interface::OperationMode::ACTIVE);
 }

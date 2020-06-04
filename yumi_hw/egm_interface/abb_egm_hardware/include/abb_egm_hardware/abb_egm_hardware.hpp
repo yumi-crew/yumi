@@ -55,6 +55,7 @@ private:
   // Handles
   std::vector<hardware_interface::JointStateHandle> joint_state_handles_;
   std::vector<hardware_interface::JointCommandHandle> joint_command_handles_;
+  std::vector<hardware_interface::JointCommandHandle> joint_command_handles_vel_;
   std::vector<hardware_interface::OperationModeHandle> read_op_handles_;
   std::vector<hardware_interface::OperationModeHandle> write_op_handles_;
 
@@ -81,6 +82,7 @@ private:
   std::vector<double> joint_velocity_; 
   std::vector<double> joint_effort_; 
   std::vector<double> joint_position_command_; 
+  std::vector<double> joint_velocity_command_;
   bool *read_op_; 
   bool *write_op_; 
 

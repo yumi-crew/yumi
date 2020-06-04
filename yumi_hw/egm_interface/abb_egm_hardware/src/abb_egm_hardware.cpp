@@ -90,9 +90,16 @@ AbbEgmHardware::init()
       return ret;
     }
 
-    joint_command_handles_[i] = hardware_interface::JointCommandHandle(joint_names_[i], &joint_position_command_[i]);
-    
-    ret = register_joint_command_handle(&joint_command_handles_[i]);
+    // joint_command_handles_[i] = hardware_interface::JointCommandHandle(joint_names_[i], &joint_position_command_[i]);
+    // ret = register_joint_command_handle(&joint_command_handles_[i]);
+    // if (ret != hardware_interface::HW_RET_OK)
+    // {
+    //   RCLCPP_WARN(node_->get_logger(), "Can't register joint command handle %s", joint_names_[i].c_str());
+    //   return ret;
+    // }
+
+    joint_command_handles_vel_[i] = hardware_interface::JointCommandHandle(joint_names_[i], &joint_velocity_command_[i]);
+    ret = register_joint_command_handle(&joint_command_handles_vel_[i]);
     if (ret != hardware_interface::HW_RET_OK)
     {
       RCLCPP_WARN(node_->get_logger(), "Can't register joint command handle %s", joint_names_[i].c_str());
@@ -100,7 +107,7 @@ AbbEgmHardware::init()
     }
 
     read_op_handles_[i] = hardware_interface::OperationModeHandle(
-        read_op_handle_names_[i], reinterpret_cast<hardware_interface::OperationMode*>(&read_op_[i]));
+    read_op_handle_names_[i], reinterpret_cast<hardware_interface::OperationMode*>(&read_op_[i]));
 
     ret = register_operation_mode_handle(&read_op_handles_[i]);
     if (ret != hardware_interface::HW_RET_OK)
@@ -126,6 +133,7 @@ AbbEgmHardware::init()
   // * Sets up an EGM server (that the robot controller's EGM client can connect to).
   // * Provides APIs to the user (for setting motion references, that are sent in reply to the EGM client's request).
   configuration_.axes = num_axes_;
+  configuration_.use_velocity_outputs = true;
   egm_interface_.reset(new abb::egm::EGMControllerInterface(io_service_, port_, configuration_));
 
   if (!egm_interface_->isInitialized())
@@ -178,18 +186,20 @@ AbbEgmHardware::read()
     if (first_packet_)
     {
       first_packet_ = false;
-      
-      abb::egm::wrapper::Joints initial_position;
+      abb::egm::wrapper::Joints initial_position, initial_velocity;
       initial_position.CopyFrom(state_.feedback().robot().joints().position());
+      initial_velocity.CopyFrom(state_.feedback().robot().joints().velocity());
 
       for (size_t index = 0; index < n_joints_; ++index)
       {
         joint_position_command_[index] = angles::from_degrees(initial_position.values(index));
+        joint_velocity_command_[index] = angles::from_degrees(initial_velocity.values(index));
       }
 
       // clear command_ to be sure it is empty
       command_.Clear();
-      command_.mutable_robot()->mutable_joints()->mutable_position()->CopyFrom(initial_position);     
+      // command_.mutable_robot()->mutable_joints()->mutable_position()->CopyFrom(initial_position);     
+      command_.mutable_robot()->mutable_joints()->mutable_velocity()->CopyFrom(initial_velocity);   
     }
    
     for (size_t i = 0; i < n_joints_; ++i)
@@ -209,11 +219,13 @@ AbbEgmHardware::write()
   // writes joint_position_command_ to command_ which is written to robot
   for (size_t index = 0; index < n_joints_; ++index)
   {
-    command_.mutable_robot()->mutable_joints()->mutable_position()->set_values(index, 
-      angles::to_degrees(joint_position_command_[index]));
+    // command_.mutable_robot()->mutable_joints()->mutable_position()->set_values(index, 
+    //    angles::to_degrees(joint_position_command_[index]));
+    command_.mutable_robot()->mutable_joints()->mutable_velocity()->set_values(index, 
+      angles::to_degrees(joint_velocity_command_[index]));
   }
 
-  //command_.PrintDebugString();
+  // command_.PrintDebugString();
   egm_interface_->write(command_);
   return hardware_interface::HW_RET_OK;
 }
@@ -399,6 +411,7 @@ AbbEgmHardware::initialize_vectors()
   // Set sizes
   joint_state_handles_.resize(n_joints_);
   joint_command_handles_.resize(n_joints_);
+  joint_command_handles_vel_.resize(n_joints_);
   read_op_handles_.resize(n_joints_);
   write_op_handles_.resize(n_joints_);
   read_op_ = new bool[n_joints_];
@@ -409,6 +422,7 @@ AbbEgmHardware::initialize_vectors()
   joint_velocity_.assign(n_joints_, 0.0);
   joint_effort_.assign(n_joints_, 0.0);
   joint_position_command_.assign(n_joints_, 0.0);
+  joint_velocity_command_.assign(n_joints_, 0.0);
   
   for (int i = 0; i < n_joints_; ++i)
   {
