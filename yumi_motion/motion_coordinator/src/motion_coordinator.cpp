@@ -541,7 +541,7 @@ int MotionCoordinator::place_in_object(std::string planning_component, std::stri
   object_manager_->detatch_object(object);
   
 
-  Linear move back to hover point. If linear motion is not possible, try ordinary motion.
+  // Linear move back to hover point. If linear motion is not possible, try ordinary motion.
   if(!linear_move_to_object(planning_component, object_id, 0, hover_height, visualize, true, true, 1.0))
   {
     move_to_object(planning_component, object_id, num_retries, hover_height, visualize, true, false);
