@@ -109,7 +109,7 @@ int main(int argc, char **argv)
   bool cap_success{false};
   bool est_success{false};
   std::string arm = "right_arm";
-  std::vector<std::string> objects = {"small_marker", "nail_polish", "battery"};
+  std::vector<std::string> objects = {"nail_polish", "battery", "small_marker"};
   double percentage = 0;
   int lin_retries = 3;
 
@@ -226,7 +226,7 @@ int main(int argc, char **argv)
     log_file << ct << ", ";
     sum += ct;
   }
-  log_file << std::endl << "Average cycle time: " << sum / tries << std::endl;
+  log_file << std::endl << "Average cycle time: " << sum / num_pics << std::endl;
 
   log_file.close();
   std::cout << "Motion completed, please ctrl+c" << std::endl;

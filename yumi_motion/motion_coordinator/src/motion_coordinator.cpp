@@ -293,11 +293,11 @@ bool MotionCoordinator::linear_move_to_pose(std::string planning_component, std:
   }
 
   // Verify the pose is a valid pose.
-  if(!moveit2_wrapper_->pose_valid(planning_component, ee_link, pose, eulerzyx))
-  {
-    std::cout << "[ERROR] The given goal pose is not valid. Aborting." << std::endl;
-    return false;
-  }
+  // if(!moveit2_wrapper_->pose_valid(planning_component, ee_link, pose, eulerzyx))
+  // {
+  //   std::cout << "[ERROR] The given goal pose is not valid. Aborting." << std::endl;
+  //   return false;
+  // }
 
   bool retry = false;
   std::vector<double> new_pose(6);
@@ -426,6 +426,9 @@ int MotionCoordinator::pick_object(std::string planning_component, std::string o
 
   std::vector<double> hover_pose = grip_pose; hover_pose[2] += hover_height;
 
+  // Disable collision for the object ot be picked
+  moveit2_wrapper_->disable_collision(object_id, true);
+
   // Move to hover pose and open gripper enough to pick.
   move_to_pose(planning_component, hover_pose, false, num_retries, visualize, true, false);
   jog_gripper(planning_component, object_dimensions[0]+grip_margin_, true);
@@ -463,7 +466,7 @@ int MotionCoordinator::pick_object(std::string planning_component, std::string o
   
 
   // Linear move back to hover point. If linear motion is not possible, try ordinary motion.
-  if(!linear_move_to_pose(planning_component, hover_pose, false, 0, visualize, true, true, 1.0))
+  if(!linear_move_to_pose(planning_component, hover_pose, false, 0, visualize, true, true, 1.0, 1.0, 1.0))
   {
     move_to_pose(planning_component, hover_pose, false, num_retries, visualize, true, false);
   }
@@ -536,8 +539,9 @@ int MotionCoordinator::place_in_object(std::string planning_component, std::stri
   // Let go object
   open_gripper(planning_component, true);
   object_manager_->detatch_object(object);
+  
 
-  // Linear move back to hover point. If linear motion is not possible, try ordinary motion.
+  Linear move back to hover point. If linear motion is not possible, try ordinary motion.
   if(!linear_move_to_object(planning_component, object_id, 0, hover_height, visualize, true, true, 1.0))
   {
     move_to_object(planning_component, object_id, num_retries, hover_height, visualize, true, false);

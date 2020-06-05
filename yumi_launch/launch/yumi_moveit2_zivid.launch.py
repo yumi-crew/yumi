@@ -129,7 +129,7 @@ def generate_launch_description():
      # zivid manual composition
     zivid_camera = Node(package='zivid_camera',
              node_executable='manual_composition',
-             parameters=[{"zivid.camera.num_capture_frames" : 3}],
+             parameters=[{"zivid.camera.num_capture_frames" : 4}],
              output='screen')
 
     state_publisher = Node(package='robot_state_publisher',

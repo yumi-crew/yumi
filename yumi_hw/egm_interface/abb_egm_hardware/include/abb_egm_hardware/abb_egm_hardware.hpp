@@ -72,6 +72,7 @@ private:
   std::unique_ptr<abb::egm::EGMControllerInterface> egm_interface_;
   abb::egm::wrapper::Input state_;
   abb::egm::wrapper::Output command_;
+  bool use_velocity_control_{false};
 
   unsigned int sequence_number_ = 0.0;
   bool first_packet_ = true;
