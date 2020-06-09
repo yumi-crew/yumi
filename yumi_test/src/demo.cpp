@@ -226,7 +226,7 @@ int main(int argc, char **argv)
     log_file << ct << ", ";
     sum += ct;
   }
-  log_file << std::endl << "Average cycle time: " << sum / num_pics << std::endl;
+  log_file << std::endl << "Average cycle time: " << sum / num_picks << std::endl;
 
   log_file.close();
   std::cout << "Motion completed, please ctrl+c" << std::endl;
