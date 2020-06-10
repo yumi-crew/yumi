@@ -36,8 +36,11 @@
         sudo ldconfig # refresh shared library cache.
         ~~~~ 
 * Install pose_estimation dependencies. Guide in repo https://github.com/yumi-crew/pose_estimation
-* Install zivid-ros dependencies. Guide in repoo https://github.com/yumi-crew/zivid-ros.git
+* Install zivid-ros dependencies. Guide in repo https://github.com/yumi-crew/zivid-ros.git
 
+* Moveit 2 dependencies
+    * yaml-cpp   
+        * `sudo apt-get install libyaml-cpp-dev` 
      
 ### Installation:
 
@@ -64,6 +67,7 @@ Installs ROS 2 packages used to control the ABB YuMi and the Zivid One 3D camera
     source install/local_setup.bash
     ~~~~
 
+    When building,  the KDL library will complain about not finding "Eigen/Core" etc. This is due to the library expecting an older  version of Eigen. This can be fixed by adding "eigen3" in the include statements, ex: "#include <eigen3/Eigen/Core". (need sudo privileges)
 ### Use 
 
 Launch architecture
