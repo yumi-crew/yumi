@@ -1,4 +1,4 @@
-// Copyright 2020 Norwegian University of Science and Technology.
+// Copyright 2020 Markus Bjønnes and Marius Nilsen.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #pragma once
-
 #include <moveit2_wrapper/moveit2_wrapper.hpp>
 #include <moveit2_wrapper/object_manager.hpp>
 #include <rws_clients/robot_manager_client.hpp>

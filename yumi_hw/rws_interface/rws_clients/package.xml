@@ -7,7 +7,7 @@
 
   <license>Apache License 2.0</license>
   <author email="mariunil@stud.ntnu.no">Marius Nilsen</author>
-  
+  <author email="markubjo@stud.ntnu.no">Markus Bjønnes</author> 
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

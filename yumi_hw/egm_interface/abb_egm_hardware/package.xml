@@ -9,8 +9,8 @@
 
   <license>Apache License 2.0</license>
 
-  <author email="lars.tingelstad@ntnu.no">Lars Tingelstad</author>
-
+  <author email="markubjo@stud.ntnu.no">Markus Bjønnes</author>
+  <author email="mariunil@stud.ntnu.no">Marius Nilsen</author>
   <url type="repository">https://github.com/tingelst/abb_libegm</url>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
