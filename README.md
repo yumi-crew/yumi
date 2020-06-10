@@ -56,6 +56,7 @@ Installs ROS 2 packages used to control the ABB YuMi and the Zivid One 3D camera
 2. Build
 
     ~~~~
+    cd /home/$USER/abb_ws/
     # To build moveit2
     colcon build --event-handlers desktop_notification- status- --cmake-args -DCMAKE_BUILD_TYPE=Release
     # Normal build, just in case;)
