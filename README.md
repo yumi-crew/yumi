@@ -5,6 +5,8 @@
 
 
 ### Dependencies:
+* vcs import
+   * `sudo apt-get install python3-vcstool`
 
 * abb_librws dependencies
    * POCO C++ Libraries (>= 1.4.3 due to WebSocket support)
