@@ -44,7 +44,7 @@ Installs ROS 2 packages used to control the ABB YuMi and the Zivid One 3D camera
 
 1. Clone repos
     ~~~~
-    mkdir -p /home/$USER/abb_ws/src 
+    mkdir -p /home/$USER/abb_ws/src && cd /home/$USER/abb_ws/src
     git clone https://github.com/yumi-crew/yumi.git
     vcs import /home/$USER/abb_ws/src < /home/$USER/abb_ws/src/yumi/yumi.repos
     vcs import /home/$USER/abb_ws/src < /home/$USER/abb_ws/src/moveit2/moveit2.repos
