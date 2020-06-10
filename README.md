@@ -16,8 +16,8 @@
          cd poco
          mkdir cmake-build 
          cd cmake-build
-         cmake ..
-         cmake --build . --target install
+         sudo cmake ..
+         sudo cmake --build . --target install
          ~~~~
 * abb_libegm dependencies
   * Boost
@@ -29,7 +29,7 @@
         git clone https://github.com/protocolbuffers/protobuf.git  
         cd protobuf  
         ./configure
-        make
+        sudo make
         sudo make install
         sudo ldconfig # refresh shared library cache.
         ~~~~ 
