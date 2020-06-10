@@ -1,6 +1,8 @@
 # ROS 2 stack for external control of the ABB YuMi.
+<p align="center">
+  <img src="https://github.com/yumi-crew/yumi/blob/eloquent/yumi_description/meshes/yumi_render.png" width=300>
+</p>
 
- ![](https://github.com/yumi-crew/yumi/blob/eloquent/yumi_description/meshes/yumi_render.png | width=100)
 
 ### Dependencies:
 
