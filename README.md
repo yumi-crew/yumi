@@ -33,8 +33,8 @@
         sudo make install
         sudo ldconfig # refresh shared library cache.
         ~~~~ 
-* For pose_estimation dependencies, see the pose_estimation repo https://github.com/yumi-crew/pose_estimation
-* For zivid-ros dependencies, see the the zivid-ros repo https://github.com/yumi-crew/zivid-ros.git
+* Install pose_estimation dependencies. Guide in repo https://github.com/yumi-crew/pose_estimation
+* Install zivid-ros dependencies. Guide in repoo https://github.com/yumi-crew/zivid-ros.git
 
      
 ### Installation:
