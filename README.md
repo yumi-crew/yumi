@@ -60,4 +60,15 @@ Installs ROS 2 packages used to control the ABB YuMi and the Zivid One 3D camera
     colcon build --symlink-install
     source install/local_setup.bash
     ~~~~
-
+3. Launch architecture
+   ~~~~ 
+   ros2 launch yumi_launch yumi_moveit2_zivid.launch.py
+   ~~~~
+   Sim:
+   ~~~~
+   ros2 launch yumi_launch yumi_moveit2_zivid_sim.launch.py
+   ~~~~
+4. Run bin pick demo
+   ~~~~
+   ros2 launch yumi_test demo.launch.py
+   ~~~~
